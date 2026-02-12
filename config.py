@@ -1,5 +1,5 @@
-INTERVAL = "5m"
-PERIOD = "5d"
+INTERVAL = "30m"
+PERIOD = "1d"
 
 MIN_TURNOVER = 1_000_000  # PLN
 
