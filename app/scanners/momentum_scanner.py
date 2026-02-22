@@ -18,6 +18,8 @@ class MomentumScanner:
             if len(df) < 60:
                 continue
 
+            print(df.columns)
+            print(type(df.columns))
             close = df["Close"]
             volume = df["Volume"]
 

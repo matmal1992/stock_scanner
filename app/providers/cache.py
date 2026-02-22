@@ -6,25 +6,24 @@ CACHE_DIR = Path("cache")
 CACHE_DIR.mkdir(exist_ok=True)
 
 
-def cache_path(ticker):
-    return CACHE_DIR / f"{ticker}.parquet"
+def cache_path(ticker, interval, period):
+    safe = ticker.replace(".", "_")
+    return CACHE_DIR / f"{safe}_{interval}_{period}.parquet"
 
 
 def load_cache(ticker, max_age_minutes=5):
-    path = cache_path(ticker)
+    path = cache_path(ticker, "30m", "5d")
 
     if not path.exists():
         return None
 
-    df = pd.read_parquet(path)
+    file_time = datetime.fromtimestamp(path.stat().st_mtime)
 
-    last_ts = df.index[-1].to_pydatetime()
-
-    if datetime.now() - last_ts > timedelta(minutes=max_age_minutes):
+    if datetime.now() - file_time > timedelta(minutes=max_age_minutes):
         return None
 
-    return df
+    return pd.read_parquet(path)
 
 
 def save_cache(ticker, df):
-    df.to_parquet(cache_path(ticker))
+    df.to_parquet(cache_path(ticker, "30m", "5d"))
