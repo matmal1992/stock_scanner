@@ -1,10 +1,51 @@
 import yfinance as yf
+import pandas as pd
+import os
+from datetime import datetime, timedelta
 
-ticker = "CRI.WA" 
+ticker = "CRI.WA"
+file_name = "CRI_WA.parquet"
 
-df = yf.Ticker(ticker).history(period="1y", interval="1d")
+def download_full_history():
+    print("Pobieram pełną historię...")
+    df = yf.Ticker(ticker).history(period="1y", interval="1d")
+    df.to_parquet(file_name)
+    print("Plik zapisany.")
+    return df
 
-# Save to CSV
-df.to_parquet("CRI_WA.parquet")
+if not os.path.exists(file_name):
+    df = download_full_history()
+else:
+    print("Plik istnieje. Sprawdzam aktualność...")
 
-print("Data saved successfully!")
+    df_existing = pd.read_parquet(file_name)
+
+    if df_existing.empty:
+        df = download_full_history()
+    else:
+        last_date = df_existing.index.max()
+        print("Ostatnia data w pliku:", last_date.date())
+
+        today = datetime.now().date()
+
+        if last_date.date() == today:
+            print("Dane są aktualne.")
+            df = df_existing
+        else:
+            print("Dane nieaktualne. Aktualizuję...")
+            new_data = yf.Ticker(ticker).history(
+                start=last_date + timedelta(days=1),
+                interval="1d"
+            )
+
+            if not new_data.empty:
+                df = pd.concat([df_existing, new_data])
+                df = df[~df.index.duplicated(keep="last")]
+                df.sort_index(inplace=True)
+                df.to_parquet(file_name)
+                print("Plik zaktualizowany.")
+            else:
+                print("Brak nowych danych.")
+                df = df_existing
+
+print("Gotowe.")
