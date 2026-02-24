@@ -2,6 +2,9 @@ import yfinance as yf
 import os
 from datetime import datetime, timedelta
 
+INTERVAL = "1d"
+DATA_FOLDER = "1d_gpw_data"
+
 tickers_file = "tickers_xtb_WA.txt"
 
 if not os.path.exists(tickers_file):

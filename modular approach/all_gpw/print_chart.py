@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 
-parquet_file = "ticker.parquet"
+parquet_file = "CRI_WA.parquet"
 
 if not os.path.exists(parquet_file):
     print(f"Plik {parquet_file} nie istnieje.")

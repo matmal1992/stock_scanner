@@ -1,0 +1,1 @@
+- zapis z postępu execute skryptu do plików. W celu przyszłej analizy, w formie logów lub rozbudowane dane
