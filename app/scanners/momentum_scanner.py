@@ -3,6 +3,7 @@ import numpy as np
 
 from app.metrics.trend import r2
 
+# miejsce na definicję poszczególnych skanerów, parametrów, rynków, etc
 
 class MomentumScanner:
     def __init__(self, provider):
