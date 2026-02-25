@@ -1,4 +1,4 @@
-from app.providers.yahoo import YahooProvider
+from app.providers.yahoo import download.
 from app.scanners.momentum_scanner import MomentumScanner
 from app.universe.gpw import GPW_TICKERS
 
@@ -14,3 +14,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+ 
