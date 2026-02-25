@@ -2,8 +2,11 @@ import yfinance as yf
 import pandas as pd
 import os
 from datetime import datetime, timedelta
+from pathlib import Path
 
-DATA_FOLDER = "1d_gpw_data"
+BASE_DIR = Path(__file__).resolve().parent
+DATA_FOLDER = BASE_DIR / "1d_gpw_data"
+DATA_FOLDER.mkdir(exist_ok=True)
 PERIOD = "1y"
 INTERVAL = "1d"
 
@@ -52,11 +55,14 @@ def update_ticker(ticker, file_path):
     else:
         print("Brak nowych danych.")
         return df_existing
+def main():
+    for file in os.listdir(DATA_FOLDER):
+        if file.endswith(".parquet"):
+            ticker = file.replace(".parquet", "").replace("_", ".")
+            file_path = os.path.join(DATA_FOLDER, file)
+            update_ticker(ticker, file_path)
 
-for file in os.listdir(DATA_FOLDER):
-    if file.endswith(".parquet"):
-        ticker = file.replace(".parquet", "").replace("_", ".")
-        file_path = os.path.join(DATA_FOLDER, file)
-        update_ticker(ticker, file_path)
+    print("\nGotowe. Wszystkie tickery sprawdzone.")
 
-print("\nGotowe. Wszystkie tickery sprawdzone.")
+if __name__ == "__main__":
+    main()

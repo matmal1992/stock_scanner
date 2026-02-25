@@ -2,7 +2,6 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 
-
 DATA_DIR = Path("1d_gpw_data")
 
 
@@ -90,9 +89,7 @@ def scan_directory():
 
     return candidates
 
-
-if __name__ == "__main__":
-
+def main():
     results = scan_directory()
 
     print("\n=== SPEŁNIAJĄCE WARUNKI ===")
@@ -110,3 +107,5 @@ if __name__ == "__main__":
 
     print("-" * 50)
     print(f"Znaleziono: {len(results)} spółek")
+
+
