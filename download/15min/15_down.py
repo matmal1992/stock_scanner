@@ -4,8 +4,9 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 def main():
-    INTERVAL = "15min"
+    INTERVAL = "15m"
     DATA_FOLDER = "15min_gpw_data"
+    PERIOD = "60d"
 
     BASE_DIR = Path(__file__).resolve().parent
     tickers_file = BASE_DIR / "15min_tickers_WA.txt"
@@ -24,7 +25,7 @@ def main():
         "error": []
     }
 
-    start_date = datetime.today() - timedelta(days=182)
+    # start_date = datetime.today() - timedelta(PERIOD)
 
     for ticker in tickers:
         print(f"\nSprawdzanie {ticker}...")
@@ -32,8 +33,8 @@ def main():
         try:
             t = yf.Ticker(ticker)
 
-            # próba pobrania danych z pół roku wstecz
-            df = t.history(start=start_date, interval="15min")
+            # próba pobrania danych z poprzednich 60 dni
+            df = t.history(period=PERIOD, interval=INTERVAL)
 
             if not df.empty:
                 filename = ticker.replace(".", "_") + ".parquet"
