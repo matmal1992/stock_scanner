@@ -8,6 +8,6 @@ print("Pliki w folderze:")
 for f in os.listdir():
     print(f)
 
-df = pd.read_parquet("CRI_WA.parquet")
+df = pd.read_parquet("06N_WA.parquet")
 df = df.iloc[:-10]
-df.to_parquet("CRI_WA.parquet")
+df.to_parquet("06N_WA.parquet")

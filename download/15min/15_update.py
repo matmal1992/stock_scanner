@@ -5,10 +5,10 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
-DATA_FOLDER = BASE_DIR / "1d_gpw_data"
+DATA_FOLDER = BASE_DIR / "15min_gpw_data"
 DATA_FOLDER.mkdir(exist_ok=True)
-PERIOD = "1y"
-INTERVAL = "1d"
+PERIOD = "60d"
+INTERVAL = "15m"
 
 def update_ticker(ticker, file_path):
     print(f"\n=== {ticker} ===")
