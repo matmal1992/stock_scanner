@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 
-DATA_DIR = Path("1d_gpw_data")
+DATA_DIR = Path("1d/1d_gpw_data")
 
 
 def r2(series):
