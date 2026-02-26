@@ -6,8 +6,12 @@ from pathlib import Path
 def main():
     INTERVAL = "1d"
     DATA_FOLDER = "1d_gpw_data"
+    
 
     BASE_DIR = Path(__file__).resolve().parent
+    DATA_DIR = BASE_DIR / "1d_gpw_data"
+    DATA_DIR.mkdir(exist_ok=True)
+
     tickers_file = BASE_DIR / "tickers_xtb_WA.txt"
 
     if not tickers_file.exists():
@@ -37,7 +41,7 @@ def main():
 
             if not df.empty:
                 filename = ticker.replace(".", "_") + ".parquet"
-                filepath = os.path.join("1d_gpw_data", filename)
+                filepath = DATA_DIR / filename
                 df.to_parquet(filepath)
                 results["ok"].append(ticker)
                 print("OK - zapisano dane")
