@@ -28,7 +28,8 @@ def main():
         tickers = [t.strip() for t in f.read().split(",") if t.strip()]
 
     results = {
-        "ok": [],
+        "updated": [],
+        "skipped": [],
         "short_history": [],
         "delisted_or_invalid": [],
         "error": []
@@ -50,14 +51,13 @@ def main():
             if not df.empty:
                 filename = ticker.replace(".", "_") + ".parquet"
                 filepath = DATA_DIR / filename
+                today = datetime.today().date()
                 if filepath.exists():
                     try:
                         existing_df = pd.read_parquet(filepath)
                         last_date = existing_df.index.max().date()
-                        today = datetime.today().date()
-
                         if last_date > today:
-                            results["ok"].append(ticker)
+                            results["skipped"].append(ticker)
                             continue
                     except:
                         pass
