@@ -5,6 +5,7 @@ from pathlib import Path
 import tkinter as tk
 from tkinter import messagebox
 from tqdm import tqdm
+import pandas as pd
 
 def main():
     INTERVAL = "1d"
@@ -49,6 +50,18 @@ def main():
             if not df.empty:
                 filename = ticker.replace(".", "_") + ".parquet"
                 filepath = DATA_DIR / filename
+                if filepath.exists():
+                    try:
+                        existing_df = pd.read_parquet(filepath)
+                        last_date = existing_df.index.max().date()
+                        today = datetime.today().date()
+
+                        if last_date > today:
+                            results["ok"].append(ticker)
+                            continue
+                    except:
+                        pass
+
                 df.to_parquet(filepath)
                 results["ok"].append(ticker)
                 # print("OK - zapisano dane")
