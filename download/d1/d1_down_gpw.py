@@ -4,28 +4,18 @@ from datetime import datetime, timedelta
 from pathlib import Path
 import tkinter as tk
 from tkinter import messagebox
-
-def confirm_continue(count):
-    root = tk.Tk()
-    root.withdraw()  # ukrywa główne okno
-
-    answer = messagebox.askyesno(
-        "Potwierdzenie",
-        f"Znaleziono {count} spółek.\nCzy chcesz kontynuować?"
-    )
-
-    root.destroy()
-    return answer
+from tqdm import tqdm
 
 def main():
-    # confirm_continue(5)
     INTERVAL = "1d"
     DATA_FOLDER = "1d_gpw_data"
     
-
     BASE_DIR = Path(__file__).resolve().parent
     DATA_DIR = BASE_DIR / "1d_gpw_data"
     DATA_DIR.mkdir(exist_ok=True)
+
+    log_file = BASE_DIR / "failed_tickers.txt"
+    log_file.write_text("")
 
     tickers_file = BASE_DIR / "tickers_xtb_WA.txt"
 
@@ -45,8 +35,10 @@ def main():
 
     start_date = datetime.today() - timedelta(days=365)
 
-    for ticker in tickers:
-        print(f"\nSprawdzanie {ticker}...")
+    for ticker in tqdm(tickers, desc="Pobieranie danych", unit="ticker"):
+        # print(f"\nSprawdzanie {ticker}...")
+        with open(log_file, "a") as f:
+            f.write(f"{ticker} - nSprawdzanie {ticker}...")
 
         try:
             t = yf.Ticker(ticker)
@@ -59,7 +51,9 @@ def main():
                 filepath = DATA_DIR / filename
                 df.to_parquet(filepath)
                 results["ok"].append(ticker)
-                print("OK - zapisano dane")
+                # print("OK - zapisano dane")
+                with open(log_file, "a") as f:
+                    f.write(f"{ticker} - ok\n")
                 continue
 
             # Jeśli pusto → sprawdzamy MAX
@@ -67,14 +61,20 @@ def main():
 
             if df_max.empty:
                 results["delisted_or_invalid"].append(ticker)
-                print("Brak danych w ogóle - delisted / nieobsługiwany / błędny ticker")
+                # print("Brak danych w ogóle - delisted / nieobsługiwany / błędny ticker")
+                with open(log_file, "a") as f:
+                    f.write(f"{ticker} - delisted_or_invalid\n")
             else:
                 results["short_history"].append(ticker)
-                print("Spółka notowana krócej niż 1 rok")
+                # print("Spółka notowana krócej niż 1 rok")
+                with open(log_file, "a") as f:
+                    f.write(f"{ticker} - short_history\n")    
 
         except Exception as e:
             results["error"].append(ticker)
-            print("Błąd techniczny:", e)
+            # print("Błąd techniczny:", e)
+            with open(log_file, "a") as f:
+                f.write(f"{ticker} - Błąd techniczny: {e}\n")    
 
     print("\n========== RAPORT ==========")
     print("Poprawnie pobrane:", len(results["ok"]))
