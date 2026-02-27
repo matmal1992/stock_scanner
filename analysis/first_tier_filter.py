@@ -1,9 +1,22 @@
 import pandas as pd
 import numpy as np
 from pathlib import Path
+import tkinter as tk
+from tkinter import messagebox
 
 DATA_DIR = Path("1d/1d_gpw_data")
 
+def confirm_continue(count):
+    root = tk.Tk()
+    root.withdraw()  # ukrywa główne okno
+
+    answer = messagebox.askyesno(
+        "Potwierdzenie",
+        f"Znaleziono {count} spółek.\nCzy chcesz kontynuować?"
+    )
+
+    root.destroy()
+    return answer
 
 def r2(series):
     y = series.values
@@ -107,5 +120,25 @@ def main():
 
     print("-" * 50)
     print(f"Znaleziono: {len(results)} spółek")
+
+    tickers_only = [ticker for ticker, _ in results]
+
+    print("\n=== LISTA SPÓŁEK ===")
+    for t in tickers_only:
+        print(t)
+
+    if not results:
+        print("Brak kandydatów.")
+        return
+
+    if confirm_continue(len(results)):
+        print("Kontynuuję działanie...")
+        # tutaj dalsza logika
+    else:
+        print("Przerwano przez użytkownika.")
+        return
+    
+if __name__ == "__main__":
+    main()
 
 

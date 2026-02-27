@@ -2,8 +2,23 @@ import yfinance as yf
 import os
 from datetime import datetime, timedelta
 from pathlib import Path
+import tkinter as tk
+from tkinter import messagebox
+
+def confirm_continue(count):
+    root = tk.Tk()
+    root.withdraw()  # ukrywa główne okno
+
+    answer = messagebox.askyesno(
+        "Potwierdzenie",
+        f"Znaleziono {count} spółek.\nCzy chcesz kontynuować?"
+    )
+
+    root.destroy()
+    return answer
 
 def main():
+    # confirm_continue(5)
     INTERVAL = "1d"
     DATA_FOLDER = "1d_gpw_data"
     

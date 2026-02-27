@@ -8,10 +8,10 @@ from analysis import second_tier_filter
 
 def main():
     print("===== ETAP 1: DOWNLOAD =====")
-    d1_down_gpw.main()
+    # d1_down_gpw.main()
 
     print("\n===== ETAP 2: UPDATE =====")
-    d1_update_gpw.main()
+    # d1_update_gpw.main()
 
     print("\n===== ETAP 3: ANALIZA =====")
     first_tier_filter.main()
