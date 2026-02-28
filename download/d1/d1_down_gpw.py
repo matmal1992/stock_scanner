@@ -63,7 +63,7 @@ def main():
                         pass
 
                 df.to_parquet(filepath)
-                results["ok"].append(ticker)
+                results["updated"].append(ticker)
                 # print("OK - zapisano dane")
                 with open(log_file, "a") as f:
                     f.write(f"{ticker} - ok\n")
@@ -90,7 +90,8 @@ def main():
                 f.write(f"{ticker} - Błąd techniczny: {e}\n")    
 
     print("\n========== RAPORT ==========")
-    print("Poprawnie pobrane:", len(results["ok"]))
+    print("Zaktualizowano:", len(results["updated"]))
+    print("Pominięto (aktualne):", len(results["skipped"]))
     print("Krótsza historia:", len(results["short_history"]))
     print("Delisted / niepoprawne:", len(results["delisted_or_invalid"]))
     print("Błędy techniczne:", len(results["error"]))
