@@ -38,56 +38,54 @@ def main():
     start_date = datetime.today() - timedelta(days=365)
 
     for ticker in tqdm(tickers, desc="Pobieranie danych", unit="ticker"):
-        # print(f"\nSprawdzanie {ticker}...")
-        with open(log_file, "a") as f:
-            f.write(f"{ticker} - nSprawdzanie {ticker}...")
+
+        filename = ticker.replace(".", "_") + ".parquet"
+        filepath = DATA_DIR / filename
+        today = datetime.today().date()
 
         try:
+            if filepath.exists():
+                try:
+                    existing_df = pd.read_parquet(filepath)
+                    last_date = existing_df.index.max().date()
+
+                    if last_date == today:
+                        results["skipped"].append(ticker)
+                        continue
+                except:
+                    pass
+
             t = yf.Ticker(ticker)
 
-            # Próba pobrania 1 roku
             df = t.history(start=start_date, interval="1d")
 
             if not df.empty:
-                filename = ticker.replace(".", "_") + ".parquet"
-                filepath = DATA_DIR / filename
-                today = datetime.today().date()
-                if filepath.exists():
-                    try:
-                        existing_df = pd.read_parquet(filepath)
-                        last_date = existing_df.index.max().date()
-                        if last_date > today:
-                            results["skipped"].append(ticker)
-                            continue
-                    except:
-                        pass
-
                 df.to_parquet(filepath)
                 results["updated"].append(ticker)
-                # print("OK - zapisano dane")
+
                 with open(log_file, "a") as f:
-                    f.write(f"{ticker} - ok\n")
+                    f.write(f"{ticker} - updated\n")
+
                 continue
 
-            # Jeśli pusto → sprawdzamy MAX
             df_max = t.history(period="max", interval="1d")
 
             if df_max.empty:
                 results["delisted_or_invalid"].append(ticker)
-                # print("Brak danych w ogóle - delisted / nieobsługiwany / błędny ticker")
+
                 with open(log_file, "a") as f:
                     f.write(f"{ticker} - delisted_or_invalid\n")
             else:
                 results["short_history"].append(ticker)
-                # print("Spółka notowana krócej niż 1 rok")
+
                 with open(log_file, "a") as f:
-                    f.write(f"{ticker} - short_history\n")    
+                    f.write(f"{ticker} - short_history\n")
 
         except Exception as e:
             results["error"].append(ticker)
-            # print("Błąd techniczny:", e)
+
             with open(log_file, "a") as f:
-                f.write(f"{ticker} - Błąd techniczny: {e}\n")    
+                f.write(f"{ticker} - error: {e}\n")
 
     print("\n========== RAPORT ==========")
     print("Zaktualizowano:", len(results["updated"]))
