@@ -19,9 +19,6 @@ def main():
     print("===== ETAP 1: DOWNLOAD =====")
     d1_down_gpw.main()
 
-    # # confirm_continue("Update first tier data")
-    # print("\n===== ETAP 2: UPDATE =====")
-    # # d1_update_gpw.main()
     # # confirm_continue("Analyze first tier data")
     # print("\n===== ETAP 3: ANALIZA =====")
     # # first_tier_filter.main()
@@ -39,7 +36,6 @@ def main():
     # # second_tier_filter.main()
 
     print("\n===== GOTOWE =====")
-
 
 if __name__ == "__main__":
     main()

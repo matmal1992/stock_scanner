@@ -1,19 +1,19 @@
-updated (2):
-  4MB.WA
-  7FT.WA
+updated (0):
 
-skipped (6):
-  06N.WA
-  11B.WA
-  1AT.WA
-  3RG.WA
-  4MS.WA
-  AAT.WA
+skipped (0):
 
 short_history (0):
 
 delisted_or_invalid (1):
   01C.WA
 
-error (0):
+error (8):
+  06N.WA
+  11B.WA
+  1AT.WA
+  3RG.WA
+  4MB.WA
+  4MS.WA
+  7FT.WA
+  AAT.WA
 
