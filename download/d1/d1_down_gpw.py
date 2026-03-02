@@ -12,6 +12,7 @@ DATA_FOLDER = "1d_gpw_data_test"
 XTB_TICKERS_FILE = "tickers_xtb_WA_test.txt"
 FAILED_TICKERS_FILE = "failed_tickers.txt"
 DOWN_RAPORT = "download_report.txt"
+LAST_UPDATE_FILE = "last_update.txt"
     
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / DATA_FOLDER
@@ -20,6 +21,7 @@ DATA_DIR.mkdir(exist_ok=True)
 log_file = BASE_DIR / FAILED_TICKERS_FILE
 log_file.write_text("")
 download_report = BASE_DIR / DOWN_RAPORT
+last_update_path = BASE_DIR / LAST_UPDATE_FILE
 
 tickers_file = BASE_DIR / XTB_TICKERS_FILE
 
@@ -30,8 +32,22 @@ def print_raport(results):
     print("Krótsza historia:", len(results["short_history"]))
     print("Delisted / niepoprawne:", len(results["delisted_or_invalid"]))
     print("Błędy techniczne:", len(results["error"]))
+    
+def check_last_update():
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    if last_update_path.exists():
+        with open(last_update_path, "r") as f:
+            saved_datetime = f.read().strip()
+            
+        if saved_datetime:
+            saved_date = saved_datetime.split(" ")[0]
+            
+            if saved_date == today_str:
+                print("\nDane były już dziś aktualizowane — pomijam pobieranie.\n")
+                return True
+    return False
 
-def save_raport_to_file():
+def save_raport_to_file(results):
     with open(download_report, "w") as f:
         for key, value in results.items():
             f.write(f"{key} ({len(value)}):\n")
@@ -41,6 +57,9 @@ def save_raport_to_file():
     pass
 
 def main():
+    if check_last_update():
+        return
+    
     if not tickers_file.exists():
         print("Brak pliku {XTB_TICKERS_FILE}")
         return
@@ -77,7 +96,7 @@ def main():
                         existing_df = pd.read_parquet(filepath)
                         last_date = existing_df.index.max().date()
                         today = datetime.today().date()
-                        if last_date == today:
+                        if last_date >= today - timedelta(days=1):
                             results["skipped"].append(ticker)
                             continue
                     except:
@@ -108,7 +127,12 @@ def main():
                 f.write(f"{ticker} - Błąd techniczny: {e}\n")    
 
     print_raport(results)
-    save_raport_to_file()
+    save_raport_to_file(results)
+    
+    current_datetime_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    with open(last_update_path, "w") as f:
+        f.write(current_datetime_str)
 
 if __name__ == "__main__":
     main()
