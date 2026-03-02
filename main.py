@@ -15,28 +15,28 @@ def confirm_continue(messege):
     return answer
     
 def main():
-    confirm_continue("Download first tier data")
+    # confirm_continue("Download first tier data")
     print("===== ETAP 1: DOWNLOAD =====")
     d1_down_gpw.main()
 
-    confirm_continue("Update first tier data")
-    print("\n===== ETAP 2: UPDATE =====")
-    # d1_update_gpw.main()
-    confirm_continue("Analyze first tier data")
-    print("\n===== ETAP 3: ANALIZA =====")
-    # first_tier_filter.main()
+    # # confirm_continue("Update first tier data")
+    # print("\n===== ETAP 2: UPDATE =====")
+    # # d1_update_gpw.main()
+    # # confirm_continue("Analyze first tier data")
+    # print("\n===== ETAP 3: ANALIZA =====")
+    # # first_tier_filter.main()
 
-    confirm_continue("Download second tier data")
-    print("\n===== ETAP 4: DOWNLOAD 15min tickers =====")
-    # min15_down.main()
+    # # confirm_continue("Download second tier data")
+    # print("\n===== ETAP 4: DOWNLOAD 15min tickers =====")
+    # # min15_down.main()
 
-    confirm_continue("Update second tier data")
-    print("\n===== ETAP 5: UPDATE =====")
-    # min15_update.main()
+    # # confirm_continue("Update second tier data")
+    # print("\n===== ETAP 5: UPDATE =====")
+    # # min15_update.main()
 
-    confirm_continue("Analyze second tier data")
-    print("\n===== ETAP 6: ANALIZA =====")
-    # second_tier_filter.main()
+    # # confirm_continue("Analyze second tier data")
+    # print("\n===== ETAP 6: ANALIZA =====")
+    # # second_tier_filter.main()
 
     print("\n===== GOTOWE =====")
 

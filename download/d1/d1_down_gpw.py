@@ -9,19 +9,23 @@ import pandas as pd
 
 def main():
     INTERVAL = "1d"
-    DATA_FOLDER = "1d_gpw_data"
+    DATA_FOLDER = "1d_gpw_data_test"
+    XTB_TICKERS_FILE = "tickers_xtb_WA_test.txt"
+    FAILED_TICKERS_FILE = "failed_tickers.txt"
+    DOWN_RAPORT = "download_report.txt"
     
     BASE_DIR = Path(__file__).resolve().parent
-    DATA_DIR = BASE_DIR / "1d_gpw_data"
+    DATA_DIR = BASE_DIR / DATA_FOLDER
     DATA_DIR.mkdir(exist_ok=True)
 
-    log_file = BASE_DIR / "failed_tickers.txt"
+    log_file = BASE_DIR / FAILED_TICKERS_FILE
     log_file.write_text("")
+    download_report = BASE_DIR / DOWN_RAPORT
 
-    tickers_file = BASE_DIR / "tickers_xtb_WA.txt"
+    tickers_file = BASE_DIR / XTB_TICKERS_FILE
 
     if not tickers_file.exists():
-        print("Brak pliku tickers_xtb_WA.txt")
+        print("Brak pliku {XTB_TICKERS_FILE}")
         return
 
     with open(tickers_file, "r") as f:
@@ -38,54 +42,53 @@ def main():
     start_date = datetime.today() - timedelta(days=365)
 
     for ticker in tqdm(tickers, desc="Pobieranie danych", unit="ticker"):
-
-        filename = ticker.replace(".", "_") + ".parquet"
-        filepath = DATA_DIR / filename
-        today = datetime.today().date()
+        with open(log_file, "a") as f:
+            f.write(f"{ticker} - nSprawdzanie {ticker}...")
 
         try:
-            if filepath.exists():
-                try:
-                    existing_df = pd.read_parquet(filepath)
-                    last_date = existing_df.index.max().date()
-
-                    if last_date == today:
-                        results["skipped"].append(ticker)
-                        continue
-                except:
-                    pass
-
             t = yf.Ticker(ticker)
 
+            # Próba pobrania 1 roku
             df = t.history(start=start_date, interval="1d")
 
             if not df.empty:
+                filename = ticker.replace(".", "_") + ".parquet"
+                filepath = DATA_DIR / filename
+
+                if filepath.exists():
+                    try:
+                        existing_df = pd.read_parquet(filepath)
+                        last_date = existing_df.index.max().date()
+                        today = datetime.today().date()
+                        if last_date == today:
+                            results["skipped"].append(ticker)
+                            continue
+                    except:
+                        pass
+
                 df.to_parquet(filepath)
                 results["updated"].append(ticker)
-
                 with open(log_file, "a") as f:
                     f.write(f"{ticker} - updated\n")
-
                 continue
 
+            # Jeśli pusto → sprawdzamy MAX
             df_max = t.history(period="max", interval="1d")
 
             if df_max.empty:
                 results["delisted_or_invalid"].append(ticker)
-
                 with open(log_file, "a") as f:
                     f.write(f"{ticker} - delisted_or_invalid\n")
             else:
                 results["short_history"].append(ticker)
-
                 with open(log_file, "a") as f:
-                    f.write(f"{ticker} - short_history\n")
+                    f.write(f"{ticker} - short_history\n")    
 
         except Exception as e:
             results["error"].append(ticker)
-
+            # print("BŁĄD:", ticker, e)
             with open(log_file, "a") as f:
-                f.write(f"{ticker} - error: {e}\n")
+                f.write(f"{ticker} - Błąd techniczny: {e}\n")    
 
     print("\n========== RAPORT ==========")
     print("Zaktualizowano:", len(results["updated"]))
@@ -95,7 +98,7 @@ def main():
     print("Błędy techniczne:", len(results["error"]))
 
     # Zapis raportu
-    with open("download_report.txt", "w") as f:
+    with open(download_report, "w") as f:
         for key, value in results.items():
             f.write(f"{key} ({len(value)}):\n")
             for t in value:
