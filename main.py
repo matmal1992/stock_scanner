@@ -27,10 +27,6 @@ def main():
     # print("\n===== ETAP 4: DOWNLOAD 15min tickers =====")
     # # min15_down.main()
 
-    # # confirm_continue("Update second tier data")
-    # print("\n===== ETAP 5: UPDATE =====")
-    # # min15_update.main()
-
     # # confirm_continue("Analyze second tier data")
     # print("\n===== ETAP 6: ANALIZA =====")
     # # second_tier_filter.main()

@@ -7,23 +7,40 @@ from tkinter import messagebox
 from tqdm import tqdm
 import pandas as pd
 
-def main():
-    INTERVAL = "1d"
-    DATA_FOLDER = "1d_gpw_data_test"
-    XTB_TICKERS_FILE = "tickers_xtb_WA_test.txt"
-    FAILED_TICKERS_FILE = "failed_tickers.txt"
-    DOWN_RAPORT = "download_report.txt"
+INTERVAL = "1d"
+DATA_FOLDER = "1d_gpw_data_test"
+XTB_TICKERS_FILE = "tickers_xtb_WA_test.txt"
+FAILED_TICKERS_FILE = "failed_tickers.txt"
+DOWN_RAPORT = "download_report.txt"
     
-    BASE_DIR = Path(__file__).resolve().parent
-    DATA_DIR = BASE_DIR / DATA_FOLDER
-    DATA_DIR.mkdir(exist_ok=True)
+BASE_DIR = Path(__file__).resolve().parent
+DATA_DIR = BASE_DIR / DATA_FOLDER
+DATA_DIR.mkdir(exist_ok=True)
 
-    log_file = BASE_DIR / FAILED_TICKERS_FILE
-    log_file.write_text("")
-    download_report = BASE_DIR / DOWN_RAPORT
+log_file = BASE_DIR / FAILED_TICKERS_FILE
+log_file.write_text("")
+download_report = BASE_DIR / DOWN_RAPORT
 
-    tickers_file = BASE_DIR / XTB_TICKERS_FILE
+tickers_file = BASE_DIR / XTB_TICKERS_FILE
 
+def print_raport(results):
+    print("\n========== RAPORT ==========")
+    print("Zaktualizowano:", len(results["updated"]))
+    print("Pominięto (aktualne):", len(results["skipped"]))
+    print("Krótsza historia:", len(results["short_history"]))
+    print("Delisted / niepoprawne:", len(results["delisted_or_invalid"]))
+    print("Błędy techniczne:", len(results["error"]))
+
+def save_raport_to_file():
+    with open(download_report, "w") as f:
+        for key, value in results.items():
+            f.write(f"{key} ({len(value)}):\n")
+            for t in value:
+                f.write(f"  {t}\n")
+            f.write("\n")
+    pass
+
+def main():
     if not tickers_file.exists():
         print("Brak pliku {XTB_TICKERS_FILE}")
         return
@@ -90,21 +107,8 @@ def main():
             with open(log_file, "a") as f:
                 f.write(f"{ticker} - Błąd techniczny: {e}\n")    
 
-    print("\n========== RAPORT ==========")
-    print("Zaktualizowano:", len(results["updated"]))
-    print("Pominięto (aktualne):", len(results["skipped"]))
-    print("Krótsza historia:", len(results["short_history"]))
-    print("Delisted / niepoprawne:", len(results["delisted_or_invalid"]))
-    print("Błędy techniczne:", len(results["error"]))
-
-    # Zapis raportu
-    with open(download_report, "w") as f:
-        for key, value in results.items():
-            f.write(f"{key} ({len(value)}):\n")
-            for t in value:
-                f.write(f"  {t}\n")
-            f.write("\n")
-    pass
+    print_raport(results)
+    save_raport_to_file()
 
 if __name__ == "__main__":
     main()
