@@ -1,0 +1,8 @@
+#Compiled Python files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# data files
+*.parquet
