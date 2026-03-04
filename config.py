@@ -1,9 +1,10 @@
 from dataclasses import dataclass
-from pathlib import Path
+# from pathlib import Path
 
 
 # BASE_DIR = Path(__file__).resolve().parent
 
+@dataclass
 class DownloadConfig:
     interval: str
     period_days: int

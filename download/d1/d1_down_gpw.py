@@ -6,25 +6,26 @@ import tkinter as tk
 from tkinter import messagebox
 from tqdm import tqdm
 import pandas as pd
+from config import CONFIG_1D as CONFIG
 
-INTERVAL = "1d"
-DATA_FOLDER = "1d_gpw_data_test"
-PERIOD = 365
-XTB_TICKERS_FILE = "tickers_xtb_WA_test.txt"
-FAILED_TICKERS_FILE = "failed_tickers.txt"
-DOWN_RAPORT = "download_report.txt"
-LAST_UPDATE_FILE = "last_update.txt"
+# INTERVAL = "1d"
+# DATA_FOLDER = "1d_gpw_data_test"
+# PERIOD = 365
+# XTB_TICKERS_FILE = "tickers_xtb_WA_test.txt"
+# FAILED_TICKERS_FILE = "failed_tickers.txt"
+# DOWN_RAPORT = "download_report.txt"
+# LAST_UPDATE_FILE = "last_update.txt"
     
 BASE_DIR = Path(__file__).resolve().parent
-DATA_DIR = BASE_DIR / DATA_FOLDER
+DATA_DIR = BASE_DIR / CONFIG.data_folder
 DATA_DIR.mkdir(exist_ok=True)
 
-log_file = BASE_DIR / FAILED_TICKERS_FILE
+log_file = BASE_DIR / CONFIG.failed_tickers_file
 log_file.write_text("")
-download_report = BASE_DIR / DOWN_RAPORT
-last_update_path = BASE_DIR / LAST_UPDATE_FILE
+download_report = BASE_DIR / CONFIG.download_report_file
+last_update_path = BASE_DIR / CONFIG.last_update_file
 
-tickers_file = BASE_DIR / XTB_TICKERS_FILE
+tickers_file = BASE_DIR / CONFIG.tickers_file
 
 def print_raport(results):
     print("\n========== RAPORT ==========")
@@ -76,7 +77,7 @@ def main():
         "error": []
     }
 
-    start_date = datetime.today() - timedelta(days=PERIOD)
+    start_date = datetime.today() - timedelta(days=CONFIG.period_days)
 
     for ticker in tqdm(tickers, desc="Pobieranie danych", unit="ticker"):
         with open(log_file, "a") as f:
@@ -110,7 +111,7 @@ def main():
                 continue
 
             # Jeśli pusto → sprawdzamy MAX
-            df_max = t.history(period="max", interval="1d")
+            df_max = t.history(period="max", interval=CONFIG.interval)
 
             if df_max.empty:
                 results["delisted_or_invalid"].append(ticker)
