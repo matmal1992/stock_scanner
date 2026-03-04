@@ -1,11 +1,9 @@
 import yfinance as yf
 from datetime import datetime, timedelta
 from pathlib import Path
-import tkinter as tk
 from tqdm import tqdm
 import pandas as pd
-from config import CONFIG_1D as CONFIG
-from config import report_path
+from config import CONFIG_5M as CONFIG
     
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / CONFIG.data_folder
@@ -13,7 +11,7 @@ DATA_DIR.mkdir(exist_ok=True)
 
 log_file = BASE_DIR / CONFIG.failed_tickers_file
 log_file.write_text("")
-download_report = BASE_DIR / report_path
+download_report = BASE_DIR / CONFIG.download_report_file
 last_update_path = BASE_DIR / CONFIG.last_update_file
 
 tickers_file = BASE_DIR / CONFIG.tickers_file
@@ -26,49 +24,34 @@ def print_raport(results):
     print("Delisted / niepoprawne:", len(results["delisted_or_invalid"]))
     print("Błędy techniczne:", len(results["error"]))
     
-def check_last_update():
-    today_str = datetime.now().strftime("%Y-%m-%d")
-    if last_update_path.exists():
-        with open(last_update_path, "r") as f:
-            saved_datetime = f.read().strip()
+# dorobić checkowanie 5min interwału, patrzeć na godzine ostatniej aktualizacji
+# def check_last_update():
+#     today_str = datetime.now().strftime("%Y-%m-%d")
+#     if last_update_path.exists():
+#         with open(last_update_path, "r") as f:
+#             saved_datetime = f.read().strip()
             
-        if saved_datetime:
-            saved_date = saved_datetime.split(" ")[0]
+#         if saved_datetime:
+#             saved_date = saved_datetime.split(" ")[0]
             
-            if saved_date == today_str:
-                print("\nDane były już dziś aktualizowane — pomijam pobieranie.\n")
-                return True
-    return False
-
-# def save_raport_to_file(results):
-#     with open(download_report, "w") as f:
-#         for key, value in results.items():
-#             f.write(f"{key} ({len(value)}):\n")
-#             for t in value:
-#                 f.write(f"  {t}\n")
-#             f.write("\n")
-#     pass
+#             if saved_date == today_str:
+#                 print("\nDane były już dziś aktualizowane — pomijam pobieranie.\n")
+#                 return True
+#     return False
 
 def save_raport_to_file(results):
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    with open(download_report, "w", encoding="utf-8") as f:
-        f.write("=====================================\n")
-        f.write("          RAPORT POBIERANIA\n")
-        f.write("=====================================\n")
-        f.write(f"Data wygenerowania: {now}\n\n")
-
-        for key, tickers in results.items():
-            f.write(f"--- {key.upper()} ({len(tickers)}) ---\n")
-            for t in tickers:
-                f.write(f"{t}\n")
+    with open(download_report, "w") as f:
+        for key, value in results.items():
+            f.write(f"{key} ({len(value)}):\n")
+            for t in value:
+                f.write(f"  {t}\n")
             f.write("\n")
+    pass
 
-    print(f"\nRaport zapisany do: {download_report}")
 
 def main():
-    if check_last_update():
-        return
+    # if check_last_update():
+    #     return
     
     if not tickers_file.exists():
         print("Brak pliku {XTB_TICKERS_FILE}")
@@ -94,8 +77,8 @@ def main():
         try:
             t = yf.Ticker(ticker)
 
-            # Próba pobrania 1 roku
-            df = t.history(start=start_date, interval=CONFIG.interval)
+            # Próba pobrania 5min
+            df = t.history(start=start_date, interval="5m")
 
             if not df.empty:
                 filename = ticker.replace(".", "_") + ".parquet"

@@ -6,6 +6,8 @@ from download.min15 import min15_update
 from analysis import second_tier_filter
 import tkinter as tk
 from tkinter import messagebox
+import os
+from config import report_path
 
 def confirm_continue(messege):
     root = tk.Tk()
@@ -32,6 +34,7 @@ def main():
     # # second_tier_filter.main()
 
     print("\n===== GOTOWE =====")
+    os.startfile(report_path)
 
 if __name__ == "__main__":
     main()
