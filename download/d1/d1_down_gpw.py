@@ -5,6 +5,7 @@ import tkinter as tk
 from tqdm import tqdm
 import pandas as pd
 from config import CONFIG_1D as CONFIG
+from config import report_path
     
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / CONFIG.data_folder
@@ -12,7 +13,7 @@ DATA_DIR.mkdir(exist_ok=True)
 
 log_file = BASE_DIR / CONFIG.failed_tickers_file
 log_file.write_text("")
-download_report = BASE_DIR / CONFIG.download_report_file
+download_report = BASE_DIR / report_path
 last_update_path = BASE_DIR / CONFIG.last_update_file
 
 tickers_file = BASE_DIR / CONFIG.tickers_file
@@ -39,14 +40,31 @@ def check_last_update():
                 return True
     return False
 
+# def save_raport_to_file(results):
+#     with open(download_report, "w") as f:
+#         for key, value in results.items():
+#             f.write(f"{key} ({len(value)}):\n")
+#             for t in value:
+#                 f.write(f"  {t}\n")
+#             f.write("\n")
+#     pass
+
 def save_raport_to_file(results):
-    with open(download_report, "w") as f:
-        for key, value in results.items():
-            f.write(f"{key} ({len(value)}):\n")
-            for t in value:
-                f.write(f"  {t}\n")
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    with open(download_report, "w", encoding="utf-8") as f:
+        f.write("=====================================\n")
+        f.write("          RAPORT POBIERANIA\n")
+        f.write("=====================================\n")
+        f.write(f"Data wygenerowania: {now}\n\n")
+
+        for key, tickers in results.items():
+            f.write(f"--- {key.upper()} ({len(tickers)}) ---\n")
+            for t in tickers:
+                f.write(f"{t}\n")
             f.write("\n")
-    pass
+
+    print(f"\nRaport zapisany do: {download_report}")
 
 def main():
     if check_last_update():

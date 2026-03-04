@@ -5,6 +5,7 @@ import tkinter as tk
 from tqdm import tqdm
 import pandas as pd
 from config import CONFIG_15M as CONFIG
+from config import report_path
     
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / CONFIG.data_folder
@@ -12,7 +13,6 @@ DATA_DIR.mkdir(exist_ok=True)
 
 log_file = BASE_DIR / CONFIG.failed_tickers_file
 log_file.write_text("")
-download_report = BASE_DIR / CONFIG.download_report_file
 last_update_path = BASE_DIR / CONFIG.last_update_file
 
 tickers_file = BASE_DIR / CONFIG.tickers_file
@@ -40,7 +40,7 @@ def print_raport(results):
 #     return False
 
 def save_raport_to_file(results):
-    with open(download_report, "w") as f:
+    with open(report_path, "w") as f:
         for key, value in results.items():
             f.write(f"{key} ({len(value)}):\n")
             for t in value:
