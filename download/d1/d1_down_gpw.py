@@ -1,20 +1,10 @@
 import yfinance as yf
-import os
 from datetime import datetime, timedelta
 from pathlib import Path
 import tkinter as tk
-from tkinter import messagebox
 from tqdm import tqdm
 import pandas as pd
 from config import CONFIG_1D as CONFIG
-
-# INTERVAL = "1d"
-# DATA_FOLDER = "1d_gpw_data_test"
-# PERIOD = 365
-# XTB_TICKERS_FILE = "tickers_xtb_WA_test.txt"
-# FAILED_TICKERS_FILE = "failed_tickers.txt"
-# DOWN_RAPORT = "download_report.txt"
-# LAST_UPDATE_FILE = "last_update.txt"
     
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / CONFIG.data_folder
@@ -87,7 +77,7 @@ def main():
             t = yf.Ticker(ticker)
 
             # Próba pobrania 1 roku
-            df = t.history(start=start_date, interval="1d")
+            df = t.history(start=start_date, interval=CONFIG.interval)
 
             if not df.empty:
                 filename = ticker.replace(".", "_") + ".parquet"
@@ -111,7 +101,7 @@ def main():
                 continue
 
             # Jeśli pusto → sprawdzamy MAX
-            df_max = t.history(period="max", interval=CONFIG.interval)
+            df_max = t.history(period="max", interval="1d")
 
             if df_max.empty:
                 results["delisted_or_invalid"].append(ticker)

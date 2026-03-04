@@ -1,28 +1,20 @@
 import yfinance as yf
-import os
 from datetime import datetime, timedelta
 from pathlib import Path
 from tqdm import tqdm
 import pandas as pd
-
-INTERVAL = "5min"
-DATA_FOLDER = "5min_gpw_data"
-PERIOD = 5
-XTB_TICKERS_FILE = "5min_tickers_WA.txt"
-FAILED_TICKERS_FILE = "failed_tickers.txt"
-DOWN_RAPORT = "download_report.txt"
-LAST_UPDATE_FILE = "last_update.txt"
+from config import CONFIG_5M as CONFIG
     
 BASE_DIR = Path(__file__).resolve().parent
-DATA_DIR = BASE_DIR / DATA_FOLDER
+DATA_DIR = BASE_DIR / CONFIG.data_folder
 DATA_DIR.mkdir(exist_ok=True)
 
-log_file = BASE_DIR / FAILED_TICKERS_FILE
+log_file = BASE_DIR / CONFIG.failed_tickers_file
 log_file.write_text("")
-download_report = BASE_DIR / DOWN_RAPORT
-last_update_path = BASE_DIR / LAST_UPDATE_FILE
+download_report = BASE_DIR / CONFIG.download_report_file
+last_update_path = BASE_DIR / CONFIG.last_update_file
 
-tickers_file = BASE_DIR / XTB_TICKERS_FILE
+tickers_file = BASE_DIR / CONFIG.tickers_file
 
 def print_raport(results):
     print("\n========== RAPORT ==========")
@@ -76,7 +68,7 @@ def main():
         "error": []
     }
 
-    start_date = datetime.today() - timedelta(days=PERIOD)
+    start_date = datetime.today() - timedelta(days=CONFIG.period_days)
 
     for ticker in tqdm(tickers, desc="Pobieranie danych", unit="ticker"):
         with open(log_file, "a") as f:

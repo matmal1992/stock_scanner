@@ -1,47 +1,103 @@
 import yfinance as yf
-import os
 from datetime import datetime, timedelta
 from pathlib import Path
+import tkinter as tk
+from tqdm import tqdm
+import pandas as pd
+from config import CONFIG_15M as CONFIG
+    
+BASE_DIR = Path(__file__).resolve().parent
+DATA_DIR = BASE_DIR / CONFIG.data_folder
+DATA_DIR.mkdir(exist_ok=True)
+
+log_file = BASE_DIR / CONFIG.failed_tickers_file
+log_file.write_text("")
+download_report = BASE_DIR / CONFIG.download_report_file
+last_update_path = BASE_DIR / CONFIG.last_update_file
+
+tickers_file = BASE_DIR / CONFIG.tickers_file
+
+def print_raport(results):
+    print("\n========== RAPORT ==========")
+    print("Zaktualizowano:", len(results["updated"]))
+    print("Pominięto (aktualne):", len(results["skipped"]))
+    print("Krótsza historia:", len(results["short_history"]))
+    print("Delisted / niepoprawne:", len(results["delisted_or_invalid"]))
+    print("Błędy techniczne:", len(results["error"]))
+    
+# def check_last_update():
+#     today_str = datetime.now().strftime("%Y-%m-%d")
+#     if last_update_path.exists():
+#         with open(last_update_path, "r") as f:
+#             saved_datetime = f.read().strip()
+            
+#         if saved_datetime:
+#             saved_date = saved_datetime.split(" ")[0]
+            
+#             if saved_date == today_str:
+#                 print("\nDane były już dziś aktualizowane — pomijam pobieranie.\n")
+#                 return True
+#     return False
+
+def save_raport_to_file(results):
+    with open(download_report, "w") as f:
+        for key, value in results.items():
+            f.write(f"{key} ({len(value)}):\n")
+            for t in value:
+                f.write(f"  {t}\n")
+            f.write("\n")
+    pass
 
 def main():
-    INTERVAL = "15m"
-    DATA_FOLDER = "15min_gpw_data"
-    PERIOD = "60d"
-
-    BASE_DIR = Path(__file__).resolve().parent
-    tickers_file = BASE_DIR / "15min_tickers_WA.txt"
-
+    # if check_last_update():
+    #     return
+    
     if not tickers_file.exists():
-        print("Brak pliku 15min_tickers_WA.txt")
+        print("Brak pliku {XTB_TICKERS_FILE}")
         return
 
     with open(tickers_file, "r") as f:
         tickers = [t.strip() for t in f.read().split(",") if t.strip()]
 
     results = {
-        "ok": [],
+        "updated": [],
+        "skipped": [],
         "short_history": [],
         "delisted_or_invalid": [],
         "error": []
     }
 
-    # start_date = datetime.today() - timedelta(PERIOD)
+    start_date = datetime.today() - timedelta(days=CONFIG.period_days)
 
-    for ticker in tickers:
-        print(f"\nSprawdzanie {ticker}...")
+    for ticker in tqdm(tickers, desc="Pobieranie danych", unit="ticker"):
+        with open(log_file, "a") as f:
+            f.write(f"{ticker} - nSprawdzanie {ticker}...")
 
         try:
             t = yf.Ticker(ticker)
 
-            # próba pobrania danych z poprzednich 60 dni
-            df = t.history(period=PERIOD, interval=INTERVAL)
+            # Próba pobrania 60 dni
+            df = t.history(start=start_date, interval=CONFIG.interval)
 
             if not df.empty:
                 filename = ticker.replace(".", "_") + ".parquet"
-                filepath = os.path.join(DATA_FOLDER, filename)
+                filepath = DATA_DIR / filename
+
+                if filepath.exists():
+                    try:
+                        existing_df = pd.read_parquet(filepath)
+                        last_date = existing_df.index.max().date()
+                        today = datetime.today().date()
+                        if last_date >= today - timedelta(days=1):
+                            results["skipped"].append(ticker)
+                            continue
+                    except:
+                        pass
+
                 df.to_parquet(filepath)
-                results["ok"].append(ticker)
-                print("OK - zapisano dane")
+                results["updated"].append(ticker)
+                with open(log_file, "a") as f:
+                    f.write(f"{ticker} - updated\n")
                 continue
 
             # Jeśli pusto → sprawdzamy MAX
@@ -49,29 +105,26 @@ def main():
 
             if df_max.empty:
                 results["delisted_or_invalid"].append(ticker)
-                print("Brak danych w ogóle - delisted / nieobsługiwany / błędny ticker")
+                with open(log_file, "a") as f:
+                    f.write(f"{ticker} - delisted_or_invalid\n")
             else:
                 results["short_history"].append(ticker)
-                print("Spółka notowana krócej niż 1 rok")
+                with open(log_file, "a") as f:
+                    f.write(f"{ticker} - short_history\n")    
 
         except Exception as e:
             results["error"].append(ticker)
-            print("Błąd techniczny:", e)
+            # print("BŁĄD:", ticker, e)
+            with open(log_file, "a") as f:
+                f.write(f"{ticker} - Błąd techniczny: {e}\n")    
 
-    print("\n========== RAPORT ==========")
-    print("Poprawnie pobrane:", len(results["ok"]))
-    print("Krótsza historia:", len(results["short_history"]))
-    print("Delisted / niepoprawne:", len(results["delisted_or_invalid"]))
-    print("Błędy techniczne:", len(results["error"]))
+    print_raport(results)
+    save_raport_to_file(results)
+    
+    current_datetime_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # Zapis raportu
-    with open("download_report.txt", "w") as f:
-        for key, value in results.items():
-            f.write(f"{key} ({len(value)}):\n")
-            for t in value:
-                f.write(f"  {t}\n")
-            f.write("\n")
-    pass
+    with open(last_update_path, "w") as f:
+        f.write(current_datetime_str)
 
 if __name__ == "__main__":
     main()
