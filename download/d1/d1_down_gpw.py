@@ -9,6 +9,7 @@ import pandas as pd
 
 INTERVAL = "1d"
 DATA_FOLDER = "1d_gpw_data_test"
+PERIOD = 365
 XTB_TICKERS_FILE = "tickers_xtb_WA_test.txt"
 FAILED_TICKERS_FILE = "failed_tickers.txt"
 DOWN_RAPORT = "download_report.txt"
@@ -75,7 +76,7 @@ def main():
         "error": []
     }
 
-    start_date = datetime.today() - timedelta(days=365)
+    start_date = datetime.today() - timedelta(days=PERIOD)
 
     for ticker in tqdm(tickers, desc="Pobieranie danych", unit="ticker"):
         with open(log_file, "a") as f:
