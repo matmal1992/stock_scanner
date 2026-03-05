@@ -10,15 +10,13 @@ class DownloadConfig:
     period_days: int
     data_folder: str
     tickers_file: str
-    failed_tickers_file: str
     last_update_file: str
 
 CONFIG_1D = DownloadConfig(
     interval="1d",
     period_days=365,
-    data_folder="1d_gpw_data_test",
-    tickers_file="tickers_xtb_WA_test.txt",
-    failed_tickers_file="failed_tickers_1d.txt",
+    data_folder="d1_parquet_gpw_test",
+    tickers_file="first_tier_list_test.txt",
     last_update_file="last_update_1d.txt"
 )
 
@@ -27,7 +25,6 @@ CONFIG_15M = DownloadConfig(
     period_days=60,
     data_folder="15m_gpw_data",
     tickers_file="tickers_to_analyze.txt",
-    failed_tickers_file="failed_tickers_15m.txt",
     last_update_file="last_update_15m.txt"
 )
 
@@ -36,7 +33,6 @@ CONFIG_5M = DownloadConfig(
     period_days=1,
     data_folder="5m_gpw_data",
     tickers_file="tickers_to_analyze.txt",
-    failed_tickers_file="failed_tickers_5m.txt",
     last_update_file="last_update_5m.txt"
 )
 

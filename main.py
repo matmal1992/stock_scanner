@@ -1,25 +1,24 @@
-from download.d1 import d1_down_gpw
-from download.d1 import d1_update_gpw
-from analysis import first_tier_filter
-from download import min15_down
-from download import min15_update
-from analysis import second_tier_filter
-import tkinter as tk
-from tkinter import messagebox
-import os
+from download import d1_gpw
+# from analysis import first_tier_filter
+# from download import min15_down
+# from download import min15_update
+# from analysis import second_tier_filter
+# import tkinter as tk
+# from tkinter import messagebox
+# import os
 from report.report_builder import create_empty_report
 
-def confirm_continue(messege):
-    root = tk.Tk()
-    root.withdraw()  # ukrywa główne okno
-    answer = messagebox.askyesno("Potwierdzenie", messege)
-    root.destroy()
-    return answer
+# def confirm_continue(messege):
+#     root = tk.Tk()
+#     root.withdraw()  # ukrywa główne okno
+#     answer = messagebox.askyesno("Potwierdzenie", messege)
+#     root.destroy()
+#     return answer
     
 def main():
     report_path = create_empty_report()
     print("===== ETAP 1: DOWNLOAD =====")
-    d1_down_gpw.main()
+    d1_gpw.main()
 
     # # confirm_continue("Analyze first tier data")
     # print("\n===== ETAP 3: ANALIZA =====")
