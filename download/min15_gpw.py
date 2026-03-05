@@ -52,7 +52,7 @@ def main():
     #     return
     
     if not tickers_file.exists():
-        print("Brak pliku {XTB_TICKERS_FILE}")
+        print("Brak pliku {tickers_file}")
         return
 
     with open(tickers_file, "r") as f:
