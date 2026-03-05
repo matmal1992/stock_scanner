@@ -1,12 +1,10 @@
 import yfinance as yf
 from datetime import datetime, timedelta
-from pathlib import Path
-import tkinter as tk
 from tqdm import tqdm
 import pandas as pd
 from config import CONFIG_15M as CONFIG
-from config import report_path, BASE_DIR
-from report.report_updater import update_XT_down_section
+from config import BASE_DIR
+from report.report_updater import update_down_section
 
 data_dir = BASE_DIR / "data" / "parquet" / CONFIG.data_folder
 data_dir.mkdir(exist_ok=True)
@@ -86,8 +84,7 @@ def main():
             results["error"].append(ticker)
             print("BŁĄD:", ticker, e)
 
-    # update_2T_down_section(results)
-    update_XT_down_section(results, "<!-- T2_DOWNLOAD -->")
+    update_down_section(results, "<!-- T2_DOWNLOAD -->", "second")
 
     current_datetime_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 

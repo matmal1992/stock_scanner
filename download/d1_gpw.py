@@ -3,9 +3,8 @@ from datetime import datetime, timedelta
 from tqdm import tqdm
 import pandas as pd
 from config import CONFIG_1D as CONFIG
-from config import report_path
 from config import BASE_DIR
-from report.report_updater import update_XT_down_section
+from report.report_updater import update_down_section
 
 data_dir = BASE_DIR / "data" / "parquet" / CONFIG.data_folder
 data_dir.mkdir(exist_ok=True)
@@ -85,7 +84,7 @@ def main():
         except Exception as e:
             results["error"].append(ticker)
 
-    update_XT_down_section(results, "<!-- T1_DOWNLOAD -->")
+    update_down_section(results, "<!-- T1_DOWNLOAD -->", "first")
     
     current_datetime_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
