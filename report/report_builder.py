@@ -94,7 +94,9 @@ function openTab(tabId) {{
 </div>
 
 <div id="d1download" class="content active">
-<div class="section-box" id="d1download-content"> 1st tier download report here! </div>
+<div class="section-box" id="d1download-content">
+<!-- T1_DOWNLOAD -->
+</div>
 </div>
 
 <div id="d1analysis" class="content">
@@ -102,7 +104,9 @@ function openTab(tabId) {{
 </div>
 
 <div id="m15download" class="content">
-<div class="section-box" id="m15download-content"> 2nd tier download report here! </div>
+<div class="section-box" id="m15download-content">
+<!-- T2_DOWNLOAD -->
+</div>
 </div>
 
 <div id="m15analysis" class="content">
@@ -110,7 +114,9 @@ function openTab(tabId) {{
 </div>
 
 <div id="m5download" class="content">
-<div class="section-box" id="m5download-content"></div> 3rd tier download report here! </div>
+<div class="section-box" id="m5download-content">
+<!-- T3_DOWNLOAD -->
+</div>
 </div>
 
 <div id="m5analysis" class="content">

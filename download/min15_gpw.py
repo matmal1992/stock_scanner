@@ -31,7 +31,7 @@ def update_second_tier_section(results):
     with open(report_path, "r", encoding="utf-8") as f:
         html = f.read()
 
-    content_html = "<h2>Download 1D Results</h2>"
+    content_html = "<h2>Download 2nd tier data results</h2>"
 
     for key, tickers in results.items():
         content_html += f"<h3>{key} ({len(tickers)})</h3><ul>"
@@ -40,7 +40,7 @@ def update_second_tier_section(results):
         content_html += "</ul>"
 
     html = html.replace(
-        "2nd tier download report here!",
+        "<!-- T2_DOWNLOAD -->",
         content_html
     )
 
