@@ -5,6 +5,7 @@ from tqdm import tqdm
 import pandas as pd
 from config import CONFIG_5M as CONFIG
 from config import BASE_DIR, report_path
+from report.report_updater import update_XT_down_section
     
 data_dir = BASE_DIR / "data" / "parquet" / CONFIG.data_folder
 data_dir.mkdir(exist_ok=True)
@@ -25,27 +26,6 @@ tickers_file = BASE_DIR / "data" / "txt" / CONFIG.tickers_file
 #                 print("\nDane były już dziś aktualizowane — pomijam pobieranie.\n")
 #                 return True
 #     return False
-
-def update_third_tier_section(results):
-
-    with open(report_path, "r", encoding="utf-8") as f:
-        html = f.read()
-
-    content_html = "<h2>Download 3rd tier data results</h2>"
-
-    for key, tickers in results.items():
-        content_html += f"<h3>{key} ({len(tickers)})</h3><ul>"
-        for t in tickers:
-            content_html += f"<li>{t}</li>"
-        content_html += "</ul>"
-
-    html = html.replace(
-        "<!-- T3_DOWNLOAD -->",
-        content_html
-    )
-
-    with open(report_path, "w", encoding="utf-8") as f:
-        f.write(html)
 
 def main():
     # if check_last_update():
@@ -106,7 +86,8 @@ def main():
             results["error"].append(ticker)
             # print("BŁĄD:", ticker, e)
 
-    update_third_tier_section(results)
+    # update_3T_down_section(results)
+    update_XT_down_section(results, "<!-- T3_DOWNLOAD -->")
     current_datetime_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     with open(last_update_path, "w") as f:

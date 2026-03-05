@@ -5,6 +5,7 @@ import pandas as pd
 from config import CONFIG_1D as CONFIG
 from config import report_path
 from config import BASE_DIR
+from report.report_updater import update_XT_down_section
 
 data_dir = BASE_DIR / "data" / "parquet" / CONFIG.data_folder
 data_dir.mkdir(exist_ok=True)
@@ -24,27 +25,6 @@ def check_last_update():
                 print("\nDane były już dziś aktualizowane — pomijam pobieranie.\n")
                 return True
     return False
-
-def update_d1_section(results):
-
-    with open(report_path, "r", encoding="utf-8") as f:
-        html = f.read()
-
-    content_html = "<h2>Download 1st tier data results</h2>"
-
-    for key, tickers in results.items():
-        content_html += f"<h3>{key} ({len(tickers)})</h3><ul>"
-        for t in tickers:
-            content_html += f"<li>{t}</li>"
-        content_html += "</ul>"
-
-    html = html.replace(
-        "<!-- T1_DOWNLOAD -->",
-        content_html
-    )
-
-    with open(report_path, "w", encoding="utf-8") as f:
-        f.write(html)
 
 def main():
 
@@ -105,7 +85,7 @@ def main():
         except Exception as e:
             results["error"].append(ticker)
 
-    update_d1_section(results)
+    update_XT_down_section(results, "<!-- T1_DOWNLOAD -->")
     
     current_datetime_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
