@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
-report_path = BASE_DIR / "report.txt"
+report_path = BASE_DIR / "report.html"
 
 @dataclass
 class DownloadConfig:
@@ -10,37 +10,44 @@ class DownloadConfig:
     period_days: int
     data_folder: str
     tickers_file: str
-    failed_tickers_file: str
     last_update_file: str
+    
+    @property
+    def data_dir(self):
+        return BASE_DIR / "data" / "parquet" / self.data_folder
+
+    @property
+    def tickers_path(self):
+        return BASE_DIR / "data" / "txt" / self.tickers_file
+
+    @property
+    def last_update_path(self):
+        return BASE_DIR / "data" / "txt" / self.last_update_file
+    
 
 CONFIG_1D = DownloadConfig(
     interval="1d",
     period_days=365,
-    data_folder="1d_gpw_data_test",
-    tickers_file="tickers_xtb_WA_test.txt",
-    failed_tickers_file="failed_tickers_1d.txt",
-    last_update_file="last_update_1d.txt"
+    data_folder="d1_parquet_gpw",
+    tickers_file="first_tier_list_test.txt",
+    last_update_file="last_update_d1.txt"
 )
 
 CONFIG_15M = DownloadConfig(
     interval="15m",
     period_days=60,
-    data_folder="15m_gpw_data",
-    tickers_file="tickers_to_analyze.txt",
-    failed_tickers_file="failed_tickers_15m.txt",
-    last_update_file="last_update_15m.txt"
+    data_folder="min15_parquet_gpw",
+    tickers_file="second_tier_list.txt",
+    last_update_file="last_update_min15.txt"
 )
 
 CONFIG_5M = DownloadConfig(
     interval="5m",
     period_days=1,
-    data_folder="5m_gpw_data",
-    tickers_file="tickers_to_analyze.txt",
-    failed_tickers_file="failed_tickers_5m.txt",
-    last_update_file="last_update_5m.txt"
+    data_folder="min5_parquet_gpw",
+    tickers_file="third_tier_list.txt",
+    last_update_file="last_update_min5.txt"
 )
-
-
 
 # later to implement
 MIN_TURNOVER = 1_000_000  # PLN

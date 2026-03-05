@@ -1,40 +1,37 @@
-from download.d1 import d1_down_gpw
-from download.d1 import d1_update_gpw
-from analysis import first_tier_filter
-from download.min15 import min15_down
-from download.min15 import min15_update
-from analysis import second_tier_filter
-import tkinter as tk
-from tkinter import messagebox
-import os
-from config import report_path
+from download import d1_gpw, min15_gpw, min5_gpw
+# from analysis import first_tier_filter
+# from analysis import second_tier_filter
+# import tkinter as tk
+# from tkinter import messagebox
+# import os
+from report.report_builder import create_empty_report
 
-def confirm_continue(messege):
-    root = tk.Tk()
-    root.withdraw()  # ukrywa główne okno
-    answer = messagebox.askyesno("Potwierdzenie", messege)
-    root.destroy()
-    return answer
+# def confirm_continue(messege):
+#     root = tk.Tk()
+#     root.withdraw()  # ukrywa główne okno
+#     answer = messagebox.askyesno("Potwierdzenie", messege)
+#     root.destroy()
+#     return answer
     
 def main():
-    # confirm_continue("Download first tier data")
-    print("===== ETAP 1: DOWNLOAD =====")
-    d1_down_gpw.main()
+    report_path = create_empty_report()
+    print("===== STAGE 1: DOWNLOAD first tier tickers =====")
+    d1_gpw.main()
 
-    # # confirm_continue("Analyze first tier data")
     # print("\n===== ETAP 3: ANALIZA =====")
     # # first_tier_filter.main()
 
-    # # confirm_continue("Download second tier data")
-    # print("\n===== ETAP 4: DOWNLOAD 15min tickers =====")
-    # # min15_down.main()
+    print("\n===== STAGE 3: DOWNLOAD second tier tickers =====")
+    min15_gpw.main()
 
-    # # confirm_continue("Analyze second tier data")
     # print("\n===== ETAP 6: ANALIZA =====")
     # # second_tier_filter.main()
 
-    print("\n===== GOTOWE =====")
-    os.startfile(report_path)
+    print("\n===== STAGE 5: DOWNLOAD third tier tickers =====")
+    min5_gpw.main()
+
+    print("\n===== DONE =====")
+    # os.startfile(report_path)
 
 if __name__ == "__main__":
     main()
