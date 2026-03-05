@@ -15,25 +15,25 @@ class DownloadConfig:
 CONFIG_1D = DownloadConfig(
     interval="1d",
     period_days=365,
-    data_folder="d1_parquet_gpw_test",
+    data_folder="d1_parquet_gpw",
     tickers_file="first_tier_list_test.txt",
-    last_update_file="last_update_1d.txt"
+    last_update_file="last_update_d1.txt"
 )
 
 CONFIG_15M = DownloadConfig(
     interval="15m",
     period_days=60,
-    data_folder="15m_gpw_data",
-    tickers_file="tickers_to_analyze.txt",
-    last_update_file="last_update_15m.txt"
+    data_folder="min15_parquet_gpw",
+    tickers_file="second_tier_list.txt",
+    last_update_file="last_update_min15.txt"
 )
 
 CONFIG_5M = DownloadConfig(
     interval="5m",
     period_days=1,
-    data_folder="5m_gpw_data",
-    tickers_file="tickers_to_analyze.txt",
-    last_update_file="last_update_5m.txt"
+    data_folder="min5_parquet_gpw",
+    tickers_file="third_tier_list.txt",
+    last_update_file="last_update_min5.txt"
 )
 
 

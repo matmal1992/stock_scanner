@@ -1,7 +1,5 @@
-from download import d1_gpw
+from download import d1_gpw, min15_gpw
 # from analysis import first_tier_filter
-# from download import min15_down
-# from download import min15_update
 # from analysis import second_tier_filter
 # import tkinter as tk
 # from tkinter import messagebox
@@ -17,16 +15,14 @@ from report.report_builder import create_empty_report
     
 def main():
     report_path = create_empty_report()
-    print("===== ETAP 1: DOWNLOAD =====")
+    print("===== ETAP 1: DOWNLOAD first tier tickers =====")
     d1_gpw.main()
 
-    # # confirm_continue("Analyze first tier data")
     # print("\n===== ETAP 3: ANALIZA =====")
     # # first_tier_filter.main()
 
-    # # confirm_continue("Download second tier data")
-    # print("\n===== ETAP 4: DOWNLOAD 15min tickers =====")
-    # # min15_down.main()
+    print("\n===== ETAP 3: DOWNLOAD second tier tickers =====")
+    min15_gpw.main()
 
     # # confirm_continue("Analyze second tier data")
     # print("\n===== ETAP 6: ANALIZA =====")

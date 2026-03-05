@@ -1,15 +1,13 @@
 import yfinance as yf
 from datetime import datetime, timedelta
-from pathlib import Path
 from tqdm import tqdm
 import pandas as pd
 from config import CONFIG_1D as CONFIG
 from config import report_path
 from config import BASE_DIR
 
-DATA_DIR = BASE_DIR / CONFIG.data_folder
-DATA_DIR.mkdir(exist_ok=True)
-download_report = BASE_DIR / report_path
+data_dir = BASE_DIR / "data" / "parquet" / CONFIG.data_folder
+data_dir.mkdir(exist_ok=True)
 last_update_path = BASE_DIR / "data" / "txt" / CONFIG.last_update_file
 tickers_file = BASE_DIR / "data" / "txt" / CONFIG.tickers_file
     
@@ -41,7 +39,7 @@ def update_d1_section(results):
         content_html += "</ul>"
 
     html = html.replace(
-        "<!-- TU TRAFI RAPORT 1D -->",
+        "1st tier download report here!",
         content_html
     )
 
@@ -79,7 +77,7 @@ def main():
 
             if not df.empty:
                 filename = ticker.replace(".", "_") + ".parquet"
-                filepath = DATA_DIR / filename
+                filepath = data_dir / filename
 
                 if filepath.exists():
                     try:

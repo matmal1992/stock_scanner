@@ -94,17 +94,15 @@ function openTab(tabId) {{
 </div>
 
 <div id="d1download" class="content active">
-<div class="section-box" id="d1download-content">
-<!-- TU TRAFI RAPORT 1D -->
-</div>
+<div class="section-box" id="d1download-content"> 1st tier download report here! </div>
 </div>
 
 <div id="d1analysis" class="content">
 <div class="section-box" id="d1analysis-content"></div>
 </div>
 
-<div id="m15download" class="content">
-<div class="section-box" id="m15download-content"></div>
+<div id="m15download" class="content active">
+<div class="section-box" id="m15download-content"> 2nd tier download report here! </div>
 </div>
 
 <div id="m15analysis" class="content">
