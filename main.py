@@ -7,7 +7,7 @@ from analysis import second_tier_filter
 import tkinter as tk
 from tkinter import messagebox
 import os
-from config import report_path
+from report.report_builder import create_empty_report
 
 def confirm_continue(messege):
     root = tk.Tk()
@@ -17,7 +17,7 @@ def confirm_continue(messege):
     return answer
     
 def main():
-    # confirm_continue("Download first tier data")
+    report_path = create_empty_report()
     print("===== ETAP 1: DOWNLOAD =====")
     d1_down_gpw.main()
 
@@ -34,7 +34,7 @@ def main():
     # # second_tier_filter.main()
 
     print("\n===== GOTOWE =====")
-    os.startfile(report_path)
+    # os.startfile(report_path)
 
 if __name__ == "__main__":
     main()

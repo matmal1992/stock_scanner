@@ -18,13 +18,13 @@ last_update_path = BASE_DIR / CONFIG.last_update_file
 
 tickers_file = BASE_DIR / CONFIG.tickers_file
 
-def print_raport(results):
-    print("\n========== RAPORT ==========")
-    print("Zaktualizowano:", len(results["updated"]))
-    print("Pominięto (aktualne):", len(results["skipped"]))
-    print("Krótsza historia:", len(results["short_history"]))
-    print("Delisted / niepoprawne:", len(results["delisted_or_invalid"]))
-    print("Błędy techniczne:", len(results["error"]))
+# def print_raport(results):
+#     print("\n========== RAPORT ==========")
+#     print("Zaktualizowano:", len(results["updated"]))
+#     print("Pominięto (aktualne):", len(results["skipped"]))
+#     print("Krótsza historia:", len(results["short_history"]))
+#     print("Delisted / niepoprawne:", len(results["delisted_or_invalid"]))
+#     print("Błędy techniczne:", len(results["error"]))
     
 def check_last_update():
     today_str = datetime.now().strftime("%Y-%m-%d")
@@ -49,24 +49,46 @@ def check_last_update():
 #             f.write("\n")
 #     pass
 
-def save_raport_to_file(results):
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+# def save_raport_to_file(results):
+#     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    with open(download_report, "w", encoding="utf-8") as f:
-        f.write("=====================================\n")
-        f.write("          RAPORT POBIERANIA\n")
-        f.write("=====================================\n")
-        f.write(f"Data wygenerowania: {now}\n\n")
+#     with open(download_report, "w", encoding="utf-8") as f:
+#         f.write("=====================================\n")
+#         f.write("          RAPORT POBIERANIA\n")
+#         f.write("=====================================\n")
+#         f.write(f"Data wygenerowania: {now}\n\n")
 
-        for key, tickers in results.items():
-            f.write(f"--- {key.upper()} ({len(tickers)}) ---\n")
-            for t in tickers:
-                f.write(f"{t}\n")
-            f.write("\n")
+#         for key, tickers in results.items():
+#             f.write(f"--- {key.upper()} ({len(tickers)}) ---\n")
+#             for t in tickers:
+#                 f.write(f"{t}\n")
+#             f.write("\n")
 
-    print(f"\nRaport zapisany do: {download_report}")
+#     print(f"\nRaport zapisany do: {download_report}")
+
+def update_d1_section(results):
+
+    with open(report_path, "r", encoding="utf-8") as f:
+        html = f.read()
+
+    content_html = "<h2>Download 1D Results</h2>"
+
+    for key, tickers in results.items():
+        content_html += f"<h3>{key} ({len(tickers)})</h3><ul>"
+        for t in tickers:
+            content_html += f"<li>{t}</li>"
+        content_html += "</ul>"
+
+    html = html.replace(
+        "<!-- TU TRAFI RAPORT 1D -->",
+        content_html
+    )
+
+    with open(report_path, "w", encoding="utf-8") as f:
+        f.write(html)
 
 def main():
+    
     if check_last_update():
         return
     
@@ -136,8 +158,9 @@ def main():
             with open(log_file, "a") as f:
                 f.write(f"{ticker} - Błąd techniczny: {e}\n")    
 
-    print_raport(results)
-    save_raport_to_file(results)
+    # print_raport(results)
+    # save_raport_to_file(results)
+    update_d1_section(results)
     
     current_datetime_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 

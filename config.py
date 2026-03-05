@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
-report_path = BASE_DIR / "report.txt"
+report_path = BASE_DIR / "report.html"
 
 @dataclass
 class DownloadConfig:
