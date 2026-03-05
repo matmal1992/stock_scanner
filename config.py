@@ -11,6 +11,19 @@ class DownloadConfig:
     data_folder: str
     tickers_file: str
     last_update_file: str
+    
+    @property
+    def data_dir(self):
+        return BASE_DIR / "data" / "parquet" / self.data_folder
+
+    @property
+    def tickers_path(self):
+        return BASE_DIR / "data" / "txt" / self.tickers_file
+
+    @property
+    def last_update_path(self):
+        return BASE_DIR / "data" / "txt" / self.last_update_file
+    
 
 CONFIG_1D = DownloadConfig(
     interval="1d",
@@ -35,8 +48,6 @@ CONFIG_5M = DownloadConfig(
     tickers_file="third_tier_list.txt",
     last_update_file="last_update_min5.txt"
 )
-
-
 
 # later to implement
 MIN_TURNOVER = 1_000_000  # PLN

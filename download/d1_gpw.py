@@ -3,18 +3,12 @@ from datetime import datetime, timedelta
 from tqdm import tqdm
 import pandas as pd
 from config import CONFIG_1D as CONFIG
-from config import BASE_DIR
 from report.report_updater import update_down_section
-
-data_dir = BASE_DIR / "data" / "parquet" / CONFIG.data_folder
-data_dir.mkdir(exist_ok=True)
-last_update_path = BASE_DIR / "data" / "txt" / CONFIG.last_update_file
-tickers_file = BASE_DIR / "data" / "txt" / CONFIG.tickers_file
     
 def check_last_update():
     today_str = datetime.now().strftime("%Y-%m-%d")
-    if last_update_path.exists():
-        with open(last_update_path, "r") as f:
+    if CONFIG.last_update_path.exists():
+        with open(CONFIG.last_update_path, "r") as f:
             saved_datetime = f.read().strip()
             
         if saved_datetime:
@@ -30,11 +24,11 @@ def main():
     if check_last_update():
         return
     
-    if not tickers_file.exists():
-        print("Brak pliku {tickers_file}")
+    if not CONFIG.tickers_path.exists():
+        print("Brak pliku {CONFIG.tickers_path}")
         return
 
-    with open(tickers_file, "r") as f:
+    with open(CONFIG.tickers_path, "r") as f:
         tickers = [t.strip() for t in f.read().split(",") if t.strip()]
 
     results = {
@@ -56,7 +50,7 @@ def main():
 
             if not df.empty:
                 filename = ticker.replace(".", "_") + ".parquet"
-                filepath = data_dir / filename
+                filepath = CONFIG.data_dir / filename
 
                 if filepath.exists():
                     try:
@@ -88,7 +82,7 @@ def main():
     
     current_datetime_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    with open(last_update_path, "w") as f:
+    with open(CONFIG.last_update_path, "w") as f:
         f.write(current_datetime_str)
 
 if __name__ == "__main__":
