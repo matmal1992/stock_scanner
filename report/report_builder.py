@@ -100,7 +100,9 @@ function openTab(tabId) {{
 </div>
 
 <div id="d1analysis" class="content">
-<div class="section-box" id="d1analysis-content"></div>
+<div class="section-box" id="d1analysis-content">
+<!-- T1_FILTER -->
+</div>
 </div>
 
 <div id="m15download" class="content">

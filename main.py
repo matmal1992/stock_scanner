@@ -1,5 +1,5 @@
 from download import d1_gpw, min15_gpw, min5_gpw
-# from analysis import first_tier_filter
+from analysis import first_tier_filter
 # from analysis import second_tier_filter
 # import tkinter as tk
 # from tkinter import messagebox
@@ -18,8 +18,8 @@ def main():
     print("===== STAGE 1: DOWNLOAD first tier tickers =====")
     d1_gpw.main()
 
-    # print("\n===== ETAP 3: ANALIZA =====")
-    # # first_tier_filter.main()
+    print("\n===== ETAP 2: ANALIZA first tier tickers =====")
+    first_tier_filter.main()
 
     print("\n===== STAGE 3: DOWNLOAD second tier tickers =====")
     min15_gpw.main()

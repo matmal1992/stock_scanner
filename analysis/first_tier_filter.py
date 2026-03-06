@@ -1,10 +1,7 @@
 import pandas as pd
 import numpy as np
-from pathlib import Path
-import tkinter as tk
-from tkinter import messagebox
-
-DATA_DIR = Path("1d/1d_gpw_data")
+from config import CONFIG_1D as CONFIG
+from report.report_updater import update_filter_section
 
 def r2(series):
     y = series.values
@@ -64,7 +61,7 @@ def scan_directory():
 
     candidates = []
 
-    for path in DATA_DIR.glob("*.parquet"):
+    for path in CONFIG.data_dir.glob("*.parquet"):
 
         ticker = path.stem  # nazwa pliku bez .parquet
 
@@ -92,6 +89,7 @@ def scan_directory():
 
 def main():
     results = scan_directory()
+    update_filter_section(results, "<!-- T1_FILTER -->", "first")
 
     print("\n=== SPEŁNIAJĄCE WARUNKI ===")
     print("-" * 50)
