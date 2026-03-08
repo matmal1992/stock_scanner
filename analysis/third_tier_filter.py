@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from config import CONFIG_15M as CONFIG
 from report.report_updater import update_3T_filter_section
+from config_filters import T3_FILTER
 
 def r2(series):
     y = series.values
@@ -94,12 +95,12 @@ def scan_directory():
 
             # Final 5m filter
             if (
-                metrics["compression_ratio"] < 0.7
-                and metrics["dist_from_high"] > -0.01
+                metrics["compression_ratio"] < T3_FILTER.max_compression
+                and metrics["dist_from_high"] > T3_FILTER.min_dist_from_high
                 and metrics["breakout"] is True
-                and metrics["vol_ratio"] > 1.4
-                and metrics["trend_r2"] > 0.3
-                and metrics["atr_sanity"] is True
+                and metrics["vol_ratio"] > T3_FILTER.min_vol_ratio
+                and metrics["trend_r2"] > T3_FILTER.min_trend_r2
+                and metrics["atr_sanity"] is T3_FILTER.atr_sanity_required
             ):
                 score = calculate_score(metrics)
                 metrics["score"] = score
