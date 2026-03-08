@@ -101,13 +101,26 @@ def scan_directory():
                 and metrics["trend_r2"] > 0.3
                 and metrics["atr_sanity"] is True
             ):
+                score = calculate_score(metrics)
+                metrics["score"] = score
                 candidates.append((ticker, metrics))
 
         except Exception as e:
             print(f"Błąd przy {ticker}: {e}")
 
+    candidates.sort(key=lambda x: x[1]["score"], reverse=True)
     return candidates
 
+def calculate_score(m):
+
+    score = (
+        0.25 * (1 - m["compression_ratio"]) +   # im mniejsza kompresja tym lepiej
+        0.25 * min(m["vol_ratio"] / 3, 1) +     # normalizacja volume expansion
+        0.25 * m["trend_r2"] +                  # siła trendu
+        0.25 * (1 + m["dist_from_high"])        # bliskość high
+    )
+
+    return score
 
 def main():
 

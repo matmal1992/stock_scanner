@@ -126,21 +126,22 @@ def update_3T_filter_section(results, location, tier):
     content_html = f"""
 <h2>Filter {tier} - breakout candidates</h2>
 
-<table style="border-collapse:collapse; width:100%;">
-<tr style="background:#eee;">
+<th>Rank</th>
 <th>Ticker</th>
+<th>Score</th>
 <th>Compression</th>
 <th>Dist From High</th>
 <th>Volume Ratio</th>
 <th>R² Trend</th>
-<th>ATR(14)</th>
-</tr>
+<th>ATR</th>
 """
 
-    for ticker, m in results:
+    for i, (ticker, m) in enumerate(results, start=1):
         content_html += f"""
 <tr>
+<td>{i}</td>
 <td>{ticker}</td>
+<td>{m['score']:.2f}</td>
 <td>{m['compression_ratio']:.2f}</td>
 <td>{m['dist_from_high']:.2%}</td>
 <td>{m['vol_ratio']:.2f}</td>
