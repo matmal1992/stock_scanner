@@ -1,9 +1,8 @@
 import pandas as pd
 import numpy as np
 from pathlib import Path
-
-DATA_DIR = Path("15min/15min_gpw_data")
-
+from report.report_updater import update_2T_filter_section
+from config import CONFIG_15M as CONFIG
 
 def r2(series):
     y = series.values
@@ -61,7 +60,7 @@ def scan_directory():
 
     candidates = []
 
-    for path in DATA_DIR.glob("*.parquet"):
+    for path in CONFIG.data_dir.glob("*.parquet"):
 
         ticker = path.stem
 
@@ -91,22 +90,7 @@ def scan_directory():
 def main():
 
     results = scan_directory()
-
-    print("\n=== 15M SPEŁNIAJĄCE WARUNKI ===")
-    print("-" * 70)
-
-    for ticker, m in results:
-        print(
-            f"{ticker} | "
-            f"Ret1D: {m['ret_1d']:.2%} | "
-            f"R²: {m['trend_r2']:.2f} | "
-            f"VolRatio: {m['vol_ratio']:.2f} | "
-            f"Comp: {m['compression_ratio']:.2f} | "
-            f"DistHigh: {m['dist_from_high']:.2%}"
-        )
-
-    print("-" * 70)
-    print(f"Znaleziono: {len(results)} spółek")
+    update_2T_filter_section(results, "<!-- T2_FILTER -->", "second")
 
 
 if __name__ == "__main__":

@@ -1,8 +1,7 @@
 import pandas as pd
 import numpy as np
-from pathlib import Path
-
-DATA_DIR = Path("min5/min5_gpw_data")
+from config import CONFIG_15M as CONFIG
+from report.report_updater import update_3T_filter_section
 
 def r2(series):
     y = series.values
@@ -82,7 +81,7 @@ def scan_directory():
 
     candidates = []
 
-    for path in DATA_DIR.glob("*.parquet"):
+    for path in CONFIG.data_dir.glob("*.parquet"):
 
         ticker = path.stem
 
@@ -113,28 +112,7 @@ def scan_directory():
 def main():
 
     results = scan_directory()
-
-    print("\n=== 5M BREAKOUT CANDIDATES ===")
-    print("-" * 80)
-
-    for ticker, m in results:
-        print(
-            f"{ticker} | "
-            f"Comp: {m['compression_ratio']:.2f} | "
-            f"DistHigh: {m['dist_from_high']:.2%} | "
-            f"VolRatio: {m['vol_ratio']:.2f} | "
-            f"R²: {m['trend_r2']:.2f} | "
-            f"ATR: {m['atr14']:.3f}"
-        )
-
-    print("-" * 80)
-    print(f"Znaleziono: {len(results)} spółek")
-
-    tickers_only = [ticker for ticker, _ in results]
-
-    print("\n=== LISTA SPÓŁEK ===")
-    for t in tickers_only:
-        print(t)
+    update_3T_filter_section(results, "<!-- T3_FILTER -->", "third")
 
 
 if __name__ == "__main__":
