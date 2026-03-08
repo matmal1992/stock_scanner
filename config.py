@@ -58,3 +58,5 @@ WEIGHTS = {
     "trend": 0.2,
     "compression": 0.2,
 }
+
+

@@ -91,27 +91,27 @@ def main():
     results = scan_directory()
     update_filter_section(results, "<!-- T1_FILTER -->", "first")
 
-    print("\n=== SPEŁNIAJĄCE WARUNKI ===")
-    print("-" * 50)
+    # print("\n=== SPEŁNIAJĄCE WARUNKI ===")
+    # print("-" * 50)
 
-    for ticker, m in results:
-        print(
-            f"{ticker} | "
-            f"20D: {m['ret_20d']:.2%} | "
-            f"R²: {m['trend_r2']:.2f} | "
-            f"ATR%: {m['atr_pct']:.2%} | "
-            f"Turnover: {m['avg_turnover']:,.0f} | "
-            f"Comp: {m['compression_ratio']:.2f}"
-        )
+    # for ticker, m in results:
+    #     print(
+    #         f"{ticker} | "
+    #         f"20D: {m['ret_20d']:.2%} | "
+    #         f"R²: {m['trend_r2']:.2f} | "
+    #         f"ATR%: {m['atr_pct']:.2%} | "
+    #         f"Turnover: {m['avg_turnover']:,.0f} | "
+    #         f"Comp: {m['compression_ratio']:.2f}"
+    #     )
 
-    print("-" * 50)
-    print(f"Znaleziono: {len(results)} spółek")
+    # print("-" * 50)
+    # print(f"Znaleziono: {len(results)} spółek")
 
-    tickers_only = [ticker for ticker, _ in results]
+    # tickers_only = [ticker for ticker, _ in results]
 
-    print("\n=== LISTA SPÓŁEK ===")
-    for t in tickers_only:
-        print(t)
+    # print("\n=== LISTA SPÓŁEK ===")
+    # for t in tickers_only:
+    #     print(t)
     
 if __name__ == "__main__":
     main()
