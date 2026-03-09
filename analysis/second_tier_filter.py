@@ -56,6 +56,14 @@ def calculate_metrics(df):
         "dist_from_high": dist_from_high,
     }
 
+def save_tickers(results):
+
+    tickers = [ticker for ticker, _ in results]
+
+    output_path = CONFIG.txt_dir / "third_tier_list.txt"
+
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.write(",".join(tickers))
 
 def scan_directory():
 
@@ -92,6 +100,7 @@ def main():
 
     results = scan_directory()
     update_2T_filter_section(results, "<!-- T2_FILTER -->", "second")
+    save_tickers(results)
 
 
 if __name__ == "__main__":

@@ -24,12 +24,16 @@ class DownloadConfig:
     def last_update_path(self):
         return BASE_DIR / "data" / "txt" / self.last_update_file
     
+    @property
+    def txt_dir(self):
+        return BASE_DIR / "data" / "txt"
+    
 
 CONFIG_1D = DownloadConfig(
     interval="1d",
     period_days=365,
     data_folder="d1_parquet_gpw",
-    tickers_file="first_tier_list_test.txt",
+    tickers_file="first_tier_list.txt",
     last_update_file="last_update_d1.txt"
 )
 

@@ -13,13 +13,13 @@ def main():
     print("\n===== STAGE 3: DOWNLOAD second tier tickers =====")
     min15_gpw.main()
 
-    print("\n===== ETAP 4: ANALIZA =====")
+    print("\n===== ETAP 4: ANALIZA 2nd tier tickers =====")
     second_tier_filter.main()
 
     print("\n===== STAGE 5: DOWNLOAD third tier tickers =====")
     min5_gpw.main()
     
-    print("\n===== ETAP 6: ANALIZA =====")
+    print("\n===== ETAP 6: ANALIZA third tier tickers =====")
     third_tier_filter.main()
 
     print("\n===== DONE =====")

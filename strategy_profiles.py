@@ -94,11 +94,16 @@ STRATEGY_PROFILES = {
 "aggressive": StrategyProfile(
 
     tier1=Tier1Filters(
-        min_ret_20d=0.03,
-        min_trend_r2=0.35,
-        min_atr_pct=0.015,
-        min_turnover=500_000,
-        max_compression=0.8
+        # min_ret_20d=0.03,
+        # min_trend_r2=0.35,
+        # min_atr_pct=0.015,
+        # min_turnover=500_000,
+        # max_compression=0.8
+        min_ret_20d=-0.10,
+        min_trend_r2=0.02,
+        min_atr_pct=0.005,
+        min_turnover=5_000,
+        max_compression=0.5
     ),
 
     tier2=Tier2Filters(
