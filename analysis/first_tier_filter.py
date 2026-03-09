@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from config import CONFIG_1D as CONFIG
 from report.report_updater import update_filter_section
-from config_filters import T1_FILTER
+from strategy_profiles import FILTERS
 
 def r2(series):
     y = series.values
@@ -75,11 +75,11 @@ def scan_directory():
 
             # --- FILTR ---
             if (
-                metrics["ret_20d"] > T1_FILTER.min_ret_20d
-                and metrics["trend_r2"] > T1_FILTER.min_trend_r2
-                and metrics["atr_pct"] > T1_FILTER.min_atr_pct
-                and metrics["avg_turnover"] > T1_FILTER.min_turnover
-                and metrics["compression_ratio"] < T1_FILTER.max_compression
+                metrics["ret_20d"] > FILTERS.tier1.min_ret_20d
+                and metrics["trend_r2"] > FILTERS.tier1.min_trend_r2
+                and metrics["atr_pct"] > FILTERS.tier1.min_atr_pct
+                and metrics["avg_turnover"] > FILTERS.tier1.min_turnover
+                and metrics["compression_ratio"] < FILTERS.tier1.max_compression
             ):
                 candidates.append((ticker, metrics))
 

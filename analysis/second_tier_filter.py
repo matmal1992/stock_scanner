@@ -3,7 +3,7 @@ import numpy as np
 from pathlib import Path
 from report.report_updater import update_2T_filter_section
 from config import CONFIG_15M as CONFIG
-from config_filters import T2_FILTER
+from strategy_profiles import FILTERS
 
 def r2(series):
     y = series.values
@@ -74,11 +74,11 @@ def scan_directory():
 
             # --- FILTR 15M ---
             if (
-                metrics["ret_1d"] > T2_FILTER.min_ret_1d
-                and metrics["trend_r2"] > T2_FILTER.min_trend_r2
-                and metrics["vol_ratio"] > T2_FILTER.min_vol_ratio
-                and metrics["compression_ratio"] < T2_FILTER.max_compression
-                and metrics["dist_from_high"] > T2_FILTER.min_dist_from_high
+                metrics["ret_1d"] > FILTERS.tier2.min_ret_1d
+                and metrics["trend_r2"] > FILTERS.tier2.min_trend_r2
+                and metrics["vol_ratio"] > FILTERS.tier2.min_vol_ratio
+                and metrics["compression_ratio"] < FILTERS.tier2.max_compression
+                and metrics["dist_from_high"] > FILTERS.tier2.min_dist_from_high
             ):
                 candidates.append((ticker, metrics))
 
