@@ -1,8 +1,8 @@
 import pandas as pd
 import numpy as np
-from pathlib import Path
-
-DATA_DIR = Path("min5/min5_gpw_data")
+from config import CONFIG_15M as CONFIG
+from report.report_updater import update_3T_filter_section
+from strategy_profiles import FILTERS
 
 def r2(series):
     y = series.values
@@ -82,7 +82,7 @@ def scan_directory():
 
     candidates = []
 
-    for path in DATA_DIR.glob("*.parquet"):
+    for path in CONFIG.data_dir.glob("*.parquet"):
 
         ticker = path.stem
 
@@ -95,46 +95,38 @@ def scan_directory():
 
             # Final 5m filter
             if (
-                metrics["compression_ratio"] < 0.7
-                and metrics["dist_from_high"] > -0.01
+                metrics["compression_ratio"] < FILTERS.tier3.max_compression
+                and metrics["dist_from_high"] > FILTERS.tier3.min_dist_from_high
                 and metrics["breakout"] is True
-                and metrics["vol_ratio"] > 1.4
-                and metrics["trend_r2"] > 0.3
-                and metrics["atr_sanity"] is True
+                and metrics["vol_ratio"] > FILTERS.tier3.min_vol_ratio
+                and metrics["trend_r2"] > FILTERS.tier3.min_trend_r2
+                and metrics["atr_sanity"] is FILTERS.tier3.atr_sanity_required
             ):
+                score = calculate_score(metrics)
+                metrics["score"] = score
                 candidates.append((ticker, metrics))
 
         except Exception as e:
             print(f"Błąd przy {ticker}: {e}")
 
+    candidates.sort(key=lambda x: x[1]["score"], reverse=True)
     return candidates
 
+def calculate_score(m):
+
+    score = (
+        0.25 * (1 - m["compression_ratio"]) +   # im mniejsza kompresja tym lepiej
+        0.25 * min(m["vol_ratio"] / 3, 1) +     # normalizacja volume expansion
+        0.25 * m["trend_r2"] +                  # siła trendu
+        0.25 * (1 + m["dist_from_high"])        # bliskość high
+    )
+
+    return score
 
 def main():
 
     results = scan_directory()
-
-    print("\n=== 5M BREAKOUT CANDIDATES ===")
-    print("-" * 80)
-
-    for ticker, m in results:
-        print(
-            f"{ticker} | "
-            f"Comp: {m['compression_ratio']:.2f} | "
-            f"DistHigh: {m['dist_from_high']:.2%} | "
-            f"VolRatio: {m['vol_ratio']:.2f} | "
-            f"R²: {m['trend_r2']:.2f} | "
-            f"ATR: {m['atr14']:.3f}"
-        )
-
-    print("-" * 80)
-    print(f"Znaleziono: {len(results)} spółek")
-
-    tickers_only = [ticker for ticker, _ in results]
-
-    print("\n=== LISTA SPÓŁEK ===")
-    for t in tickers_only:
-        print(t)
+    update_3T_filter_section(results, "<!-- T3_FILTER -->", "third")
 
 
 if __name__ == "__main__":

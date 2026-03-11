@@ -100,7 +100,9 @@ function openTab(tabId) {{
 </div>
 
 <div id="d1analysis" class="content">
-<div class="section-box" id="d1analysis-content"></div>
+<div class="section-box" id="d1analysis-content">
+<!-- T1_FILTER -->
+</div>
 </div>
 
 <div id="m15download" class="content">
@@ -110,7 +112,9 @@ function openTab(tabId) {{
 </div>
 
 <div id="m15analysis" class="content">
-<div class="section-box" id="m15analysis-content"></div>
+<div class="section-box" id="m15analysis-content">
+<!-- T2_FILTER -->
+</div>
 </div>
 
 <div id="m5download" class="content">
@@ -120,7 +124,9 @@ function openTab(tabId) {{
 </div>
 
 <div id="m5analysis" class="content">
-<div class="section-box" id="m5analysis-content"></div>
+<div class="section-box" id="m5analysis-content">
+<!-- T3_FILTER -->
+</div>
 </div>
 
 </body>

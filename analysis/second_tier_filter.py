@@ -1,9 +1,9 @@
 import pandas as pd
 import numpy as np
 from pathlib import Path
-
-DATA_DIR = Path("15min/15min_gpw_data")
-
+from report.report_updater import update_2T_filter_section
+from config import CONFIG_15M as CONFIG
+from strategy_profiles import FILTERS
 
 def r2(series):
     y = series.values
@@ -56,12 +56,24 @@ def calculate_metrics(df):
         "dist_from_high": dist_from_high,
     }
 
+def save_tickers(results):
+
+    tickers = []
+
+    for ticker, _ in results:
+        ticker_yf = ticker.replace("_", ".")
+        tickers.append(ticker_yf)
+
+    output_path = CONFIG.txt_dir / "third_tier_list.txt"
+
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.write(",".join(tickers))
 
 def scan_directory():
 
     candidates = []
 
-    for path in DATA_DIR.glob("*.parquet"):
+    for path in CONFIG.data_dir.glob("*.parquet"):
 
         ticker = path.stem
 
@@ -74,11 +86,11 @@ def scan_directory():
 
             # --- FILTR 15M ---
             if (
-                metrics["ret_1d"] > 0.02
-                and metrics["trend_r2"] > 0.4
-                and metrics["vol_ratio"] > 1.5
-                and metrics["compression_ratio"] < 0.7
-                and metrics["dist_from_high"] > -0.03
+                metrics["ret_1d"] > FILTERS.tier2.min_ret_1d
+                and metrics["trend_r2"] > FILTERS.tier2.min_trend_r2
+                and metrics["vol_ratio"] > FILTERS.tier2.min_vol_ratio
+                and metrics["compression_ratio"] < FILTERS.tier2.max_compression
+                and metrics["dist_from_high"] > FILTERS.tier2.min_dist_from_high
             ):
                 candidates.append((ticker, metrics))
 
@@ -91,22 +103,8 @@ def scan_directory():
 def main():
 
     results = scan_directory()
-
-    print("\n=== 15M SPEŁNIAJĄCE WARUNKI ===")
-    print("-" * 70)
-
-    for ticker, m in results:
-        print(
-            f"{ticker} | "
-            f"Ret1D: {m['ret_1d']:.2%} | "
-            f"R²: {m['trend_r2']:.2f} | "
-            f"VolRatio: {m['vol_ratio']:.2f} | "
-            f"Comp: {m['compression_ratio']:.2f} | "
-            f"DistHigh: {m['dist_from_high']:.2%}"
-        )
-
-    print("-" * 70)
-    print(f"Znaleziono: {len(results)} spółek")
+    update_2T_filter_section(results, "<!-- T2_FILTER -->", "second")
+    save_tickers(results)
 
 
 if __name__ == "__main__":

@@ -1,10 +1,8 @@
 import pandas as pd
 import numpy as np
-from pathlib import Path
-import tkinter as tk
-from tkinter import messagebox
-
-DATA_DIR = Path("1d/1d_gpw_data")
+from config import CONFIG_1D as CONFIG
+from report.report_updater import update_filter_section
+from strategy_profiles import FILTERS
 
 def r2(series):
     y = series.values
@@ -59,12 +57,32 @@ def calculate_metrics(df):
         "compression_ratio": compression_ratio,
     }
 
+def save_tickers(results):
+
+    tickers = []
+
+    for ticker, _ in results:
+        ticker_yf = ticker.replace("_", ".")
+        tickers.append(ticker_yf)
+
+    output_path = CONFIG.txt_dir / "second_tier_list.txt"
+
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.write(",".join(tickers))
+
 
 def scan_directory():
 
     candidates = []
+    fail_stats = {
+        "ret": 0,
+        "trend": 0,
+        "atr": 0,
+        "turnover": 0,
+        "compression": 0
+    }
 
-    for path in DATA_DIR.glob("*.parquet"):
+    for path in CONFIG.data_dir.glob("*.parquet"):
 
         ticker = path.stem  # nazwa pliku bez .parquet
 
@@ -76,44 +94,49 @@ def scan_directory():
                 continue
 
             # --- FILTR ---
-            if (
-                metrics["ret_20d"] > 0.05
-                and metrics["trend_r2"] > 0.5
-                and metrics["atr_pct"] > 0.02
-                and metrics["avg_turnover"] > 1_000_000
-                and metrics["compression_ratio"] < 0.7
-            ):
-                candidates.append((ticker, metrics))
+            # if (
+            #     metrics["ret_20d"] > FILTERS.tier1.min_ret_20d
+            #     and metrics["trend_r2"] > FILTERS.tier1.min_trend_r2
+            #     and metrics["atr_pct"] > FILTERS.tier1.min_atr_pct
+            #     and metrics["avg_turnover"] > FILTERS.tier1.min_turnover
+            #     and metrics["compression_ratio"] < FILTERS.tier1.max_compression
+            # ):
+            #     candidates.append((ticker, metrics))
+
+            if metrics["ret_20d"] <= FILTERS.tier1.min_ret_20d:
+                fail_stats["ret"] += 1
+                continue
+
+            if metrics["trend_r2"] <= FILTERS.tier1.min_trend_r2:
+                fail_stats["trend"] += 1
+                continue
+
+            if metrics["atr_pct"] <= FILTERS.tier1.min_atr_pct:
+                fail_stats["atr"] += 1
+                continue
+
+            if metrics["avg_turnover"] <= FILTERS.tier1.min_turnover:
+                fail_stats["turnover"] += 1
+                continue
+
+            if metrics["compression_ratio"] >= FILTERS.tier1.max_compression:
+                fail_stats["compression"] += 1
+                continue
+
+            candidates.append((ticker, metrics))
 
         except Exception as e:
             print(f"Błąd przy {ticker}: {e}")
 
+
+    print("\nFilter statistics:")
+    print(fail_stats)
     return candidates
 
 def main():
     results = scan_directory()
-
-    print("\n=== SPEŁNIAJĄCE WARUNKI ===")
-    print("-" * 50)
-
-    for ticker, m in results:
-        print(
-            f"{ticker} | "
-            f"20D: {m['ret_20d']:.2%} | "
-            f"R²: {m['trend_r2']:.2f} | "
-            f"ATR%: {m['atr_pct']:.2%} | "
-            f"Turnover: {m['avg_turnover']:,.0f} | "
-            f"Comp: {m['compression_ratio']:.2f}"
-        )
-
-    print("-" * 50)
-    print(f"Znaleziono: {len(results)} spółek")
-
-    tickers_only = [ticker for ticker, _ in results]
-
-    print("\n=== LISTA SPÓŁEK ===")
-    for t in tickers_only:
-        print(t)
+    update_filter_section(results, "<!-- T1_FILTER -->", "first")
+    save_tickers(results)
     
 if __name__ == "__main__":
     main()

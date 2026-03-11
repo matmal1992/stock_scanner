@@ -39,14 +39,12 @@ def main():
         "error": []
     }
 
-    start_date = datetime.today() - timedelta(days=CONFIG.period_days)
-
     for ticker in tqdm(tickers, desc="Pobieranie danych", unit="ticker"):
         try:
             t = yf.Ticker(ticker)
 
-            # Próba pobrania 5min
-            df = t.history(start=start_date, interval=CONFIG.interval)
+            # Próba pobrania 1d
+            df = t.history(period=f"{CONFIG.period_days}d", interval=CONFIG.interval)
 
             if not df.empty:
                 filename = ticker.replace(".", "_") + ".parquet"
