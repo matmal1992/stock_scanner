@@ -1,21 +1,9 @@
 import pandas as pd
 import numpy as np
-from pathlib import Path
+from core.metrics import r2
 from report.report_updater import update_2T_filter_section
 from config import CONFIG_15M as CONFIG
 from strategy_profiles import FILTERS
-
-def r2(series):
-    y = series.values
-    x = np.arange(len(y))
-    slope, intercept = np.polyfit(x, y, 1)
-    y_pred = slope * x + intercept
-
-    ss_res = np.sum((y - y_pred) ** 2)
-    ss_tot = np.sum((y - np.mean(y)) ** 2)
-
-    return 1 - ss_res / ss_tot if ss_tot != 0 else 0
-
 
 def calculate_metrics(df):
 

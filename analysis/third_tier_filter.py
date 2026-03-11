@@ -1,34 +1,8 @@
 import pandas as pd
-import numpy as np
+from core.metrics import r2, atr
 from config import CONFIG_15M as CONFIG
 from report.report_updater import update_3T_filter_section
 from strategy_profiles import FILTERS
-
-def r2(series):
-    y = series.values
-    x = np.arange(len(y))
-    slope, intercept = np.polyfit(x, y, 1)
-    y_pred = slope * x + intercept
-
-    ss_res = np.sum((y - y_pred) ** 2)
-    ss_tot = np.sum((y - np.mean(y)) ** 2)
-
-    return 1 - ss_res / ss_tot if ss_tot != 0 else 0
-
-
-def calculate_atr(df, period=14):
-    high = df["High"]
-    low = df["Low"]
-    close = df["Close"]
-
-    tr1 = high - low
-    tr2 = (high - close.shift()).abs()
-    tr3 = (low - close.shift()).abs()
-
-    tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
-    atr = tr.rolling(period).mean()
-
-    return atr.iloc[-1]
 
 def calculate_metrics(df):
 
@@ -63,7 +37,7 @@ def calculate_metrics(df):
     trend_r2 = r2(close.tail(30))
 
     # ATR sanity check
-    atr14 = calculate_atr(df, 14)
+    atr14 = atr(df, 14)
     last_candle_range = high.iloc[-1] - low.iloc[-1]
     atr_sanity = last_candle_range < 1.8 * atr14 if atr14 != 0 else False
 

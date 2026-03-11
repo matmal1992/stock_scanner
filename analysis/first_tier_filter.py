@@ -1,20 +1,7 @@
-import pandas as pd
-import numpy as np
 from config import CONFIG_1D as CONFIG
 from report.report_updater import update_filter_section
 from strategy_profiles import FILTERS
-
-def r2(series):
-    y = series.values
-    x = np.arange(len(y))
-    slope, intercept = np.polyfit(x, y, 1)
-    y_pred = slope * x + intercept
-
-    ss_res = np.sum((y - y_pred) ** 2)
-    ss_tot = np.sum((y - np.mean(y)) ** 2)
-
-    return 1 - ss_res / ss_tot if ss_tot != 0 else 0
-
+from core.metrics import *
 
 def calculate_metrics(df):
 
@@ -26,35 +13,12 @@ def calculate_metrics(df):
     low = df["Low"]
     volume = df["Volume"]
 
-    # --- 20D return ---
-    ret_20d = close.iloc[-1] / close.iloc[-20] - 1
-
-    # --- R2 trend (60D) ---
-    trend_r2 = r2(close.tail(60))
-
-    # --- ATR(14) ---
-    tr1 = high - low
-    tr2 = (high - close.shift()).abs()
-    tr3 = (low - close.shift()).abs()
-    tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
-
-    atr14 = tr.rolling(14).mean().iloc[-1]
-    atr_pct = atr14 / close.iloc[-1]
-
-    # --- avg turnover ---
-    avg_turnover = (close * volume).rolling(20).mean().iloc[-1]
-
-    # --- compression ---
-    range_20 = (high - low).rolling(20).mean().iloc[-1]
-    range_5 = (high - low).rolling(5).mean().iloc[-1]
-    compression_ratio = range_5 / range_20 if range_20 != 0 else 1
-
     return {
-        "ret_20d": ret_20d,
-        "trend_r2": trend_r2,
-        "atr_pct": atr_pct,
-        "avg_turnover": avg_turnover,
-        "compression_ratio": compression_ratio,
+        "ret_20d": return_pct(close, 20),
+        "trend_r2": r2(close.tail(60)),
+        "atr_pct": atr(df, 14) / close.iloc[-1],
+        "avg_turnover": (close * volume).rolling(20).mean().iloc[-1],
+        "compression_ratio": compression_ratio(high, low, 5, 20)
     }
 
 def save_tickers(results):
