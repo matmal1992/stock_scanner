@@ -59,7 +59,11 @@ def calculate_metrics(df):
 
 def save_tickers(results):
 
-    tickers = [ticker for ticker, _ in results]
+    tickers = []
+
+    for ticker, _ in results:
+        ticker_yf = ticker.replace("_", ".")
+        tickers.append(ticker_yf)
 
     output_path = CONFIG.txt_dir / "second_tier_list.txt"
 
