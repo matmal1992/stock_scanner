@@ -33,9 +33,12 @@ def scan_directory():
         "compression": 0
     }
 
+    total_scanned = 0
+
     for path in CONFIG.data_dir.glob("*.parquet"):
 
-        ticker = path.stem  # nazwa pliku bez .parquet
+        ticker = path.stem
+        total_scanned += 1
 
         try:
             df = pd.read_parquet(path)
@@ -43,16 +46,6 @@ def scan_directory():
 
             if metrics is None:
                 continue
-
-            # --- FILTR ---
-            # if (
-            #     metrics["ret_20d"] > FILTERS.tier1.min_ret_20d
-            #     and metrics["trend_r2"] > FILTERS.tier1.min_trend_r2
-            #     and metrics["atr_pct"] > FILTERS.tier1.min_atr_pct
-            #     and metrics["avg_turnover"] > FILTERS.tier1.min_turnover
-            #     and metrics["compression_ratio"] < FILTERS.tier1.max_compression
-            # ):
-            #     candidates.append((ticker, metrics))
 
             if metrics["ret_20d"] <= FILTERS.tier1.min_ret_20d:
                 fail_stats["ret"] += 1
@@ -79,14 +72,17 @@ def scan_directory():
         except Exception as e:
             print(f"Błąd przy {ticker}: {e}")
 
+    stats = {
+        "total": total_scanned,
+        "passed": len(candidates),
+        "fails": fail_stats
+    }
 
-    print("\nFilter statistics:")
-    print(fail_stats)
-    return candidates
+    return candidates, stats
 
 def main():
-    results = scan_directory()
-    update_filter_section(results, "<!-- T1_FILTER -->", "first")
+    results, stats = scan_directory()
+    update_filter_section(results, "<!-- T1_FILTER -->", "first", stats)
     save_tickers(results, CONFIG.txt_dir / "second_tier_list.txt")
     
 if __name__ == "__main__":
