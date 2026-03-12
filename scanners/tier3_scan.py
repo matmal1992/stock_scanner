@@ -1,12 +1,10 @@
-import pandas as pd
-from core.metrics import r2, atr
+from core.metrics import *
 from config import CONFIG_15M as CONFIG
 from report.report_updater import update_3T_filter_section
 from strategy_profiles import FILTERS
 
 def calculate_metrics(df):
 
-    # At least 2 days of data (~150 candles)
     if len(df) < 150:
         return None
 
@@ -15,38 +13,30 @@ def calculate_metrics(df):
     low = df["Low"]
     volume = df["Volume"]
 
-    # Mikro-kompresja (1h vs 4h)
-    range_12 = (high - low).rolling(12).mean().iloc[-1]   # 1h
-    range_48 = (high - low).rolling(48).mean().iloc[-1]   # 4h
-    compression_ratio = range_12 / range_48 if range_48 != 0 else 1
+    compression = compression_ratio(high, low, 12, 48)
 
-    # Bliskość high dnia
-    session_high = high.iloc[-78:].max()  # ~1 sesja
-    dist_from_high = close.iloc[-1] / session_high - 1
+    session_high = high.iloc[-78:].max()
+    dist_high = close.iloc[-1] / session_high - 1
 
-    # Breakout z ostatnich 20 świec (~100 min)
     breakout_level = high.tail(20).max()
     breakout = close.iloc[-1] > breakout_level
 
-    # Ekspansja wolumenu (30 min vs 2.5h)
-    vol_short = volume.tail(6).mean()
-    vol_long = volume.tail(30).mean()
-    vol_ratio = vol_short / vol_long if vol_long != 0 else 0
+    vol_ratio = volume_ratio(volume, 6, 30)
 
-    # Mikro-trend (R² z 30 świec)
-    trend_r2 = r2(close.tail(30))
+    trend = r2(close.tail(30))
 
-    # ATR sanity check
     atr14 = atr(df, 14)
-    last_candle_range = high.iloc[-1] - low.iloc[-1]
-    atr_sanity = last_candle_range < 1.8 * atr14 if atr14 != 0 else False
+
+    last_range = high.iloc[-1] - low.iloc[-1]
+
+    atr_sanity = last_range < 1.8 * atr14 if atr14 != 0 else False
 
     return {
-        "compression_ratio": compression_ratio,
-        "dist_from_high": dist_from_high,
+        "compression_ratio": compression,
+        "dist_from_high": dist_high,
         "breakout": breakout,
         "vol_ratio": vol_ratio,
-        "trend_r2": trend_r2,
+        "trend_r2": trend,
         "atr14": atr14,
         "last_close": close.iloc[-1],
         "atr_sanity": atr_sanity

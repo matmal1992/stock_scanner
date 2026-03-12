@@ -2,6 +2,7 @@ from config import CONFIG_1D as CONFIG
 from report.report_updater import update_filter_section
 from strategy_profiles import FILTERS
 from core.metrics import *
+from core.io_utils import *
 
 def calculate_metrics(df):
 
@@ -20,20 +21,6 @@ def calculate_metrics(df):
         "avg_turnover": (close * volume).rolling(20).mean().iloc[-1],
         "compression_ratio": compression_ratio(high, low, 5, 20)
     }
-
-def save_tickers(results):
-
-    tickers = []
-
-    for ticker, _ in results:
-        ticker_yf = ticker.replace("_", ".")
-        tickers.append(ticker_yf)
-
-    output_path = CONFIG.txt_dir / "second_tier_list.txt"
-
-    with open(output_path, "w", encoding="utf-8") as f:
-        f.write(",".join(tickers))
-
 
 def scan_directory():
 
@@ -100,7 +87,7 @@ def scan_directory():
 def main():
     results = scan_directory()
     update_filter_section(results, "<!-- T1_FILTER -->", "first")
-    save_tickers(results)
+    save_tickers(results, CONFIG.txt_dir / "second_tier_list.txt")
     
 if __name__ == "__main__":
     main()

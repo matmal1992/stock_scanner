@@ -1,13 +1,12 @@
 import pandas as pd
-import numpy as np
-from core.metrics import r2
+from core.metrics import *
+from core.io_utils import *
 from report.report_updater import update_2T_filter_section
 from config import CONFIG_15M as CONFIG
 from strategy_profiles import FILTERS
 
 def calculate_metrics(df):
 
-    # minimum 3 dni danych (~75 świec)
     if len(df) < 80:
         return None
 
@@ -16,46 +15,13 @@ def calculate_metrics(df):
     low = df["Low"]
     volume = df["Volume"]
 
-    # --- 1D intraday return (~26 świec) ---
-    ret_1d = close.iloc[-1] / close.iloc[-26] - 1
-
-    # --- intraday trend (R² z 50 świec) ---
-    trend_r2 = r2(close.tail(50))
-
-    # --- volume expansion ---
-    vol_short = volume.tail(10).mean()
-    vol_long = volume.tail(50).mean()
-    vol_ratio = vol_short / vol_long if vol_long != 0 else 0
-
-    # --- compression ---
-    range_20 = (high - low).rolling(20).mean().iloc[-1]
-    range_5 = (high - low).rolling(5).mean().iloc[-1]
-    compression_ratio = range_5 / range_20 if range_20 != 0 else 1
-
-    # --- distance from 30-bar high ---
-    high_30 = close.rolling(30).max().iloc[-1]
-    dist_from_high = close.iloc[-1] / high_30 - 1
-
     return {
-        "ret_1d": ret_1d,
-        "trend_r2": trend_r2,
-        "vol_ratio": vol_ratio,
-        "compression_ratio": compression_ratio,
-        "dist_from_high": dist_from_high,
+        "ret_1d": return_pct(close, 26),
+        "trend_r2": r2(close.tail(50)),
+        "vol_ratio": volume_ratio(volume, 10, 50),
+        "compression_ratio": compression_ratio(high, low, 5, 20),
+        "dist_from_high": distance_from_high(close, 30)
     }
-
-def save_tickers(results):
-
-    tickers = []
-
-    for ticker, _ in results:
-        ticker_yf = ticker.replace("_", ".")
-        tickers.append(ticker_yf)
-
-    output_path = CONFIG.txt_dir / "third_tier_list.txt"
-
-    with open(output_path, "w", encoding="utf-8") as f:
-        f.write(",".join(tickers))
 
 def scan_directory():
 
@@ -92,7 +58,7 @@ def main():
 
     results = scan_directory()
     update_2T_filter_section(results, "<!-- T2_FILTER -->", "second")
-    save_tickers(results)
+    save_tickers(results, CONFIG.txt_dir / "third_tier_list.txt")
 
 
 if __name__ == "__main__":
