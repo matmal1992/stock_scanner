@@ -26,11 +26,20 @@ def scan_directory():
 
     candidates = []
     fail_stats = {
+        "too_short_data": 0,
         "ret": 0,
         "trend": 0,
         "atr": 0,
         "turnover": 0,
         "compression": 0
+    }
+
+    pipeline = {
+        "after_ret": 0,
+        "after_trend": 0,
+        "after_atr": 0,
+        "after_turnover": 0,
+        "after_compression": 0
     }
 
     total_scanned = 0
@@ -41,31 +50,39 @@ def scan_directory():
         total_scanned += 1
 
         try:
-            df = pd.read_parquet(path)
+            df = read_parquet(path)
+            if df is None:
+                continue
+            
             metrics = calculate_metrics(df)
 
             if metrics is None:
+                fail_stats["too_short_data"] += 1
                 continue
-
             if metrics["ret_20d"] <= FILTERS.tier1.min_ret_20d:
                 fail_stats["ret"] += 1
                 continue
+            pipeline["after_ret"] += 1
 
             if metrics["trend_r2"] <= FILTERS.tier1.min_trend_r2:
                 fail_stats["trend"] += 1
                 continue
+            pipeline["after_trend"] += 1
 
             if metrics["atr_pct"] <= FILTERS.tier1.min_atr_pct:
                 fail_stats["atr"] += 1
                 continue
+            pipeline["after_atr"] += 1
 
             if metrics["avg_turnover"] <= FILTERS.tier1.min_turnover:
                 fail_stats["turnover"] += 1
                 continue
+            pipeline["after_turnover"] += 1
 
             if metrics["compression_ratio"] >= FILTERS.tier1.max_compression:
                 fail_stats["compression"] += 1
                 continue
+            pipeline["after_compression"] += 1
 
             candidates.append((ticker, metrics))
 
@@ -75,7 +92,8 @@ def scan_directory():
     stats = {
         "total": total_scanned,
         "passed": len(candidates),
-        "fails": fail_stats
+        "fails": fail_stats,
+        "pipeline": pipeline
     }
 
     return candidates, stats

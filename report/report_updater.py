@@ -18,6 +18,29 @@ def update_down_section(results, location, tier):
     with open(report_path, "w", encoding="utf-8") as f:
         f.write(html)
 
+def build_filter_stats_html(stats):
+
+    if stats is None:
+        return ""
+
+    total = stats["total"]
+
+    html = "<h3>Filter diagnostics</h3>"
+    html += "<ul>"
+    html += f"<li>Total scanned: {total}</li>"
+    html += f"<li>Passed filter: {stats['passed']}</li>"
+    html += "</ul>"
+    html += "<h4>Fail reasons</h4>"
+    html += "<ul>"
+
+    for key, value in stats["fails"].items():
+
+        pct = (value / total * 100) if total else 0
+        html += f"<li>{key}: {value} ({pct:.1f}%)</li>"
+
+    html += "</ul>"
+
+    return html
 
 # def update_filter_section(results, location, tier):
 
@@ -36,14 +59,45 @@ def update_down_section(results, location, tier):
 
 #     with open(report_path, "w", encoding="utf-8") as f:
 #         f.write(html)
+def build_pipeline_html(stats):
 
-def update_filter_section(results, location, tier):
+    if stats is None or "pipeline" not in stats:
+        return ""
+
+    p = stats["pipeline"]
+
+    html = "<h3>Filter pipeline</h3>"
+
+    html += "<pre>"
+    html += f"Universe: {stats['total']}\n"
+    html += "↓\n"
+    html += f"Return filter: {p['after_ret']}\n"
+    html += "↓\n"
+    html += f"Trend filter: {p['after_trend']}\n"
+    html += "↓\n"
+    html += f"ATR filter: {p['after_atr']}\n"
+    html += "↓\n"
+    html += f"Turnover filter: {p['after_turnover']}\n"
+    html += "↓\n"
+    html += f"Compression filter: {p['after_compression']}\n"
+    html += "</pre>"
+
+    return html
+
+def update_filter_section(results, location, tier, stats):
+
+    stats_html = build_filter_stats_html(stats)
+    pipeline_html = build_pipeline_html(stats)
 
     with open(report_path, "r", encoding="utf-8") as f:
         html = f.read()
 
     content_html = f"""
 <h2>Filter {tier} - tier data results</h2>
+
+{stats_html}
+
+{pipeline_html}
 
 <table style="border-collapse:collapse; width:100%;">
 <tr style="background:#eee;">
@@ -75,7 +129,8 @@ def update_filter_section(results, location, tier):
 
     with open(report_path, "w", encoding="utf-8") as f:
         f.write(html)
-        
+
+
 
 def update_2T_filter_section(results, location, tier):
 
