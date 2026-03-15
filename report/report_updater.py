@@ -212,3 +212,26 @@ def update_3T_filter_section(results, location, tier):
 
     with open(report_path, "w", encoding="utf-8") as f:
         f.write(html)
+        
+# def build_filter_stats_html(stats):
+
+#     if stats is None:
+#         return ""
+
+#     html = "<h3>Filter diagnostics</h3>"
+#     html += "<ul>"
+
+#     html += f"<li>Total scanned: {stats['total']}</li>"
+#     html += f"<li>Passed filter: {stats['passed']}</li>"
+
+#     html += "</ul>"
+
+#     html += "<h4>Fail reasons</h4>"
+#     html += "<ul>"
+
+#     for key, value in stats["fails"].items():
+#         html += f"<li>{key}: {value}</li>"
+
+#     html += "</ul>"
+
+#     return html

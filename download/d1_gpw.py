@@ -76,6 +76,7 @@ def main():
                 results["short_history"].append(ticker)
 
         except Exception as e:
+            print(f"ERROR {ticker}: {e}")
             results["error"].append(ticker)
 
     update_down_section(results, "<!-- T1_DOWNLOAD -->", "first")
