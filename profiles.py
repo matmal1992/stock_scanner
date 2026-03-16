@@ -1,7 +1,7 @@
 # profiles.py
 from config import CONFIG_1D, CONFIG_15M, CONFIG_5M
 from config_filters import T1_FILTER, T2_FILTER, T3_FILTER
-from strategy_profiles2 import metrics_t1, metrics_t2, metrics_t3, T1_COLUMNS, T2_COLUMNS, T3_COLUMNS
+from strategy_profiles import metrics_t1, metrics_t2, metrics_t3, T1_COLUMNS, T2_COLUMNS, T3_COLUMNS
 
 # -------- RULES --------
 RULES_T1 = [

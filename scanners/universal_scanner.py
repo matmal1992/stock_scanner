@@ -1,8 +1,5 @@
 from core.io_utils import read_parquet
 from report.report_updater import update_filter_section
-
-from core.io_utils import read_parquet
-from report.report_updater import update_filter_section
 import pandas as pd
 
 def run_scan(profile):
@@ -78,3 +75,15 @@ def run_scan(profile):
         profile["columns"],
         stats
     )
+
+#  W przyszłości implementacja rankingu  
+# def calculate_score(m):
+
+#     score = (
+#         0.25 * (1 - m["compression_ratio"]) +   # im mniejsza kompresja tym lepiej
+#         0.25 * min(m["vol_ratio"] / 3, 1) +     # normalizacja volume expansion
+#         0.25 * m["trend_r2"] +                  # siła trendu
+#         0.25 * (1 + m["dist_from_high"])        # bliskość high
+#     )
+
+#     return score

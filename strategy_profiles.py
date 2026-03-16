@@ -1,129 +1,111 @@
-from dataclasses import dataclass
+from core.metrics import *
+
+def metrics_t1(df):
+    if len(df) < 60:
+        return None
+
+    close = df["Close"]
+    high = df["High"]
+    low = df["Low"]
+    volume = df["Volume"]
+
+    try:
+        return {
+            "ret_20d": return_pct(close, 20),
+            "trend_r2": r2(close.tail(60)),
+            "atr_pct": atr(df, 14) / close.iloc[-1],
+            "avg_turnover": (close * volume).rolling(20).mean().iloc[-1],
+            "compression_ratio": compression_ratio(high, low, 5, 20)
+        }
+    except:
+        return None
+
+# zastanowić się czy na pewno lambdy to dobre rozwiązanie
+T1_COLUMNS = [
+    ("Ticker", lambda i,t,m: t),
+    ("20D Return", lambda i,t,m: f"{m['ret_20d']:.2%}"),
+    ("R² Trend", lambda i,t,m: f"{m['trend_r2']:.2f}"),
+    ("ATR %", lambda i,t,m: f"{m['atr_pct']:.2%}"),
+    ("Turnover", lambda i,t,m: f"{m['avg_turnover']:,.0f}"),
+    ("Compression", lambda i,t,m: f"{m['compression_ratio']:.2f}")
+]
 
 
-@dataclass
-class Tier1Filters:
-    min_ret_20d: float
-    min_trend_r2: float
-    min_atr_pct: float
-    min_turnover: int
-    max_compression: float
+def metrics_t2(df):
+    if len(df) < 80:
+        return None
+
+    close = df["Close"]
+    high = df["High"]
+    low = df["Low"]
+    volume = df["Volume"]
+
+    try:
+        return {
+            "ret_1d": return_pct(close, 26),
+            "trend_r2": r2(close.tail(50)),
+            "vol_ratio": volume_ratio(volume, 10, 50),
+            "compression_ratio": compression_ratio(high, low, 5, 20),
+            "dist_from_high": distance_from_high(close, 30)
+        }
+    except:
+        # W przyszłości zamiast zwracac none, dodać walidatory
+        return None
 
 
-@dataclass
-class Tier2Filters:
-    min_ret_1d: float
-    min_trend_r2: float
-    min_vol_ratio: float
-    max_compression: float
-    min_dist_from_high: float
+T2_COLUMNS = [
+    ("Ticker", lambda i,t,m: t),
+    ("1D Return", lambda i,t,m: f"{m['ret_1d']:.2%}"),
+    ("R² Trend", lambda i,t,m: f"{m['trend_r2']:.2f}"),
+    ("Volume Ratio", lambda i,t,m: f"{m['vol_ratio']:.2f}"),
+    ("Compression", lambda i,t,m: f"{m['compression_ratio']:.2f}"),
+    ("Dist From High", lambda i,t,m: f"{m['dist_from_high']:.2%}")
+]
 
 
-@dataclass
-class Tier3Filters:
-    max_compression: float
-    min_dist_from_high: float
-    min_vol_ratio: float
-    min_trend_r2: float
-    atr_sanity_required: bool
+def metrics_t3(df):
+    if len(df) < 150:
+        return None
 
-@dataclass
-class StrategyProfile:
-    tier1: Tier1Filters
-    tier2: Tier2Filters
-    tier3: Tier3Filters
+    close = df["Close"]
+    high = df["High"]
+    low = df["Low"]
+    volume = df["Volume"]
+
+    try:
+        compression = compression_ratio(high, low, 12, 48)
+
+        session_high = high.iloc[-78:].max()
+        dist_high = close.iloc[-1] / session_high - 1
+
+        breakout = close.iloc[-1] > high.tail(20).max()
+        vol_ratio = volume_ratio(volume, 6, 30)
+        trend = r2(close.tail(30))
+        atr14 = atr(df, 14)
+
+        last_range = high.iloc[-1] - low.iloc[-1]
+        atr_sanity = last_range < 1.8 * atr14 if atr14 != 0 else False
+
+        return {
+            "compression_ratio": compression,
+            "dist_from_high": dist_high,
+            "breakout": breakout,
+            "vol_ratio": vol_ratio,
+            "trend_r2": trend,
+            "atr14": atr14,
+            "atr_sanity": atr_sanity
+        }
+    except:
+        return None
 
 
-
-STRATEGY_PROFILES = {
-
-"conservative": StrategyProfile(
-
-    tier1=Tier1Filters(
-        min_ret_20d=0.08,
-        min_trend_r2=0.65,
-        min_atr_pct=0.025,
-        min_turnover=2_000_000,
-        max_compression=0.6
-    ),
-
-    tier2=Tier2Filters(
-        min_ret_1d=0.03,
-        min_trend_r2=0.5,
-        min_vol_ratio=1.8,
-        max_compression=0.6,
-        min_dist_from_high=-0.02
-    ),
-
-    tier3=Tier3Filters(
-        max_compression=0.6,
-        min_dist_from_high=-0.005,
-        min_vol_ratio=1.7,
-        min_trend_r2=0.4,
-        atr_sanity_required=True
-    )
-),
-
-"balanced": StrategyProfile(
-
-    tier1=Tier1Filters(
-        min_ret_20d=0.05,
-        min_trend_r2=0.5,
-        min_atr_pct=0.02,
-        min_turnover=1_000_000,
-        max_compression=0.7
-    ),
-
-    tier2=Tier2Filters(
-        min_ret_1d=0.02,
-        min_trend_r2=0.4,
-        min_vol_ratio=1.5,
-        max_compression=0.7,
-        min_dist_from_high=-0.03
-    ),
-
-    tier3=Tier3Filters(
-        max_compression=0.7,
-        min_dist_from_high=-0.01,
-        min_vol_ratio=1.4,
-        min_trend_r2=0.3,
-        atr_sanity_required=True
-    )
-),
-
-"aggressive": StrategyProfile(
-
-    tier1=Tier1Filters(
-        # min_ret_20d=0.03,
-        # min_trend_r2=0.35,
-        # min_atr_pct=0.015,
-        # min_turnover=500_000,
-        # max_compression=0.8
-        min_ret_20d=-0.10,
-        min_trend_r2=0.02,
-        min_atr_pct=0.005,
-        min_turnover=5_000,
-        max_compression=0.5
-    ),
-
-    tier2=Tier2Filters(
-        min_ret_1d=0.01,
-        min_trend_r2=0.25,
-        min_vol_ratio=1.2,
-        max_compression=0.8,
-        min_dist_from_high=-0.05
-    ),
-
-    tier3=Tier3Filters(
-        max_compression=0.8,
-        min_dist_from_high=-0.02,
-        min_vol_ratio=1.2,
-        min_trend_r2=0.2,
-        atr_sanity_required=True
-    )
-)
-
-}
-
-ACTIVE_STRATEGY = "aggressive"
-FILTERS = STRATEGY_PROFILES[ACTIVE_STRATEGY]
+T3_COLUMNS = [
+    ("Rank", lambda i,t,m: i),
+    ("Ticker", lambda i,t,m: t),
+    ("Score", lambda i,t,m: f"{m['score']:.2f}"),
+    ("Compression", lambda i,t,m: f"{m['compression_ratio']:.2f}"),
+    ("Dist From High", lambda i,t,m: f"{m['dist_from_high']:.2%}"),
+    ("Volume Ratio", lambda i,t,m: f"{m['vol_ratio']:.2f}"),
+    ("R² Trend", lambda i,t,m: f"{m['trend_r2']:.2f}"),
+    ("ATR", lambda i,t,m: f"{m['atr14']:.3f}")
+]
