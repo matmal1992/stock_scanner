@@ -41,7 +41,7 @@ def write_section(location, content_html):
     with open(report_path, "r", encoding="utf-8") as f:
         html = f.read()
 
-    html = html.replace(location, content_html)
+    html = html.replace(str(location), content_html)
 
     with open(report_path, "w", encoding="utf-8") as f:
         f.write(html)
