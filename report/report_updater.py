@@ -63,14 +63,11 @@ def update_filter_section(results, location, columns, stats=None):
 
     content_html += "</tr>"
 
-    for i, (ticker, m) in enumerate(results, start=1):
-
+    for i, (ticker, metrics) in enumerate(results, start=1):
         content_html += "<tr>"
-
         for _, value_fn in columns:
-            value = value_fn(i, ticker, m)
+            value = value_fn(i, ticker, (metrics))
             content_html += f"<td>{value}</td>"
-
         content_html += "</tr>"
 
     content_html += "</table>"

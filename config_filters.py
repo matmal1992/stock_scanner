@@ -3,11 +3,11 @@ from dataclasses import dataclass
 # -------- Tier 1 (1D momentum scan) --------
 @dataclass
 class Tier1Filters:
-    min_ret_20d: float = 0.05
-    min_trend_r2: float = 0.5
-    min_atr_pct: float = 0.02
-    min_turnover: int = 1_000_000
-    max_compression: float = 0.7
+    min_ret_20d: float = -0.10
+    min_trend_r2: float = 0.02
+    min_atr_pct: float = 0.005
+    min_turnover: int = 5_000
+    max_compression: float = 0.5
 
 
 # -------- Tier 2 (15m confirmation) --------
