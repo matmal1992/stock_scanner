@@ -2,9 +2,6 @@ from config import report_path
 
 def update_down_section(results, location, tier):
 
-    with open(report_path, "r", encoding="utf-8") as f:
-        html = f.read()
-
     content_html = f"<h2>Download {tier} - tier data results</h2>"
 
     for key, tickers in results.items():
@@ -13,10 +10,7 @@ def update_down_section(results, location, tier):
             content_html += f"<li>{t}</li>"
         content_html += "</ul>"
 
-    html = html.replace(location, content_html)
-
-    with open(report_path, "w", encoding="utf-8") as f:
-        f.write(html)
+    write_section(location, content_html)
 
 def build_filter_stats_html(stats):
 
@@ -42,35 +36,24 @@ def build_filter_stats_html(stats):
 
     return html
 
-# def update_filter_section(results, location, tier):
-
-#     with open(report_path, "r", encoding="utf-8") as f:
-#         html = f.read()
-
-#     content_html = f"<h2>Filter {tier} - tier data results</h2>"
-
-#     for key, tickers in results.items():
-#         content_html += f"<h3>{key} ({len(tickers)})</h3><ul>"
-#         for t in tickers:
-#             content_html += f"<li>{t}</li>"
-#         content_html += "</ul>"
-
-#     html = html.replace(location, content_html)
-
-#     with open(report_path, "w", encoding="utf-8") as f:
-#         f.write(html)
-
-def update_filter_section(results, location, tier, stats):
-
-    stats_html = build_filter_stats_html(stats)
+def write_section(location, content_html):
 
     with open(report_path, "r", encoding="utf-8") as f:
         html = f.read()
 
+    html = html.replace(location, content_html)
+
+    with open(report_path, "w", encoding="utf-8") as f:
+        f.write(html)
+
+def update_filter_section(results, location, tier, stats):
+
+    # stats_html = build_filter_stats_html(stats)
+
     content_html = f"""
 <h2>Filter {tier} - tier data results</h2>
 
-{stats_html}
+{build_filter_stats_html(stats)}
 
 <table style="border-collapse:collapse; width:100%;">
 <tr style="background:#eee;">
@@ -97,18 +80,9 @@ def update_filter_section(results, location, tier, stats):
 
     content_html += "</table>"
     content_html += f"<p><b>Znaleziono: {len(results)} spółek</b></p>"
-
-    html = html.replace(location, content_html)
-
-    with open(report_path, "w", encoding="utf-8") as f:
-        f.write(html)
-
-
+    write_section(location, content_html)
 
 def update_2T_filter_section(results, location, tier):
-
-    with open(report_path, "r", encoding="utf-8") as f:
-        html = f.read()
 
     content_html = f"""
 <h2>Filter {tier} - intraday confirmation</h2>
@@ -138,18 +112,9 @@ def update_2T_filter_section(results, location, tier):
 
     content_html += "</table>"
     content_html += f"<p><b>Znaleziono: {len(results)} spółek</b></p>"
-
-    html = html.replace(location, content_html)
-
-    with open(report_path, "w", encoding="utf-8") as f:
-        f.write(html)
-
-
+    write_section(location, content_html)
 
 def update_3T_filter_section(results, location, tier):
-
-    with open(report_path, "r", encoding="utf-8") as f:
-        html = f.read()
 
     content_html = f"""
 <h2>Filter {tier} - breakout candidates</h2>
@@ -180,8 +145,4 @@ def update_3T_filter_section(results, location, tier):
 
     content_html += "</table>"
     content_html += f"<p><b>Znaleziono: {len(results)} spółek</b></p>"
-
-    html = html.replace(location, content_html)
-
-    with open(report_path, "w", encoding="utf-8") as f:
-        f.write(html)
+    write_section(location, content_html)
