@@ -4,6 +4,15 @@ from strategy_profiles import FILTERS
 from core.metrics import *
 from core.io_utils import *
 
+T1_COLUMNS = [
+    ("Ticker", lambda i,t,m: t),
+    ("20D Return", lambda i,t,m: f"{m['ret_20d']:.2%}"),
+    ("R² Trend", lambda i,t,m: f"{m['trend_r2']:.2f}"),
+    ("ATR %", lambda i,t,m: f"{m['atr_pct']:.2%}"),
+    ("Turnover", lambda i,t,m: f"{m['avg_turnover']:,.0f}"),
+    ("Compression", lambda i,t,m: f"{m['compression_ratio']:.2f}")
+]
+
 def calculate_metrics(df):
 
     if len(df) < 60:
@@ -86,7 +95,7 @@ def scan_directory():
 
 def main():
     results, stats = scan_directory()
-    update_filter_section(results, "<!-- T1_FILTER -->", "first", stats)
+    update_filter_section(results, "<!-- T1_FILTER -->", T1_COLUMNS, stats)
     save_tickers(results, CONFIG.txt_dir / "second_tier_list.txt")
     
 if __name__ == "__main__":

@@ -1,9 +1,18 @@
 import pandas as pd
 from core.metrics import *
 from core.io_utils import *
-from report.report_updater import update_2T_filter_section
+from report.report_updater import update_filter_section
 from config import CONFIG_15M as CONFIG
 from strategy_profiles import FILTERS
+
+T2_COLUMNS = [
+    ("Ticker", lambda i,t,m: t),
+    ("1D Return", lambda i,t,m: f"{m['ret_1d']:.2%}"),
+    ("R² Trend", lambda i,t,m: f"{m['trend_r2']:.2f}"),
+    ("Volume Ratio", lambda i,t,m: f"{m['vol_ratio']:.2f}"),
+    ("Compression", lambda i,t,m: f"{m['compression_ratio']:.2f}"),
+    ("Dist From High", lambda i,t,m: f"{m['dist_from_high']:.2%}")
+]
 
 def calculate_metrics(df):
 
@@ -26,6 +35,16 @@ def calculate_metrics(df):
 def scan_directory():
 
     candidates = []
+    fail_stats = {
+        "too_short_data": 0,
+        "ret": 0,
+        "trend": 0,
+        "volume": 0,
+        "compression": 0,
+        "distance": 0
+    }
+
+    total_scanned = 0
 
     for path in CONFIG.data_dir.glob("*.parquet"):
 
@@ -36,30 +55,48 @@ def scan_directory():
             metrics = calculate_metrics(df)
 
             if metrics is None:
+                fail_stats["too_short_data"] += 1
                 continue
 
-            # --- FILTR 15M ---
-            if (
-                metrics["ret_1d"] > FILTERS.tier2.min_ret_1d
-                and metrics["trend_r2"] > FILTERS.tier2.min_trend_r2
-                and metrics["vol_ratio"] > FILTERS.tier2.min_vol_ratio
-                and metrics["compression_ratio"] < FILTERS.tier2.max_compression
-                and metrics["dist_from_high"] > FILTERS.tier2.min_dist_from_high
-            ):
-                candidates.append((ticker, metrics))
+            if metrics["ret_1d"] <= FILTERS.tier2.min_ret_1d:
+                fail_stats["ret"] += 1
+                continue
+
+            if metrics["trend_r2"] <= FILTERS.tier2.min_trend_r2:
+                fail_stats["trend"] += 1
+                continue
+
+            if metrics["vol_ratio"] <= FILTERS.tier2.min_vol_ratio:
+                fail_stats["volume"] += 1
+                continue
+
+            if metrics["compression_ratio"] >= FILTERS.tier2.max_compression:
+                fail_stats["compression"] += 1
+                continue
+
+            if metrics["dist_from_high"] <= FILTERS.tier2.min_dist_from_high:
+                fail_stats["distance"] += 1
+                continue
+
+            candidates.append((ticker, metrics))
 
         except Exception as e:
             print(f"Błąd przy {ticker}: {e}")
 
-    return candidates
+    stats = {
+        "total": total_scanned,
+        "passed": len(candidates),
+        "fails": fail_stats
+    }
+
+    return candidates, stats
 
 
 def main():
 
-    results = scan_directory()
-    update_2T_filter_section(results, "<!-- T2_FILTER -->", "second")
+    results, stats = scan_directory()
+    update_filter_section(results, "<!-- T2_FILTER -->", T2_COLUMNS, stats)
     save_tickers(results, CONFIG.txt_dir / "third_tier_list.txt")
-
 
 if __name__ == "__main__":
     main()

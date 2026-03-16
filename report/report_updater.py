@@ -46,103 +46,34 @@ def write_section(location, content_html):
     with open(report_path, "w", encoding="utf-8") as f:
         f.write(html)
 
-def update_filter_section(results, location, tier, stats):
+def update_filter_section(results, location, columns, stats=None):
 
-    # stats_html = build_filter_stats_html(stats)
+    stats_html = build_filter_stats_html(stats)
 
     content_html = f"""
-<h2>Filter {tier} - tier data results</h2>
 
-{build_filter_stats_html(stats)}
+{stats_html}
 
 <table style="border-collapse:collapse; width:100%;">
 <tr style="background:#eee;">
-<th>Ticker</th>
-<th>20D Return</th>
-<th>R² Trend</th>
-<th>ATR %</th>
-<th>Turnover</th>
-<th>Compression</th>
-</tr>
 """
 
-    for ticker, m in results:
-        content_html += f"""
-<tr>
-<td>{ticker}</td>
-<td>{m['ret_20d']:.2%}</td>
-<td>{m['trend_r2']:.2f}</td>
-<td>{m['atr_pct']:.2%}</td>
-<td>{m['avg_turnover']:,.0f}</td>
-<td>{m['compression_ratio']:.2f}</td>
-</tr>
-"""
+    for col_name, _ in columns:
+        content_html += f"<th>{col_name}</th>"
 
-    content_html += "</table>"
-    content_html += f"<p><b>Znaleziono: {len(results)} spółek</b></p>"
-    write_section(location, content_html)
-
-def update_2T_filter_section(results, location, tier):
-
-    content_html = f"""
-<h2>Filter {tier} - intraday confirmation</h2>
-
-<table style="border-collapse:collapse; width:100%;">
-<tr style="background:#eee;">
-<th>Ticker</th>
-<th>1D Return</th>
-<th>R² Trend</th>
-<th>Volume Ratio</th>
-<th>Compression</th>
-<th>Dist From High</th>
-</tr>
-"""
-
-    for ticker, m in results:
-        content_html += f"""
-<tr>
-<td>{ticker}</td>
-<td>{m['ret_1d']:.2%}</td>
-<td>{m['trend_r2']:.2f}</td>
-<td>{m['vol_ratio']:.2f}</td>
-<td>{m['compression_ratio']:.2f}</td>
-<td>{m['dist_from_high']:.2%}</td>
-</tr>
-"""
-
-    content_html += "</table>"
-    content_html += f"<p><b>Znaleziono: {len(results)} spółek</b></p>"
-    write_section(location, content_html)
-
-def update_3T_filter_section(results, location, tier):
-
-    content_html = f"""
-<h2>Filter {tier} - breakout candidates</h2>
-
-<th>Rank</th>
-<th>Ticker</th>
-<th>Score</th>
-<th>Compression</th>
-<th>Dist From High</th>
-<th>Volume Ratio</th>
-<th>R² Trend</th>
-<th>ATR</th>
-"""
+    content_html += "</tr>"
 
     for i, (ticker, m) in enumerate(results, start=1):
-        content_html += f"""
-<tr>
-<td>{i}</td>
-<td>{ticker}</td>
-<td>{m['score']:.2f}</td>
-<td>{m['compression_ratio']:.2f}</td>
-<td>{m['dist_from_high']:.2%}</td>
-<td>{m['vol_ratio']:.2f}</td>
-<td>{m['trend_r2']:.2f}</td>
-<td>{m['atr14']:.3f}</td>
-</tr>
-"""
+
+        content_html += "<tr>"
+
+        for _, value_fn in columns:
+            value = value_fn(i, ticker, m)
+            content_html += f"<td>{value}</td>"
+
+        content_html += "</tr>"
 
     content_html += "</table>"
     content_html += f"<p><b>Znaleziono: {len(results)} spółek</b></p>"
+
     write_section(location, content_html)
