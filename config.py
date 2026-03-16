@@ -9,7 +9,8 @@ class DownloadConfig:
     interval: str
     period_days: int
     data_folder: str
-    tickers_file: str
+    downloaded_tickers_file: str
+    tickers_to_download: str
     last_update_file: str
     
     @property
@@ -18,7 +19,11 @@ class DownloadConfig:
 
     @property
     def tickers_path(self):
-        return BASE_DIR / "data" / "txt" / self.tickers_file
+        return BASE_DIR / "data" / "txt" / self.downloaded_tickers_file
+    
+    @property
+    def to_download(self):
+        return BASE_DIR / "data" / "txt" / self.tickers_to_download
 
     @property
     def last_update_path(self):
@@ -33,15 +38,17 @@ CONFIG_1D = DownloadConfig(
     interval="1d",
     period_days=365,
     data_folder="d1_parquet_gpw",
-    tickers_file="first_tier_list.txt",
+    downloaded_tickers_file="first_tier_list.txt",
+    tickers_to_download="filtered_T1_list.txt",
     last_update_file="last_update_d1.txt"
 )
 
 CONFIG_15M = DownloadConfig(
     interval="15m",
-    period_days=50,
+    period_days=40,
     data_folder="min15_parquet_gpw",
-    tickers_file="second_tier_list.txt",
+    downloaded_tickers_file="second_tier_list.txt",
+    tickers_to_download="filtered_T2_list.txt",
     last_update_file="last_update_min15.txt"
 )
 
@@ -49,18 +56,8 @@ CONFIG_5M = DownloadConfig(
     interval="5m",
     period_days=1,
     data_folder="min5_parquet_gpw",
-    tickers_file="third_tier_list.txt",
+    downloaded_tickers_file="third_tier_list.txt",
+    tickers_to_download="filtered_T3_list.txt",
     last_update_file="last_update_min5.txt"
 )
-
-# later to implement
-MIN_TURNOVER = 1_000_000  # PLN
-
-WEIGHTS = {
-    "rs": 0.4,
-    "volume": 0.2,
-    "trend": 0.2,
-    "compression": 0.2,
-}
-
 

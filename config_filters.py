@@ -7,13 +7,13 @@ class Tier1Filters:
     min_trend_r2: float = 0.02
     min_atr_pct: float = 0.005
     min_turnover: int = 5_000
-    max_compression: float = 0.5
+    max_compression: float = 0.65
 
 
 # -------- Tier 2 (15m confirmation) --------
 @dataclass
 class Tier2Filters:
-    min_ret_1d: float = 0.02
+    min_ret_1d: float = 0.01
     min_trend_r2: float = 0.4
     min_vol_ratio: float = 1.5
     max_compression: float = 0.7
@@ -35,3 +35,10 @@ class Tier3Filters:
 T1_FILTER = Tier1Filters()
 T2_FILTER = Tier2Filters()
 T3_FILTER = Tier3Filters()
+
+# WEIGHTS = {
+#     "rs": 0.4,
+#     "volume": 0.2,
+#     "trend": 0.2,
+#     "compression": 0.2,
+# }

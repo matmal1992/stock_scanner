@@ -1,4 +1,4 @@
-from core.io_utils import read_parquet
+from core.io_utils import read_parquet, save_tickers
 from report.report_updater import update_filter_section
 import pandas as pd
 
@@ -75,6 +75,8 @@ def run_scan(profile):
         profile["columns"],
         stats
     )
+
+    save_tickers(candidates, CONFIG.tickers_to_download)
 
 #  W przyszłości implementacja rankingu  
 # def calculate_score(m):

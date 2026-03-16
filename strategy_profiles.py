@@ -44,7 +44,7 @@ def metrics_t2(df):
         return {
             "ret_1d": return_pct(close, 26),
             "trend_r2": r2(close.tail(50)),
-            "vol_ratio": volume_ratio(volume, 10, 50),
+            "vol_ratio": volume_ratio(volume, 10, 40),
             "compression_ratio": compression_ratio(high, low, 5, 20),
             "dist_from_high": distance_from_high(close, 30)
         }
