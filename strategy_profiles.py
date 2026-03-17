@@ -96,6 +96,13 @@ def metrics_t3(df):
 
         last_range = high.iloc[-1] - low.iloc[-1]
         atr_sanity = last_range < 1.8 * atr14 if atr14 != 0 else False
+        
+        alert = (
+            breakout
+            and vol_ratio > 1.5
+            and trend > 0.2
+            and dist_high > -0.02
+        )
 
         return {
             "compression_ratio": compression,
@@ -104,7 +111,8 @@ def metrics_t3(df):
             "vol_ratio": vol_ratio,
             "trend_r2": trend,
             "atr14": atr14,
-            "atr_sanity": atr_sanity
+            "atr_sanity": atr_sanity,
+            "alert": alert
         }
 
     except Exception as e:

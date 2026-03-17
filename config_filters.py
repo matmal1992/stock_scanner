@@ -23,11 +23,12 @@ class Tier2Filters:
 # -------- Tier 3 (5m breakout trigger) --------
 @dataclass
 class Tier3Filters:
-    max_compression: float = 0.7
-    min_dist_from_high: float = -0.01
-    min_vol_ratio: float = 1.4
-    min_trend_r2: float = 0.3
-    atr_sanity_required: bool = True
+    # max_compression: float = 0.7
+    # min_dist_from_high: float = -0.01
+    # min_vol_ratio: float = 1.4
+    # min_trend_r2: float = 0.3
+    # atr_sanity_required: bool = True
+    pass
 
 
 # Instances used in project

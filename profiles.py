@@ -25,7 +25,8 @@ RULES_T3 = [
     ("min_dist_from_high", lambda m,f: m["dist_from_high"] >= f.min_dist_from_high),
     ("min_vol_ratio", lambda m,f: m["vol_ratio"] >= f.min_vol_ratio),
     ("min_trend_r2", lambda m,f: m["trend_r2"] >= f.min_trend_r2),
-    ("atr_sanity_required", lambda m,f: m["atr_sanity"] if f.atr_sanity_required else True)
+    ("atr_sanity_required", lambda m,f: m["atr_sanity"] if f.atr_sanity_required else True),
+    ("alert", lambda m,f: m["alert"])
 ]
 
 # -------- PROFILES --------
