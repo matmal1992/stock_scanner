@@ -21,6 +21,28 @@ def check_last_update(config):
     return False
 
 
+def should_skip_ticker(filepath, interval_minutes):
+    if not filepath.exists():
+        return False
+
+    try:
+        df = pd.read_parquet(filepath)
+
+        if df.empty:
+            return False
+
+        last_timestamp = df.index.max()
+        now = datetime.now()
+
+        if now - last_timestamp < timedelta(minutes=interval_minutes):
+            return True
+
+    except Exception as e:
+        print(f"Błąd przy sprawdzaniu {filepath}: {e}")
+
+    return False
+
+
 def load_tickers(path):
     if not path.exists():
         print(f"Brak pliku {path}")
@@ -40,18 +62,15 @@ def process_ticker(ticker, config, results):
         df = fetch_data(ticker, config)
 
         if not df.empty:
-            filename = ticker.replace(".", "_") + ".parquet"
+            filename = f"{ticker}.parquet"
             filepath = config.data_dir / filename
 
             if filepath.exists():
                 try:
-                    existing_df = pd.read_parquet(filepath)
-                    last_date = existing_df.index.max().date()
-                    today = datetime.today().date()
-
-                    if last_date >= today - timedelta(days=1):
-                        results["skipped"].append(ticker)
-                        return
+                    if config.interval in ["15m", "5m"]:
+                        if should_skip_ticker(filepath, config.interval_minutes):
+                            results["skipped"].append(ticker)
+                            return
                 except:
                     pass
 
@@ -73,9 +92,10 @@ def process_ticker(ticker, config, results):
         results["error"].append(ticker)
 
 
-def run_download(config, report_tag, report_stage, use_check=True):
-    if use_check and check_last_update(config):
-        return
+def run_download(config, report_tag, report_stage):
+    if config.interval in ["1d"]:
+        if check_last_update(config):
+            return
 
     tickers = load_tickers(config.tickers_path)
 

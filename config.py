@@ -12,6 +12,7 @@ class DownloadConfig:
     downloaded_tickers_file: str
     tickers_to_download: str
     last_update_file: str
+    interval_minutes: int
     
     @property
     def data_dir(self):
@@ -40,7 +41,8 @@ CONFIG_1D = DownloadConfig(
     data_folder="d1_parquet_gpw",
     downloaded_tickers_file="first_tier_list.txt",
     tickers_to_download="filtered_T1_list.txt",
-    last_update_file="last_update_d1.txt"
+    last_update_file="last_update_d1.txt",
+    interval_minutes=0
 )
 
 CONFIG_15M = DownloadConfig(
@@ -49,7 +51,8 @@ CONFIG_15M = DownloadConfig(
     data_folder="min15_parquet_gpw",
     downloaded_tickers_file="filtered_T1_list.txt",
     tickers_to_download="filtered_T2_list.txt",
-    last_update_file="last_update_min15.txt"
+    last_update_file="last_update_min15.txt",
+    interval_minutes=15
 )
 
 CONFIG_5M = DownloadConfig(
@@ -58,6 +61,7 @@ CONFIG_5M = DownloadConfig(
     data_folder="min5_parquet_gpw",
     downloaded_tickers_file="filtered_T2_list.txt",
     tickers_to_download="filtered_T3_list.txt",
-    last_update_file="last_update_min5.txt"
+    last_update_file="last_update_min5.txt",
+    interval_minutes=5
 )
 
