@@ -45,9 +45,9 @@ CONFIG_1D = DownloadConfig(
 
 CONFIG_15M = DownloadConfig(
     interval="15m",
-    period_days=40,
+    period_days=60,
     data_folder="min15_parquet_gpw",
-    downloaded_tickers_file="second_tier_list.txt",
+    downloaded_tickers_file="filtered_T1_list.txt",
     tickers_to_download="filtered_T2_list.txt",
     last_update_file="last_update_min15.txt"
 )
@@ -56,7 +56,7 @@ CONFIG_5M = DownloadConfig(
     interval="5m",
     period_days=1,
     data_folder="min5_parquet_gpw",
-    downloaded_tickers_file="third_tier_list.txt",
+    downloaded_tickers_file="filtered_T2_list.txt",
     tickers_to_download="filtered_T3_list.txt",
     last_update_file="last_update_min5.txt"
 )

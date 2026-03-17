@@ -42,7 +42,7 @@ def main():
         try:
             t = yf.Ticker(ticker)
 
-            # Próba pobrania 50 dni
+            # Próba pobrania 60 dni
             df = t.history(period=f"{CONFIG.period_days}d", interval=CONFIG.interval)
 
             if not df.empty:

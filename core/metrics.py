@@ -43,7 +43,7 @@ def compression_ratio(high, low, short=5, long=20):
     return range_short / range_long
 
 
-def volume_ratio(volume, short=10, long=50):
+def volume_ratio(volume, short=10, long=30):
 
     vol_short = volume.tail(short).mean()
     vol_long = volume.tail(long).mean()

@@ -32,7 +32,8 @@ T1_COLUMNS = [
 
 
 def metrics_t2(df):
-    if len(df) < 80:
+
+    if len(df) < 30:
         return None
 
     close = df["Close"]
@@ -41,15 +42,18 @@ def metrics_t2(df):
     volume = df["Volume"]
 
     try:
+        n = len(df)
+
         return {
-            "ret_1d": return_pct(close, 26),
-            "trend_r2": r2(close.tail(50)),
-            "vol_ratio": volume_ratio(volume, 10, 40),
+            "ret_1d": return_pct(close, min(26, n)),
+            "trend_r2": r2(close.tail(min(50, n))),
+            "vol_ratio": volume_ratio(volume, min(10, n), min(40, n)),
             "compression_ratio": compression_ratio(high, low, 5, 20),
-            "dist_from_high": distance_from_high(close, 30)
+            "dist_from_high": distance_from_high(close, min(30, n))
         }
-    except:
-        # W przyszłości zamiast zwracac none, dodać walidatory
+
+    except Exception as e:
+        print("metrics_t2 error:", e)
         return None
 
 
@@ -64,8 +68,9 @@ T2_COLUMNS = [
 
 
 def metrics_t3(df):
-    if len(df) < 150:
-        return None
+
+    # if len(df) < 20:
+    #     return None
 
     close = df["Close"]
     high = df["High"]
@@ -73,15 +78,21 @@ def metrics_t3(df):
     volume = df["Volume"]
 
     try:
-        compression = compression_ratio(high, low, 12, 48)
+        n = len(df)
+        print(f"T3 DEBUG: len={len(df)}")
+        compression = compression_ratio(
+            high, low,
+            min(12, n//4),
+            min(48, n)
+        )
 
-        session_high = high.iloc[-78:].max()
+        session_high = high.iloc[-min(78, n):].max()
         dist_high = close.iloc[-1] / session_high - 1
 
-        breakout = close.iloc[-1] > high.tail(20).max()
-        vol_ratio = volume_ratio(volume, 6, 30)
-        trend = r2(close.tail(30))
-        atr14 = atr(df, 14)
+        breakout = close.iloc[-1] > high.tail(min(20, n)).max()
+        vol_ratio = volume_ratio(volume, min(6, n), min(30, n))
+        trend = r2(close.tail(min(30, n)))
+        atr14 = atr(df, min(14, n))
 
         last_range = high.iloc[-1] - low.iloc[-1]
         atr_sanity = last_range < 1.8 * atr14 if atr14 != 0 else False
@@ -95,7 +106,9 @@ def metrics_t3(df):
             "atr14": atr14,
             "atr_sanity": atr_sanity
         }
-    except:
+
+    except Exception as e:
+        print("metrics_t3 error:", e)
         return None
 
 

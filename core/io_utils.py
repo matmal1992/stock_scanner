@@ -12,11 +12,24 @@ def read_parquet(path):
 
 def save_tickers(results, path):
 
+    if not results:
+        print("Brak tickerów do zapisania")
+    else:
+        print(f"Zapisywanie {len(results)} tickerów...")
+
     tickers = []
 
     for ticker, _ in results:
         ticker_yf = ticker.replace("_", ".")
         tickers.append(ticker_yf)
 
-    with open(path, "w", encoding="utf-8") as f:
-        f.write(",".join(tickers))
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    try:
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(",".join(tickers))
+
+        print(f"Zapisano do: {path}")
+
+    except Exception as e:
+        print(f"Błąd zapisu pliku {path}: {e}")

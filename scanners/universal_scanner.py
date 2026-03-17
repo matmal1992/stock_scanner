@@ -76,7 +76,7 @@ def run_scan(profile):
         stats
     )
 
-    save_tickers(candidates, CONFIG.tickers_to_download)
+    save_tickers(candidates, CONFIG.to_download)
 
 #  W przyszłości implementacja rankingu  
 # def calculate_score(m):

@@ -13,9 +13,9 @@ class Tier1Filters:
 # -------- Tier 2 (15m confirmation) --------
 @dataclass
 class Tier2Filters:
-    min_ret_1d: float = 0.01
-    min_trend_r2: float = 0.4
-    min_vol_ratio: float = 1.5
+    min_ret_1d: float = -0.02
+    min_trend_r2: float = 0.1
+    min_vol_ratio: float = 0.8
     max_compression: float = 0.7
     min_dist_from_high: float = -0.03
 
