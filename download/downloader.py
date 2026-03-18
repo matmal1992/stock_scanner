@@ -1,5 +1,5 @@
 import yfinance as yf
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from tqdm import tqdm
 import pandas as pd
 from report.report_updater import update_down_section
@@ -21,21 +21,62 @@ def check_last_update(config):
     return False
 
 
+# def should_skip_ticker(filepath, interval_minutes):
+#     if not filepath.exists():
+#         return False
+
+#     try:
+#         df = pd.read_parquet(filepath)
+
+#         if df.empty:
+#             return False
+
+#         last_timestamp = df.index.max()
+#         now = datetime.now(timezone.utc)
+
+#         if now - last_timestamp < timedelta(minutes=interval_minutes):
+#             return True
+
+#     except Exception as e:
+#         print(f"Błąd przy sprawdzaniu {filepath}: {e}")
+
+#     return False
+from datetime import datetime, timezone, timedelta
+import pandas as pd
+
 def should_skip_ticker(filepath, interval_minutes):
     if not filepath.exists():
+        print(f"[DEBUG] Plik nie istnieje: {filepath}")
         return False
 
     try:
         df = pd.read_parquet(filepath)
 
         if df.empty:
+            print(f"[DEBUG] Plik pusty: {filepath}")
             return False
 
-        last_timestamp = df.index.max()
-        now = datetime.now()
+        # Upewniamy się, że indeks jest DatetimeIndex z UTC
+        if not isinstance(df.index, pd.DatetimeIndex):
+            df.index = pd.to_datetime(df.index, utc=True)
+        elif df.index.tz is None:
+            df.index = df.index.tz_localize('UTC')
 
-        if now - last_timestamp < timedelta(minutes=interval_minutes):
+        last_timestamp = df.index.max()
+        now = pd.Timestamp.now(tz=last_timestamp.tz)
+        diff_minutes = (now - last_timestamp).total_seconds() / 60
+
+        # Debug info
+        print(f"[DEBUG] Plik: {filepath}")
+        print(f"[DEBUG] Last timestamp: {last_timestamp} (tz: {last_timestamp.tzinfo})")
+        print(f"[DEBUG] Now: {now}")
+        print(f"[DEBUG] Różnica czasu w minutach: {diff_minutes:.2f}")
+
+        if diff_minutes < interval_minutes:
+            print(f"[DEBUG] Pomijam ticker (różnica {diff_minutes:.2f} min < {interval_minutes} min)")
             return True
+        else:
+            print(f"[DEBUG] Pobieram ticker (różnica {diff_minutes:.2f} min >= {interval_minutes} min)")
 
     except Exception as e:
         print(f"Błąd przy sprawdzaniu {filepath}: {e}")
