@@ -1,11 +1,8 @@
 import yfinance as yf
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from tqdm import tqdm
 import pandas as pd
 from report.report_updater import update_down_section
-
-
-from datetime import datetime
 
 def is_T1_data_actual(config):
     if not config.last_update_path.exists():
