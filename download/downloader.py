@@ -5,7 +5,9 @@ import pandas as pd
 from report.report_updater import update_down_section
 
 
-def check_last_update(config, interval_minutes=None):
+from datetime import datetime
+
+def is_T1_data_actual(config):
     if not config.last_update_path.exists():
         return False
 
@@ -17,27 +19,13 @@ def check_last_update(config, interval_minutes=None):
             return False
 
         saved_datetime = datetime.strptime(saved_datetime_str, "%Y-%m-%d %H:%M:%S")
+        today = datetime.now().date()
 
-        now = datetime.now()
-        diff = now - saved_datetime
-
-        if interval_minutes is None:
-            if saved_datetime.date() == now.date():
-                print("\nDane D1 były już dziś aktualizowane — pomijam.\n")
-                return True
-
-        else:
-            diff_minutes = diff.total_seconds() / 60
-
-            print(f"[DEBUG] Ostatnia aktualizacja: {saved_datetime}")
-            print(f"[DEBUG] Minuty od ostatniego run: {diff_minutes:.2f}")
-
-            if diff_minutes < interval_minutes:
-                print(f"\nPomijam — ostatni run {diff_minutes:.2f} min temu (< {interval_minutes})\n")
-                return True
+        if saved_datetime.date() == today:
+            return True
 
     except Exception as e:
-        print(f"Błąd przy check_last_update: {e}")
+        print(f"Błąd przy sprawdzaniu T1 update: {e}")
 
     return False
 
@@ -155,9 +143,9 @@ def process_ticker(ticker, config, results):
 
 
 def run_download(config, report_tag, report_stage):
-    if config.interval in ["1d"]:
-        if check_last_update(config):
-            return
+    if config.interval == "1d" and is_T1_data_actual(config):
+        print("Skip D1 download — already updated today")
+        return
 
     tickers = load_tickers(config.tickers_path)
 
