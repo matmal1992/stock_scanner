@@ -5,19 +5,40 @@ import pandas as pd
 from report.report_updater import update_down_section
 
 
-def check_last_update(config):
-    today_str = datetime.now().strftime("%Y-%m-%d")
+def check_last_update(config, interval_minutes=None):
+    if not config.last_update_path.exists():
+        return False
 
-    if config.last_update_path.exists():
+    try:
         with open(config.last_update_path, "r") as f:
-            saved_datetime = f.read().strip()
+            saved_datetime_str = f.read().strip()
 
-        if saved_datetime:
-            saved_date = saved_datetime.split(" ")[0]
+        if not saved_datetime_str:
+            return False
 
-            if saved_date == today_str:
-                print("\nDane były już dziś aktualizowane — pomijam pobieranie.\n")
+        saved_datetime = datetime.strptime(saved_datetime_str, "%Y-%m-%d %H:%M:%S")
+
+        now = datetime.now()
+        diff = now - saved_datetime
+
+        if interval_minutes is None:
+            if saved_datetime.date() == now.date():
+                print("\nDane D1 były już dziś aktualizowane — pomijam.\n")
                 return True
+
+        else:
+            diff_minutes = diff.total_seconds() / 60
+
+            print(f"[DEBUG] Ostatnia aktualizacja: {saved_datetime}")
+            print(f"[DEBUG] Minuty od ostatniego run: {diff_minutes:.2f}")
+
+            if diff_minutes < interval_minutes:
+                print(f"\nPomijam — ostatni run {diff_minutes:.2f} min temu (< {interval_minutes})\n")
+                return True
+
+    except Exception as e:
+        print(f"Błąd przy check_last_update: {e}")
+
     return False
 
 
