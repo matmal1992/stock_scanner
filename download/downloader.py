@@ -77,27 +77,56 @@ def fetch_data(ticker, config):
 
 def process_ticker(ticker, config, results):
     try:
-        df = fetch_data(ticker, config)
+        filename = f"{ticker}.parquet"
+        filepath = config.data_dir / filename
 
+        # 1. skip dla intraday
+        if config.interval in ["15m", "5m"]:
+            if should_skip_ticker(filepath, config.interval_minutes):
+                results["skipped"].append(ticker)
+                return
+
+        t = yf.Ticker(ticker)
+
+        # 2. brak pliku → full download
+        if not filepath.exists():
+            df = t.history(period=f"{config.period_days}d", interval=config.interval)
+
+        else:
+            df_existing = pd.read_parquet(filepath)
+
+            if df_existing.empty:
+                df = t.history(period=f"{config.period_days}d", interval=config.interval)
+
+            else:
+                # 3. incremental update
+                last_ts = df_existing.index.max()
+
+                if config.interval == "1d":
+                    start = last_ts + timedelta(days=1)
+                elif config.interval == "15m":
+                    start = last_ts + timedelta(minutes=15)
+                elif config.interval == "5m":
+                    start = last_ts + timedelta(minutes=5)
+                else:
+                    start = last_ts
+
+                df_new = t.history(start=start, interval=config.interval)
+
+                if not df_new.empty:
+                    df = pd.concat([df_existing, df_new])
+                    df = df[~df.index.duplicated(keep="last")]
+                    df.sort_index(inplace=True)
+                else:
+                    df = df_existing
+
+        # 4. zapis
         if not df.empty:
-            filename = f"{ticker}.parquet"
-            filepath = config.data_dir / filename
-
-            if filepath.exists():
-                try:
-                    if config.interval in ["15m", "5m"]:
-                        if should_skip_ticker(filepath, config.interval_minutes):
-                            results["skipped"].append(ticker)
-                            return
-                except:
-                    pass
-
             df.to_parquet(filepath)
             results["updated"].append(ticker)
             return
 
-        # Jeśli pusto → sprawdzamy MAX
-        t = yf.Ticker(ticker)
+        # 5. fallback diagnostyczny
         df_max = t.history(period="max", interval="1d")
 
         if df_max.empty:
