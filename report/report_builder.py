@@ -10,7 +10,7 @@ def create_empty_report():
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Stock Scanner Report</title>
+<title>Stock Scanner Report</title> 
 
 <style>
 body {{
@@ -58,6 +58,23 @@ body {{
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}}
+
+th, td {{
+    padding: 6px 10px;
+}}
+
+th {{
+    text-align: right;
+}}
+
+td {{
+    text-align: right;
+}}
+
+th:first-child,
+td:first-child {{
+    text-align: left;
 }}
 </style>
 

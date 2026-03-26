@@ -3,6 +3,8 @@ import pandas as pd
 import os
 from datetime import datetime, timedelta
 
+#Upewnić się czy wszystko tutaj jest w aktualnej implementacji. Jak nie to out
+
 DATA_FOLDER = "1d_gpw_data"
 PERIOD = "1y"
 INTERVAL = "1d"

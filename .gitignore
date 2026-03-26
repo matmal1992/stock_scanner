@@ -9,4 +9,5 @@ __pycache__/
 # data files
 *.parquet
 *.txt
+!first_tier_list.txt
 *.html
