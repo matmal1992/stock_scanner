@@ -33,3 +33,18 @@ def save_tickers(results, path):
 
     except Exception as e:
         print(f"Błąd zapisu pliku {path}: {e}")
+
+
+def load_tickers(txt_path):
+    tickers = []
+
+    with open(txt_path, "r") as f:
+        for line in f:
+            parts = line.strip().split(",")
+
+            for p in parts:
+                t = p.strip()
+                if t:
+                    tickers.append(t)
+
+    return tickers

@@ -1,4 +1,5 @@
-from core.io_utils import read_parquet, save_tickers
+from core.io_utils import read_parquet, save_tickers, load_tickers
+from download.downloader import should_skip_ticker
 from report.report_updater import update_filter_section
 import pandas as pd
 
@@ -11,10 +12,14 @@ def run_scan(profile):
     fail_stats = {}
     total_scanned = 0
 
-    for path in CONFIG.data_dir.glob("*.parquet"):
+    tickers = load_tickers(CONFIG.tickers_path)
 
-        ticker = path.stem
+    for ticker in tickers:
+        path = CONFIG.data_dir / f"{ticker}.parquet"
         total_scanned += 1
+
+        if not path.exists():
+            continue
 
         try:
             df = read_parquet(path)
