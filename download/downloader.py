@@ -1,8 +1,11 @@
-import yfinance as yf
 from datetime import datetime, timedelta
-from tqdm import tqdm
+
 import pandas as pd
+import yfinance as yf
+from tqdm import tqdm
+
 from report.report_updater import update_down_section
+
 
 def is_T1_data_actual(config):
     if not config.last_update_path.exists():
@@ -41,7 +44,7 @@ def should_skip_ticker(filepath, interval_minutes):
         if not isinstance(df.index, pd.DatetimeIndex):
             df.index = pd.to_datetime(df.index, utc=True)
         elif df.index.tz is None:
-            df.index = df.index.tz_localize('UTC')
+            df.index = df.index.tz_localize("UTC")
 
         last_timestamp = df.index.max()
         now = pd.Timestamp.now(tz=last_timestamp.tz)
@@ -93,7 +96,9 @@ def process_ticker(ticker, config, results):
             df_existing = pd.read_parquet(filepath)
 
             if df_existing.empty:
-                df = t.history(period=f"{config.period_days}d", interval=config.interval)
+                df = t.history(
+                    period=f"{config.period_days}d", interval=config.interval
+                )
 
             else:
                 # 3. incremental update
@@ -148,7 +153,7 @@ def run_download(config, report_tag, report_stage):
         "skipped": [],
         "short_history": [],
         "delisted_or_invalid": [],
-        "error": []
+        "error": [],
     }
 
     for ticker in tqdm(tickers, desc=f"Pobieranie {config.interval}", unit="ticker"):

@@ -1,6 +1,7 @@
-import pandas as pd
-import matplotlib.pyplot as plt
 import os
+
+import matplotlib.pyplot as plt
+import pandas as pd
 
 parquet_file = "CRI_WA.parquet"
 
@@ -35,22 +36,23 @@ plt.grid(True)
 step = 20
 plt.xticks(
     ticks=range(0, len(df), 20),
-    labels=df.index.strftime('%Y-%m-%d')[::step],
-    rotation=45
+    labels=df.index.strftime("%Y-%m-%d")[::step],
+    rotation=45,
 )
 
 ax = plt.gca()
 
+
 def format_coord(x, y):
     x = int(round(x))
     if 0 <= x < len(df):
-        date = df.index[x].strftime('%Y-%m-%d')
+        date = df.index[x].strftime("%Y-%m-%d")
         return f"Data: {date} | Cena: {y:.2f}"
     else:
         return ""
+
 
 ax.format_coord = format_coord
 
 plt.tight_layout()
 plt.show()
-

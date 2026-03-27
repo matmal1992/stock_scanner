@@ -1,13 +1,15 @@
-import yfinance as yf
-import pandas as pd
 import os
 from datetime import datetime, timedelta
 
-#Upewnić się czy wszystko tutaj jest w aktualnej implementacji. Jak nie to out
+import pandas as pd
+import yfinance as yf
+
+# Upewnić się czy wszystko tutaj jest w aktualnej implementacji. Jak nie to out
 
 DATA_FOLDER = "1d_gpw_data"
 PERIOD = "1y"
 INTERVAL = "1d"
+
 
 def update_ticker(ticker, file_path):
     print(f"\n=== {ticker} ===")
@@ -40,8 +42,7 @@ def update_ticker(ticker, file_path):
     print("Dane nieaktualne. Aktualizuję...")
 
     new_data = yf.Ticker(ticker).history(
-        start=last_date + timedelta(days=1),
-        interval=INTERVAL
+        start=last_date + timedelta(days=1), interval=INTERVAL
     )
 
     if not new_data.empty:
@@ -54,6 +55,7 @@ def update_ticker(ticker, file_path):
     else:
         print("Brak nowych danych.")
         return df_existing
+
 
 for file in os.listdir(DATA_FOLDER):
     if file.endswith(".parquet"):

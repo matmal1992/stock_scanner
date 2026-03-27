@@ -1,10 +1,12 @@
-import yfinance as yf
-import pandas as pd
 import os
 from datetime import datetime, timedelta
 
+import pandas as pd
+import yfinance as yf
+
 ticker = "CRI.WA"
 file_name = "CRI_WA.parquet"
+
 
 def download_full_history():
     print("Pobieram pełną historię...")
@@ -12,6 +14,7 @@ def download_full_history():
     df.to_parquet(file_name)
     print("Plik zapisany.")
     return df
+
 
 if not os.path.exists(file_name):
     df = download_full_history()
@@ -34,8 +37,7 @@ else:
         else:
             print("Dane nieaktualne. Aktualizuję...")
             new_data = yf.Ticker(ticker).history(
-                start=last_date + timedelta(days=1),
-                interval="1d"
+                start=last_date + timedelta(days=1), interval="1d"
             )
 
             if not new_data.empty:

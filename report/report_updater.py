@@ -1,5 +1,6 @@
 from config import report_path
 
+
 def update_down_section(results, location, tier):
 
     content_html = f"<h2>Download {tier} - tier data results</h2>"
@@ -11,6 +12,7 @@ def update_down_section(results, location, tier):
         content_html += "</ul>"
 
     write_section(location, content_html)
+
 
 def build_filter_stats_html(stats):
 
@@ -36,6 +38,7 @@ def build_filter_stats_html(stats):
 
     return html
 
+
 def write_section(location, content_html):
 
     with open(report_path, "r", encoding="utf-8") as f:
@@ -45,6 +48,7 @@ def write_section(location, content_html):
 
     with open(report_path, "w", encoding="utf-8") as f:
         f.write(html)
+
 
 def update_filter_section(results, location, columns, stats=None):
 

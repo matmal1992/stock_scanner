@@ -1,7 +1,9 @@
-from core.io_utils import read_parquet, save_tickers, load_tickers
+import pandas as pd
+
+from core.io_utils import load_tickers, read_parquet, save_tickers
 from download.downloader import should_skip_ticker
 from report.report_updater import update_filter_section
-import pandas as pd
+
 
 def run_scan(profile):
 
@@ -68,22 +70,14 @@ def run_scan(profile):
     if profile.get("rank"):
         candidates.sort(key=lambda x: x[1]["score"], reverse=True)
 
-    stats = {
-        "total": total_scanned,
-        "passed": len(candidates),
-        "fails": fail_stats
-    }
+    stats = {"total": total_scanned, "passed": len(candidates), "fails": fail_stats}
 
-    update_filter_section(
-        candidates,
-        profile["report_slot"],
-        profile["columns"],
-        stats
-    )
+    update_filter_section(candidates, profile["report_slot"], profile["columns"], stats)
 
     save_tickers(candidates, CONFIG.to_download)
 
-#  W przyszłości implementacja rankingu  
+
+#  W przyszłości implementacja rankingu
 # def calculate_score(m):
 
 #     score = (

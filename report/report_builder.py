@@ -1,5 +1,7 @@
 from datetime import datetime
+
 from config import report_path
+
 
 def create_empty_report():
 

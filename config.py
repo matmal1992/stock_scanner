@@ -4,6 +4,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent
 report_path = BASE_DIR / "report.html"
 
+
 @dataclass
 class DownloadConfig:
     interval: str
@@ -13,7 +14,7 @@ class DownloadConfig:
     tickers_to_download: str
     last_update_file: str
     interval_minutes: int
-    
+
     @property
     def data_dir(self):
         return BASE_DIR / "data" / "parquet" / self.data_folder
@@ -21,7 +22,7 @@ class DownloadConfig:
     @property
     def tickers_path(self):
         return BASE_DIR / "data" / "txt" / self.downloaded_tickers_file
-    
+
     @property
     def to_download(self):
         return BASE_DIR / "data" / "txt" / self.tickers_to_download
@@ -29,11 +30,11 @@ class DownloadConfig:
     @property
     def last_update_path(self):
         return BASE_DIR / "data" / "txt" / self.last_update_file
-    
+
     @property
     def txt_dir(self):
         return BASE_DIR / "data" / "txt"
-    
+
 
 CONFIG_1D = DownloadConfig(
     interval="1d",
@@ -42,7 +43,7 @@ CONFIG_1D = DownloadConfig(
     downloaded_tickers_file="first_tier_list.txt",
     tickers_to_download="filtered_T1_list.txt",
     last_update_file="last_update_d1.txt",
-    interval_minutes=0
+    interval_minutes=0,
 )
 
 CONFIG_15M = DownloadConfig(
@@ -52,7 +53,7 @@ CONFIG_15M = DownloadConfig(
     downloaded_tickers_file="filtered_T1_list.txt",
     tickers_to_download="filtered_T2_list.txt",
     last_update_file="last_update_min15.txt",
-    interval_minutes=15
+    interval_minutes=15,
 )
 
 CONFIG_5M = DownloadConfig(
@@ -62,6 +63,5 @@ CONFIG_5M = DownloadConfig(
     downloaded_tickers_file="filtered_T2_list.txt",
     tickers_to_download="filtered_T3_list.txt",
     last_update_file="last_update_min5.txt",
-    interval_minutes=5
+    interval_minutes=5,
 )
-

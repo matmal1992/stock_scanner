@@ -1,9 +1,9 @@
-import pandas as pd
 import numpy as np
-
+import pandas as pd
 from app.metrics.trend import r2
 
 # miejsce na definicję poszczególnych skanerów, parametrów, rynków, etc
+
 
 class MomentumScanner:
     def __init__(self, provider):
@@ -38,13 +38,15 @@ class MomentumScanner:
             # compression
             vol = close.pct_change().tail(30).std()
 
-            rows.append({
-                "ticker": ticker,
-                "return": ret,
-                "volume_ratio": vol_ratio,
-                "trend": trend_score,
-                "volatility": vol,
-            })
+            rows.append(
+                {
+                    "ticker": ticker,
+                    "return": ret,
+                    "volume_ratio": vol_ratio,
+                    "trend": trend_score,
+                    "volatility": vol,
+                }
+            )
 
         df = pd.DataFrame(rows)
 

@@ -3,6 +3,7 @@ import pandas as pd
 
 # miejsce na definicję trendów, parametrów, np pod scalping, cfd, swing lub long term
 
+
 def r2(series):
     y = series.values
     x = np.arange(len(y))
@@ -28,7 +29,7 @@ def atr(df, period=14):
 
     tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
     atr = tr.rolling(period).mean()
-    
+
     return atr.iloc[-1]
 
 

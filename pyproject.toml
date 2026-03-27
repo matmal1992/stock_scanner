@@ -1,3 +1,21 @@
+[tool.poetry]
+name = "stock scanner"
+version = "0.1.0"
+description = "GPW short swing trading app"
+authors = ["Mateusz <mateusz.malek.programista@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+[tool.poetry.group.dev.dependencies]
+black = "*"
+isort = "*"
+flake8 = "*"
+mypy = "*"
+pytest = "*"
+coverage = "*"
+pre-commit = "*"
+
 [tool.black]
 line-length = 88
 
