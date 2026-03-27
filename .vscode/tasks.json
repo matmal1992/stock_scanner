@@ -20,7 +20,7 @@
         {
             "label": "Lint",
             "type": "shell",
-            "command": "poetry run flake8 . && poetry run mypy .",
+            "command": "poetry run flake8 .; poetry run mypy .",
             "problemMatcher": []
         },
         {
