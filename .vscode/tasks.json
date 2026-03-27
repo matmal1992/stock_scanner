@@ -1,6 +1,22 @@
 {
     "version": "2.0.0",
     "tasks": [
+         {
+            "label": "Set up environment",
+            "type": "shell",
+            "command": "poetry install && poetry add pandas numpy yfinance tqdm pyarrow pyside6 && poetry add --dev black isort flake8 mypy pytest coverage pre-commit",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [],
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            }
+        },
         {
             "label": "Run main.py",
             "type": "shell",
