@@ -1,4 +1,11 @@
-from core.metrics import *
+from stock_scanner.core.metrics import (
+    atr,
+    compression_ratio,
+    distance_from_high,
+    r2,
+    return_pct,
+    volume_ratio,
+)
 
 
 def metrics_t1(df):
@@ -18,7 +25,8 @@ def metrics_t1(df):
             "avg_turnover": (close * volume).rolling(20).mean().iloc[-1],
             "compression_ratio": compression_ratio(high, low, 5, 20),
         }
-    except:
+    except (IndexError, ZeroDivisionError, ValueError) as e:
+        print("metrics_t1 error:", e)
         return None
 
 

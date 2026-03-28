@@ -1,8 +1,6 @@
 import pandas as pd
-
-from core.io_utils import load_tickers, read_parquet, save_tickers
-from download.downloader import should_skip_ticker
-from report.report_updater import update_filter_section
+from stock_scanner.core.io_utils import load_tickers, read_parquet, save_tickers
+from stock_scanner.report.report_updater import update_filter_section
 
 
 def run_scan(profile):

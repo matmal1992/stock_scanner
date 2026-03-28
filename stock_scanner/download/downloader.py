@@ -2,9 +2,8 @@ from datetime import datetime, timedelta
 
 import pandas as pd
 import yfinance as yf
-from tqdm import tqdm
-
 from report.report_updater import update_down_section
+from tqdm import tqdm
 
 
 def is_T1_data_actual(config):

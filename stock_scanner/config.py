@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from pathlib import Path
 
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(__file__).resolve().parent.parent
 report_path = BASE_DIR / "report.html"
 
 

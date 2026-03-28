@@ -1,9 +1,11 @@
-from stock_scanner.stock_scanner.config import CONFIG_1D, CONFIG_5M, CONFIG_15M
-from download.downloader import run_download
+# from stock_scanner.download.downloader import run_download
+from stock_scanner.report.report_builder import create_empty_report
+from stock_scanner.scanners.universal_scanner import run_scan
+
 from stock_scanner.profiles import PROFILE_T1, PROFILE_T2, PROFILE_T3
-from report.report_builder import create_empty_report
-from scanners.universal_scanner import run_scan
-from stock_scanner.strategy_profiles import *
+from stock_scanner.config import CONFIG_1D, CONFIG_5M, CONFIG_15M
+
+# from stock_scanner.strategy_profiles import *
 
 
 def main():

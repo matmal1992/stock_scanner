@@ -1,4 +1,4 @@
-from config import report_path
+from stock_scanner.config import report_path
 
 
 def update_down_section(results, location, tier):

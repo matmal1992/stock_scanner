@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from config import report_path
+from stock_scanner.config import report_path
 
 
 def create_empty_report():
@@ -12,7 +12,7 @@ def create_empty_report():
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Stock Scanner Report</title> 
+<title>Stock Scanner Report</title>
 
 <style>
 body {{
