@@ -1,7 +1,6 @@
 # profiles.py
-from stock_scanner.config_filters import T1_FILTER, T2_FILTER, T3_FILTER
-
 from stock_scanner.config import CONFIG_1D, CONFIG_5M, CONFIG_15M
+from stock_scanner.config_filters import T1_FILTER, T2_FILTER, T3_FILTER
 from stock_scanner.strategy_profiles import (
     T1_COLUMNS,
     T2_COLUMNS,
