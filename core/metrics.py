@@ -1,7 +1,8 @@
 import numpy as np
 import pandas as pd
 
-# miejsce na definicję trendów, parametrów, np pod scalping, cfd, swing lub long term
+# miejsce na definicję trendów, parametrów,
+# np pod scalping, cfd, swing lub long term
 
 
 def r2(series):

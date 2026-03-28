@@ -1,11 +1,16 @@
 [tool.poetry]
-name = "stock scanner"
+name = "stock_scanner"
 version = "0.1.0"
 description = "GPW short swing trading app"
 authors = ["Mateusz <mateusz.malek.programista@gmail.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "^3.13"
+pandas = "*"
+numpy = "*"
+yfinance = "*"
+tqdm = "*"
+pyarrow = "*"
 
 [tool.poetry.group.dev.dependencies]
 black = "*"

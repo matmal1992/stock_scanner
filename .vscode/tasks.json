@@ -2,9 +2,9 @@
     "version": "2.0.0",
     "tasks": [
          {
-            "label": "Install dependencies",
+            "label": "Set up environment",
             "type": "shell",
-            "command": "poetry install || (poetry add pandas numpy yfinance tqdm pyarrow pyside6 && poetry add --dev black isort flake8 mypy pytest coverage pre-commit)",
+            "command": "poetry install",
             "problemMatcher": [],
             "presentation": {
                 "reveal": "always",
