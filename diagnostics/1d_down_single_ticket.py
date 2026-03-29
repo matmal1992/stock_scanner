@@ -8,7 +8,7 @@ ticker = "CRI.WA"
 file_name = "CRI_WA.parquet"
 
 
-def download_full_history():
+def download_full_history() -> pd.DataFrame:
     print("Pobieram pełną historię...")
     df = yf.Ticker(ticker).history(period="1y", interval="1d")
     df.to_parquet(file_name)

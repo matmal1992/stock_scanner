@@ -1,7 +1,9 @@
+from pathlib import Path
+
 import pandas as pd
 
 
-def read_parquet(path):
+def read_parquet(path: Path) -> pd.DataFrame | None:
 
     try:
         return pd.read_parquet(path)
@@ -10,14 +12,14 @@ def read_parquet(path):
         return None
 
 
-def save_tickers(results, path):
+def save_tickers(results: list[tuple[str, None]], path: Path) -> None:
 
     if not results:
         print("Brak tickerów do zapisania")
     else:
         print(f"Zapisywanie {len(results)} tickerów...")
 
-    tickers = []
+    tickers: list[str] = []
 
     for ticker, _ in results:
         ticker_yf = ticker.replace("_", ".")
@@ -35,8 +37,8 @@ def save_tickers(results, path):
         print(f"Błąd zapisu pliku {path}: {e}")
 
 
-def load_tickers(txt_path):
-    tickers = []
+def load_tickers(txt_path: Path) -> list[str]:
+    tickers: list[str] = []
 
     with open(txt_path, "r") as f:
         for line in f:

@@ -1,7 +1,11 @@
+from matplotlib import typing
+
 from stock_scanner.config import report_path
 
 
-def update_down_section(results, location, tier):
+def update_down_section(
+    results: dict[str, list[str]], location: str, tier: str
+) -> None:
 
     content_html = f"<h2>Download {tier} - tier data results</h2>"
 
@@ -14,7 +18,7 @@ def update_down_section(results, location, tier):
     write_section(location, content_html)
 
 
-def build_filter_stats_html(stats):
+def build_filter_stats_html(stats: dict | None) -> str:
 
     if stats is None:
         return ""
@@ -39,7 +43,7 @@ def build_filter_stats_html(stats):
     return html
 
 
-def write_section(location, content_html):
+def write_section(location: str, content_html: str) -> None:
 
     with open(report_path, "r", encoding="utf-8") as f:
         html = f.read()
@@ -50,11 +54,16 @@ def write_section(location, content_html):
         f.write(html)
 
 
-def update_filter_section(results, location, columns, stats=None):
+def update_filter_section(
+    results: list[tuple[str, dict]],
+    location: str,
+    columns: list[tuple[str, typing.Callable]],
+    stats: dict | None = None,
+) -> None:
 
     stats_html = build_filter_stats_html(stats)
 
-    content_html = f"""
+    content_html: str = f"""
 
 {stats_html}
 

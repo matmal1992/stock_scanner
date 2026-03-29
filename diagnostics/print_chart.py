@@ -43,7 +43,7 @@ plt.xticks(
 ax = plt.gca()
 
 
-def format_coord(x, y):
+def format_coord(x: float, y: float) -> str:
     x = int(round(x))
     if 0 <= x < len(df):
         date = df.index[x].strftime("%Y-%m-%d")

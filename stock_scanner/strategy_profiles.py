@@ -1,3 +1,5 @@
+import pandas as pd
+
 from stock_scanner.core.metrics import (
     atr,
     compression_ratio,
@@ -8,7 +10,7 @@ from stock_scanner.core.metrics import (
 )
 
 
-def metrics_t1(df):
+def metrics_t1(df: pd.DataFrame) -> dict[str, float] | None:
     if len(df) < 60:
         return None
 
@@ -41,7 +43,7 @@ T1_COLUMNS = [
 ]
 
 
-def metrics_t2(df):
+def metrics_t2(df: pd.DataFrame) -> dict[str, float] | None:
 
     if len(df) < 30:
         return None
@@ -77,7 +79,7 @@ T2_COLUMNS = [
 ]
 
 
-def metrics_t3(df):
+def metrics_t3(df: pd.DataFrame) -> dict[str, float] | None:
 
     # if len(df) < 20:
     #     return None

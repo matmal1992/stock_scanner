@@ -11,10 +11,10 @@ PERIOD = "1y"
 INTERVAL = "1d"
 
 
-def update_ticker(ticker, file_path):
+def update_ticker(ticker: str, file_path: str) -> pd.DataFrame:
     print(f"\n=== {ticker} ===")
 
-    def download_full_history():
+    def download_full_history() -> pd.DataFrame:
         print("Pobieram pełną historię...")
         df = yf.Ticker(ticker).history(period=PERIOD, interval=INTERVAL)
         df.to_parquet(file_path)

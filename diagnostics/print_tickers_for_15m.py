@@ -6,7 +6,7 @@ import pandas as pd
 DATA_DIR = Path("1d_gpw_data")
 
 
-def r2(series):
+def r2(series: pd.Series) -> float:
     y = series.values
     x = np.arange(len(y))
     slope, intercept = np.polyfit(x, y, 1)
@@ -18,7 +18,7 @@ def r2(series):
     return 1 - ss_res / ss_tot if ss_tot != 0 else 0
 
 
-def calculate_metrics(df):
+def calculate_metrics(df: pd.DataFrame) -> dict[str, float] | None:
 
     if len(df) < 60:
         return None
@@ -60,7 +60,7 @@ def calculate_metrics(df):
     }
 
 
-def scan_directory():
+def scan_directory() -> list[tuple[str, dict[str, float]]]:
 
     candidates = []
 

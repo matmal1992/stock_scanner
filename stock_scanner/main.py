@@ -4,7 +4,7 @@ from stock_scanner.profiles import PROFILE_T1, PROFILE_T2, PROFILE_T3
 from stock_scanner.scanners.universal_scanner import run_scan
 
 
-def main():
+def main() -> None:
     print("===== STAGE 1: DOWNLOAD first tier tickers =====")
     run_download(CONFIG_1D, "<!-- T1_DOWNLOAD -->", "first")
 

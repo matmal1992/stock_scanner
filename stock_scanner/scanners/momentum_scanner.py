@@ -1,17 +1,18 @@
 import pandas as pd
 from app.metrics.trend import r2
+from numpy import typing
 
 # miejsce na definicję poszczególnych skanerów, parametrów, rynków, etc
 
 
 class MomentumScanner:
-    def __init__(self, provider):
+    def __init__(self, provider: typing.Any) -> None:
         self.provider = provider
 
-    def scan(self, tickers):
+    def scan(self, tickers: list[str]) -> pd.DataFrame:
         data = self.provider.download(tickers)
 
-        rows = []
+        rows: list[dict] = []
 
         for ticker, df in data.items():
 

@@ -3,7 +3,7 @@ from datetime import datetime
 from stock_scanner.config import report_path
 
 
-def create_empty_report():
+def create_empty_report() -> str:
 
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -155,4 +155,4 @@ function openTab(tabId) {{
     with open(report_path, "w", encoding="utf-8") as f:
         f.write(html)
 
-    return report_path
+    return str(report_path)

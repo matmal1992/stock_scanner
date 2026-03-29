@@ -16,23 +16,23 @@ class DownloadConfig:
     interval_minutes: int
 
     @property
-    def data_dir(self):
+    def data_dir(self) -> Path:
         return BASE_DIR / "data" / "parquet" / self.data_folder
 
     @property
-    def tickers_path(self):
+    def tickers_path(self) -> Path:
         return BASE_DIR / "data" / "txt" / self.downloaded_tickers_file
 
     @property
-    def to_download(self):
+    def to_download(self) -> Path:
         return BASE_DIR / "data" / "txt" / self.tickers_to_download
 
     @property
-    def last_update_path(self):
+    def last_update_path(self) -> Path:
         return BASE_DIR / "data" / "txt" / self.last_update_file
 
     @property
-    def txt_dir(self):
+    def txt_dir(self) -> Path:
         return BASE_DIR / "data" / "txt"
 
 
