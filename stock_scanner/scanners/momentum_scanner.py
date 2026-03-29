@@ -1,12 +1,13 @@
+from typing import Any
+
 import pandas as pd
 from app.metrics.trend import r2
-from numpy import typing
 
 # miejsce na definicję poszczególnych skanerów, parametrów, rynków, etc
 
 
 class MomentumScanner:
-    def __init__(self, provider: typing.Any) -> None:
+    def __init__(self, provider: Any) -> None:
         self.provider = provider
 
     def scan(self, tickers: list[str]) -> pd.DataFrame:

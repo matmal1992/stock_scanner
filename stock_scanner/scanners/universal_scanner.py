@@ -73,7 +73,7 @@ def run_scan(profile: dict) -> None:
 
     update_filter_section(candidates, profile["report_slot"], profile["columns"], stats)
 
-    save_tickers(candidates, CONFIG.to_download)
+    save_tickers([t for t, _ in candidates], CONFIG.to_download)
 
 
 #  W przyszłości implementacja rankingu
