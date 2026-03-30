@@ -14,8 +14,7 @@ pyarrow = "*"
 
 [tool.poetry.group.dev.dependencies]
 black = "*"
-isort = "*"
-flake8 = "*"
+ruff = "*"
 mypy = "*"
 pytest = "*"
 coverage = "*"
@@ -24,12 +23,15 @@ pre-commit = "*"
 [tool.black]
 line-length = 88
 
-[tool.isort]
-profile = "black"
+[tool.ruff]
+line-length = 88
+target-version = "py311"
 
-[tool.flake8]
-max-line-length = 88
-extend-ignore = ["E203"]
+[tool.ruff.lint]
+select = ["E", "F", "I"]  # flake8 + importy (isort)
+
+[tool.ruff.format]
+quote-style = "double"
 
 [tool.mypy]
 python_version = 3.11
