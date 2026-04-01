@@ -19,7 +19,6 @@ def r2(series: pd.Series) -> float:
 
 
 def calculate_metrics(df: pd.DataFrame) -> dict[str, float] | None:
-
     if len(df) < 60:
         return None
 
@@ -61,11 +60,9 @@ def calculate_metrics(df: pd.DataFrame) -> dict[str, float] | None:
 
 
 def scan_directory() -> list[tuple[str, dict[str, float]]]:
-
     candidates = []
 
     for path in DATA_DIR.glob("*.parquet"):
-
         ticker = path.stem  # nazwa pliku bez .parquet
 
         try:
@@ -92,7 +89,6 @@ def scan_directory() -> list[tuple[str, dict[str, float]]]:
 
 
 if __name__ == "__main__":
-
     results = scan_directory()
 
     print("\n=== SPEŁNIAJĄCE WARUNKI ===")

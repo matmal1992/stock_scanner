@@ -5,7 +5,6 @@ from stock_scanner.report.report_updater import update_filter_section
 
 
 def run_scan(profile: dict) -> None:
-
     CONFIG = profile["config"]
     filters = profile["filters"]
 
@@ -47,7 +46,6 @@ def run_scan(profile: dict) -> None:
             passed = True
 
             for rule in profile["rules"]:
-
                 name, func = rule
 
                 if not func(metrics, filters):

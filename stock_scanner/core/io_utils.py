@@ -4,7 +4,6 @@ import pandas as pd
 
 
 def read_parquet(path: Path) -> pd.DataFrame | None:
-
     try:
         return pd.read_parquet(path)
     except Exception as e:
@@ -13,7 +12,6 @@ def read_parquet(path: Path) -> pd.DataFrame | None:
 
 
 def save_tickers(tickers: list[str], path: Path) -> None:
-
     if not tickers:
         print("Brak tickerów do zapisania")
         return

@@ -3,10 +3,7 @@ from matplotlib import typing
 from stock_scanner.config import report_path
 
 
-def update_down_section(
-    results: dict[str, list[str]], location: str, tier: str
-) -> None:
-
+def update_down_section(results: dict[str, list[str]], location: str, tier: str) -> None:
     content_html = f"<h2>Download {tier} - tier data results</h2>"
 
     for key, tickers in results.items():
@@ -19,7 +16,6 @@ def update_down_section(
 
 
 def build_filter_stats_html(stats: dict | None) -> str:
-
     if stats is None:
         return ""
 
@@ -34,7 +30,6 @@ def build_filter_stats_html(stats: dict | None) -> str:
     html += "<ul>"
 
     for key, value in stats["fails"].items():
-
         pct = (value / total * 100) if total else 0
         html += f"<li>{key}: {value} ({pct:.1f}%)</li>"
 
@@ -44,7 +39,6 @@ def build_filter_stats_html(stats: dict | None) -> str:
 
 
 def write_section(location: str, content_html: str) -> None:
-
     with open(report_path, "r", encoding="utf-8") as f:
         html = f.read()
 
@@ -60,7 +54,6 @@ def update_filter_section(
     columns: list[tuple[str, typing.Callable]],
     stats: dict | None = None,
 ) -> None:
-
     stats_html = build_filter_stats_html(stats)
 
     content_html: str = f"""

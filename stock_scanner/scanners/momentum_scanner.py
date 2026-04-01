@@ -16,7 +16,6 @@ class MomentumScanner:
         rows: list[dict] = []
 
         for ticker, df in data.items():
-
             if len(df) < 60:
                 continue
 

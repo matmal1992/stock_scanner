@@ -19,7 +19,6 @@ def r2(series: pd.Series) -> float:
 
 
 def analyze_ticker(ticker: str) -> None:
-
     path = Path(f"{ticker}.parquet")
 
     if not path.exists():

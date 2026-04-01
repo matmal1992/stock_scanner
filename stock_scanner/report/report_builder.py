@@ -4,7 +4,6 @@ from stock_scanner.config import report_path
 
 
 def create_empty_report() -> str:
-
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     html = f"""

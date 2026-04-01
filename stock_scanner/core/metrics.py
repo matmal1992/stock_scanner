@@ -19,7 +19,6 @@ def r2(series: pd.Series) -> float:
 
 
 def atr(df: pd.DataFrame, period: int = 14) -> float:
-
     high = df["High"]
     low = df["Low"]
     close = df["Close"]
@@ -34,10 +33,7 @@ def atr(df: pd.DataFrame, period: int = 14) -> float:
     return atr.iloc[-1]
 
 
-def compression_ratio(
-    high: pd.Series, low: pd.Series, short: int = 5, long: int = 20
-) -> float:
-
+def compression_ratio(high: pd.Series, low: pd.Series, short: int = 5, long: int = 20) -> float:
     range_short = (high - low).rolling(short).mean().iloc[-1]
     range_long = (high - low).rolling(long).mean().iloc[-1]
 
@@ -48,7 +44,6 @@ def compression_ratio(
 
 
 def volume_ratio(volume: pd.Series, short: int = 10, long: int = 30) -> float:
-
     vol_short = volume.tail(short).mean()
     vol_long = volume.tail(long).mean()
 
@@ -59,12 +54,10 @@ def volume_ratio(volume: pd.Series, short: int = 10, long: int = 30) -> float:
 
 
 def distance_from_high(close: pd.Series, window: int) -> float:
-
     high_val = close.rolling(window).max().iloc[-1]
 
     return close.iloc[-1] / high_val - 1
 
 
 def return_pct(close: pd.Series, bars: int) -> float:
-
     return close.iloc[-1] / close.iloc[-bars] - 1

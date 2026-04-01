@@ -44,7 +44,6 @@ T1_COLUMNS = [
 
 
 def metrics_t2(df: pd.DataFrame) -> dict[str, float] | None:
-
     if len(df) < 30:
         return None
 
@@ -80,7 +79,6 @@ T2_COLUMNS = [
 
 
 def metrics_t3(df: pd.DataFrame) -> dict[str, float] | None:
-
     # if len(df) < 20:
     #     return None
 
