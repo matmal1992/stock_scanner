@@ -1,34 +1,35 @@
 {
     "version": "2.0.0",
     "tasks": [
-        {
-            "label": "Run main.py",
+         {
+            "label": "Set up environment",
             "type": "shell",
-            "command": "python",
-            "args": [
-                "main.py"
-            ],
-            "group": {
-                "kind": "build",
-                "isDefault": true
+            "command": "uv sync --all-extras",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
             }
         },
         {
-            "label": "Open report",
+            "label": "Run tests",
             "type": "shell",
-            "command": "start",
-            "args": [
-                "report.html"
-            ],
+            "command": "uv run pytest --cov=.",
             "problemMatcher": []
         },
         {
-            "label": "Run project",
-            "dependsOrder": "sequence",
-            "dependsOn": [
-                "Run main.py",
-                "Open report"
-            ]
+            "label": "Run main.py",
+            "type": "shell",
+            "command": "uv sync",
+            "args": [
+                "run",
+                "python",
+                "-m",
+                "stock_scanner.main"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
         }
     ]
 }

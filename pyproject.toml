@@ -1,0 +1,45 @@
+[project]
+name = "stock_scanner"
+version = "0.1.0"
+description = "GPW short swing trading app"
+authors = [
+    { name = "Mateusz", email = "mateusz.malek.programista@gmail.com" }
+]
+requires-python = ">=3.11"
+
+dependencies = [
+    "pandas",
+    "numpy",
+    "yfinance",
+    "tqdm",
+    "pyarrow",
+    "matplotlib",
+    "pytest",
+    "pytest-cov"
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff",
+    "pytest",
+    "pytest-cov",
+    "pyinstaller"
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]  # flake8 + importy (isort)
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.mypy]
+python_version = 3.11
+ignore_missing_imports = true
+disallow_untyped_defs = true
+
+[tool.setuptools.packages.find]
+include = ["stock_scanner*"]

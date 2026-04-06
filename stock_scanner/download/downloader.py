@@ -1,10 +1,15 @@
-import yfinance as yf
 from datetime import datetime, timedelta
-from tqdm import tqdm
-import pandas as pd
-from report.report_updater import update_down_section
+from pathlib import Path
 
-def is_T1_data_actual(config):
+import pandas as pd
+import yfinance as yf
+from tqdm import tqdm
+
+from stock_scanner.config import DownloadConfig
+from stock_scanner.report.report_updater import update_down_section
+
+
+def is_T1_data_actual(config: DownloadConfig) -> bool:
     if not config.last_update_path.exists():
         return False
 
@@ -27,7 +32,7 @@ def is_T1_data_actual(config):
     return False
 
 
-def should_skip_ticker(filepath, interval_minutes):
+def should_skip_ticker(filepath: Path, interval_minutes: int) -> bool:
     if not filepath.exists():
         return False
 
@@ -41,7 +46,7 @@ def should_skip_ticker(filepath, interval_minutes):
         if not isinstance(df.index, pd.DatetimeIndex):
             df.index = pd.to_datetime(df.index, utc=True)
         elif df.index.tz is None:
-            df.index = df.index.tz_localize('UTC')
+            df.index = df.index.tz_localize("UTC")
 
         last_timestamp = df.index.max()
         now = pd.Timestamp.now(tz=last_timestamp.tz)
@@ -58,7 +63,7 @@ def should_skip_ticker(filepath, interval_minutes):
         return False
 
 
-def load_tickers(path):
+def load_tickers(path: Path) -> list[str]:
     if not path.exists():
         print(f"Brak pliku {path}")
         return []
@@ -67,12 +72,14 @@ def load_tickers(path):
         return [t.strip() for t in f.read().split(",") if t.strip()]
 
 
-def fetch_data(ticker, config):
+def fetch_data(ticker: str, config: DownloadConfig) -> pd.DataFrame:
     t = yf.Ticker(ticker)
     return t.history(period=f"{config.period_days}d", interval=config.interval)
 
 
-def process_ticker(ticker, config, results):
+def process_ticker(
+    ticker: str, config: DownloadConfig, results: dict[str, list]
+) -> None:
     try:
         filename = f"{ticker}.parquet"
         filepath = config.data_dir / filename
@@ -93,7 +100,9 @@ def process_ticker(ticker, config, results):
             df_existing = pd.read_parquet(filepath)
 
             if df_existing.empty:
-                df = t.history(period=f"{config.period_days}d", interval=config.interval)
+                df = t.history(
+                    period=f"{config.period_days}d", interval=config.interval
+                )
 
             else:
                 # 3. incremental update
@@ -136,19 +145,19 @@ def process_ticker(ticker, config, results):
         results["error"].append(ticker)
 
 
-def run_download(config, report_tag, report_stage):
+def run_download(config: DownloadConfig, report_tag: str, report_stage: str) -> None:
     if config.interval == "1d" and is_T1_data_actual(config):
         print("Skip D1 download — already updated today")
         return
 
     tickers = load_tickers(config.tickers_path)
 
-    results = {
+    results: dict[str, list[str]] = {
         "updated": [],
         "skipped": [],
         "short_history": [],
         "delisted_or_invalid": [],
-        "error": []
+        "error": [],
     }
 
     for ticker in tqdm(tickers, desc=f"Pobieranie {config.interval}", unit="ticker"):

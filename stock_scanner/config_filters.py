@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+
 # -------- Tier 1 (1D momentum scan) --------
 @dataclass
 class Tier1Filters:

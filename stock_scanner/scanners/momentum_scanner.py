@@ -1,21 +1,21 @@
-import pandas as pd
-import numpy as np
+from typing import Any
 
+import pandas as pd
 from app.metrics.trend import r2
 
 # miejsce na definicję poszczególnych skanerów, parametrów, rynków, etc
 
+
 class MomentumScanner:
-    def __init__(self, provider):
+    def __init__(self, provider: Any) -> None:
         self.provider = provider
 
-    def scan(self, tickers):
+    def scan(self, tickers: list[str]) -> pd.DataFrame:
         data = self.provider.download(tickers)
 
-        rows = []
+        rows: list[dict] = []
 
         for ticker, df in data.items():
-
             if len(df) < 60:
                 continue
 
@@ -38,13 +38,15 @@ class MomentumScanner:
             # compression
             vol = close.pct_change().tail(30).std()
 
-            rows.append({
-                "ticker": ticker,
-                "return": ret,
-                "volume_ratio": vol_ratio,
-                "trend": trend_score,
-                "volatility": vol,
-            })
+            rows.append(
+                {
+                    "ticker": ticker,
+                    "return": ret,
+                    "volume_ratio": vol_ratio,
+                    "trend": trend_score,
+                    "volatility": vol,
+                }
+            )
 
         df = pd.DataFrame(rows)
 

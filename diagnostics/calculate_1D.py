@@ -1,11 +1,12 @@
-import pandas as pd
-import numpy as np
 from pathlib import Path
 
+import numpy as np
+import pandas as pd
 
 # DATA_DIR = Path("data/1d")
 
-def r2(series):
+
+def r2(series: pd.Series) -> float:
     y = series.values
     x = np.arange(len(y))
     slope, intercept = np.polyfit(x, y, 1)
@@ -17,8 +18,7 @@ def r2(series):
     return 1 - ss_res / ss_tot if ss_tot != 0 else 0
 
 
-def analyze_ticker(ticker: str):
-
+def analyze_ticker(ticker: str) -> None:
     path = Path(f"{ticker}.parquet")
 
     if not path.exists():
