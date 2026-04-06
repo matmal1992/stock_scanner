@@ -16,6 +16,14 @@ dependencies = [
     "matplotlib"
 ]
 
+[project.optional-dependencies]
+dev = [
+    "ruff",
+    "black",
+    "pytest",
+    "pytest-cov"
+]
+
 [tool.black]
 line-length = 100
 
