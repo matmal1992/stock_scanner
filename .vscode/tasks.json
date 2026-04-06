@@ -4,7 +4,7 @@
          {
             "label": "Set up environment",
             "type": "shell",
-            "command": "uv sync",
+            "command": "uv sync --all-extras",
             "problemMatcher": [],
             "presentation": {
                 "reveal": "always",
@@ -20,7 +20,7 @@
         {
             "label": "Run main.py",
             "type": "shell",
-            "command": "uv",
+            "command": "uv sync",
             "args": [
                 "run",
                 "python",
