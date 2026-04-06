@@ -19,14 +19,9 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "ruff",
-    "black",
     "pytest",
     "pytest-cov"
 ]
-
-[tool.black]
-line-length = 100
-target-version = ["py312"]
 
 [tool.ruff]
 line-length = 100
