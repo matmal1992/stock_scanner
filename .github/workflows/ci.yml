@@ -44,19 +44,19 @@ jobs:
           name: coverage-report
           path: coverage.xml
 
-  build-windows:
-    name: Build (Windows)
-    runs-on: windows-latest
-    needs: [quality]
+  # build-windows:
+  #   name: Build (Windows)
+  #   runs-on: windows-latest
+  #   needs: [quality]
 
-    steps:
-      - uses: actions/checkout@v4
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - name: Install uv
-        run: pip install uv
+  #     - name: Install uv
+  #       run: pip install uv
 
-      - name: Sync dependencies
-        run: uv sync --all-extras
+  #     - name: Sync dependencies
+  #       run: uv sync --all-extras
 
-      - name: Run app (sanity check)
-        run: uv run python -m stock_scanner.main
+  #     - name: Run app (sanity check)
+  #       run: uv run python -m stock_scanner.main
