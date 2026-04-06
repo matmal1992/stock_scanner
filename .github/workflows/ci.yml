@@ -7,7 +7,7 @@ on:
 
 jobs:
   quality:
-    name: Code Quality & Formatter (ruff)
+    name: Code Quality
     runs-on: ubuntu-latest
 
     steps:
@@ -47,7 +47,7 @@ jobs:
   build-windows:
     name: Build (Windows)
     runs-on: windows-latest
-    needs: [quality, formatter]
+    needs: [quality]
 
     steps:
       - uses: actions/checkout@v4
