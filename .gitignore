@@ -11,3 +11,6 @@ __pycache__/
 *.txt
 !first_tier_list.txt
 *.html
+
+#environment
+*.lock

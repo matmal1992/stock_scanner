@@ -20,16 +20,15 @@
         {
             "label": "Run main.py",
             "type": "shell",
-            "command": "python",
+            "command": "uv",
             "args": [
-                "-m", "stock_scanner.main"
+                "run",
+                "python",
+                "-m",
+                "stock_scanner.main"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"
-            },
-            "group": {
-                "kind": "build",
-                "isDefault": true
             }
         }
     ]

@@ -12,7 +12,8 @@ dependencies = [
     "numpy",
     "yfinance",
     "tqdm",
-    "pyarrow"
+    "pyarrow",
+    "matplotlib"
 ]
 
 [tool.black]
