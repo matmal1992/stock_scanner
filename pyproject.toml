@@ -15,7 +15,8 @@ dependencies = [
     "pyarrow",
     "matplotlib",
     "pytest",
-    "pytest-cov"
+    "pytest-cov",
+    "pyinstaller"
 ]
 
 [project.optional-dependencies]
