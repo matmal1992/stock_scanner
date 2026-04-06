@@ -22,7 +22,8 @@ dependencies = [
 dev = [
     "ruff",
     "pytest",
-    "pytest-cov"
+    "pytest-cov",
+    "pyinstaller"
 ]
 
 [tool.ruff]

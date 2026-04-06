@@ -24,6 +24,31 @@ jobs:
       - name: Run ruff (lint)
         run: uv run ruff check .
 
+  build:
+    name: Build (Windows)
+    runs-on: windows-latest
+    needs: [quality]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Sync dependencies
+        run: uv venv && uv sync --all-extras
+
+      - name: Install project + pyinstaller
+        run: uv pip install -e .[dev]
+
+      - name: Build EXE
+        run: uv run pyinstaller --onefile --name stock_scanner stock_scanner/main.py
+
+      - name: Upload EXE artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: stock_scanner-exe
+          path: dist/stock_scanner.exe
+          
   tests:
     name: Tests + Coverage
     runs-on: ubuntu-latest
@@ -49,19 +74,3 @@ jobs:
           name: coverage-report
           path: coverage.xml
 
-  # build-windows:
-  #   name: Build (Windows)
-  #   runs-on: windows-latest
-  #   needs: [quality]
-
-  #   steps:
-  #     - uses: actions/checkout@v4
-
-  #     - name: Install uv
-  #       run: pip install uv
-
-  #     - name: Sync dependencies
-  #       run: uv sync --all-extras
-
-  #     - name: Run app (sanity check)
-  #       run: uv run python -m stock_scanner.main
