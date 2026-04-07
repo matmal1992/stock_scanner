@@ -18,18 +18,21 @@
             "problemMatcher": []
         },
         {
-            "label": "Run main.py",
+            "label": "Build EXE",
             "type": "shell",
-            "command": "uv sync",
+            "command": "powershell",
             "args": [
-                "run",
-                "python",
-                "-m",
-                "stock_scanner.main"
+                "-Command",
+                "Remove-Item -Recurse -Force build/*; uv run pyinstaller --onefile --name stock_scanner --distpath build stock_scanner/main.py"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"
-            }
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
         }
     ]
 }
