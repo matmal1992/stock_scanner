@@ -16,7 +16,8 @@ dependencies = [
     "matplotlib",
     "pytest",
     "pytest-cov",
-    "pyinstaller"
+    "pyinstaller",
+    "PySide6"
 ]
 
 [project.optional-dependencies]

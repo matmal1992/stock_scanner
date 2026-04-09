@@ -23,7 +23,7 @@
             "command": "powershell",
             "args": [
                 "-Command",
-                "Remove-Item -Recurse -Force build/*; uv run pyinstaller --onefile --name stock_scanner --distpath build stock_scanner/main.py"
+                "Remove-Item -Recurse -Force build/*; uv run pyinstaller --onefile --name stock_scanner --distpath build --add-data=\"stock_scanner/ui/main.qml:ui\" stock_scanner/main.py"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"
