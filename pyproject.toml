@@ -25,7 +25,8 @@ dev = [
     "ruff",
     "pytest",
     "pytest-cov",
-    "pyinstaller"
+    "pyinstaller",
+    "pre-commit"
 ]
 
 [tool.ruff]

@@ -3,23 +3,19 @@
 # from stock_scanner.profiles import PROFILE_T1, PROFILE_T2, PROFILE_T3
 # from stock_scanner.scanners.universal_scanner import run_scan
 import sys
-
-from PySide6.QtWidgets import QApplication
-from PySide6.QtQml import QQmlApplicationEngine
-
-import os
 from pathlib import Path
 
+from PySide6.QtQml import QQmlApplicationEngine
+from PySide6.QtWidgets import QApplication
 
 
-
-def main():
+def main() -> None:
     app = QApplication(sys.argv)
-    
+
     engine = QQmlApplicationEngine()
     qml_file = Path(__file__).resolve().parent / "ui" / "main.qml"
 
-    engine.load(str(qml_file)) 
+    engine.load(str(qml_file))
 
     if not engine.rootObjects():
         sys.exit(-1)
