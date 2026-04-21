@@ -12,29 +12,68 @@ ApplicationWindow {
     Material.theme: Material.Dark
     Material.accent: Material.Blue
 
-    Rectangle {
+    RowLayout {
         anchors.fill: parent
-        color: "#121212"
 
-        ColumnLayout {
-            anchors.left: parent.left
-            anchors.top: parent.top
-            anchors.margins: 20
-            spacing: 10        
+        // SIDEBAR (menu po lewej)
+        Rectangle {
+            Layout.preferredWidth: 220
+            Layout.fillHeight: true
+            color: "#1e1e1e"
 
-            Button {
-                text: "Show chart"
-                Layout.alignment: Qt.AlignLeft
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: 15
+                spacing: 10
+
+                Label {
+                    text: "Strategies"
+                    font.pixelSize: 18
+                    color: "white"
+                }
+
+                Button { text: "Show chart" }
+                Button { text: "The wall strategy" }
+                Button { text: "3T strategy" }
+
+                Item { Layout.fillHeight: true } // wypycha dół
+
+                Button {
+                    text: "Settings"
+                }
             }
+        }
 
-            Button {
-                text: "The wall strategy"
-                Layout.alignment: Qt.AlignLeft
-            }
+        // MAIN PANEL (wykresy / tabela)
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            color: "#121212"
 
-            Button {
-                text: "3T strategy"
-                Layout.alignment: Qt.AlignLeft
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: 15
+                spacing: 10
+
+                Label {
+                    text: "Main Panel"
+                    font.pixelSize: 20
+                    color: "white"
+                }
+
+                // Placeholder pod wykres
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    radius: 8
+                    color: "#2a2a2a"
+
+                    Label {
+                        text: "Chart / Table will be here"
+                        anchors.centerIn: parent
+                        color: "#aaaaaa"
+                    }
+                }
             }
         }
     }
