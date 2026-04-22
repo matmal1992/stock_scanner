@@ -1,9 +1,11 @@
 import sys
+import traceback
 from pathlib import Path
 
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtWidgets import QApplication
 
+from stock_scanner.bridge import Backend
 from stock_scanner.config import CONFIG_1D, CONFIG_5M, CONFIG_15M
 from stock_scanner.download.downloader import run_download
 from stock_scanner.profiles import PROFILE_T1, PROFILE_T2, PROFILE_T3
@@ -11,20 +13,23 @@ from stock_scanner.scanners.universal_scanner import run_scan
 
 
 def main() -> None:
-    app = QApplication(sys.argv)
+    try:
+        app = QApplication(sys.argv)
+        engine = QQmlApplicationEngine()
+        backend = Backend()
 
-    engine = QQmlApplicationEngine()
-    qml_file = Path(__file__).resolve().parent / "ui" / "main.qml"
+        engine.rootContext().setContextProperty("backend", backend)
+        qml_file = Path(__file__).resolve().parent / "ui" / "main.qml"
+        engine.load(str(qml_file))
 
-    engine.load(str(qml_file))
+        if not engine.rootObjects():
+            raise RuntimeError("QML failed to load")
 
-    if not engine.rootObjects():
-        sys.exit(-1)
+        sys.exit(app.exec())
 
-    sys.exit(app.exec())
-
-
-# def main() -> None:
+    except Exception:
+        traceback.print_exc()
+        input("Press Enter to exit...")
 
 
 def run_3t_strategy() -> None:

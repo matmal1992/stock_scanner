@@ -34,7 +34,9 @@ ApplicationWindow {
 
                 Button { text: "Show chart" }
                 Button { text: "The wall strategy" }
-                Button { text: "3T strategy" }
+                Button { text: "3T strategy"
+                         onClicked: bridge.run3TStrategy()
+                }
 
                 Item { Layout.fillHeight: true } // wypycha dół
 
