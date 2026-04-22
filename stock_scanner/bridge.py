@@ -1,6 +1,6 @@
 from PySide6.QtCore import QObject, QThread, Slot
 
-from stock_scanner.main import run_3t_strategy
+from stock_scanner.scanners.three_tier_scanner import run_3t_strategy
 
 
 class Worker(QThread):
