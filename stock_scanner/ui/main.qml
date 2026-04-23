@@ -13,13 +13,21 @@ ApplicationWindow {
     Material.theme: Material.Dark
     Material.accent: Material.Blue
 
-        FileDialog {
+    FileDialog {
         id: fileDialog
         title: "Select parquet file"
         nameFilters: ["Parquet files (*.parquet)"]
         onAccepted: {
             console.log("Selected:", selectedFile)
             bridge.loadChart(selectedFile)
+        }
+    }
+
+    Connections {
+        target: bridge
+
+        function onFileSelected(name) {
+            fileLabel.text = name
         }
     }
 
@@ -89,9 +97,11 @@ ApplicationWindow {
                     color: "#2a2a2a"
 
                     Label {
-                        text: "Chart / Table will be here"
+                        id: fileLabel
+                        text: "No file selected"
                         anchors.centerIn: parent
                         color: "#aaaaaa"
+                        font.pixelSize: 16
                     }
                 }
             }
