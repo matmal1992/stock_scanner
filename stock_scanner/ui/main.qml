@@ -3,6 +3,7 @@ import QtQuick.Controls 2.15
 import QtQuick.Controls.Material 2.15
 import QtQuick.Layouts 1.15
 import QtQuick.Dialogs
+import QtCharts
 
 ApplicationWindow {
     visible: true
@@ -26,8 +27,32 @@ ApplicationWindow {
     Connections {
         target: bridge
 
-        function onFileSelected(name) {
-            fileLabel.text = name
+        function onCandlesReady(data) {
+            candles.clear()
+
+            let minY = 999999
+            let maxY = -999999
+
+            for (let i = 0; i < data.length; i++) {
+                let d = data[i]
+
+                candles.append(
+                    d.x,
+                    d.open,
+                    d.high,
+                    d.low,
+                    d.close
+                )
+
+                minY = Math.min(minY, d.low)
+                maxY = Math.max(maxY, d.high)
+            }
+
+            axisX.min = 0
+            axisX.max = data.length
+
+            axisY.min = minY
+            axisY.max = maxY
         }
     }
 
@@ -96,12 +121,30 @@ ApplicationWindow {
                     radius: 8
                     color: "#2a2a2a"
 
-                    Label {
-                        id: fileLabel
-                        text: "No file selected"
-                        anchors.centerIn: parent
-                        color: "#aaaaaa"
-                        font.pixelSize: 16
+                    // Label {
+                    //     id: fileLabel
+                    //     text: "No file selected"
+                    //     anchors.centerIn: parent
+                    //     color: "#aaaaaa"
+                    //     font.pixelSize: 16
+                    // }
+
+                    ChartView {
+                        id: chart
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        antialiasing: true
+
+                        ValueAxis { id: axisX }
+                        ValueAxis { id: axisY }
+
+                        CandlestickSeries {
+                            id: candles
+                            increasingColor: "#00ff99"
+                            decreasingColor: "#ff4444"
+                            axisX: axisX
+                            axisY: axisY
+                        }
                     }
                 }
             }
