@@ -34,6 +34,8 @@ ApplicationWindow {
 
                 Button { text: "Speculation bubble" }
                 Button { text: "The wall strategy" }
+                # defined urls/sources for news, only selected stocks, maybe some sentiment analysis included
+                Button { text: "News tracker" } 
                 Button { text: "3T strategy"
                          onClicked: bridge.run3T()
                 }
