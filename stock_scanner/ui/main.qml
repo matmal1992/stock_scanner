@@ -2,6 +2,7 @@ import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Controls.Material 2.15
 import QtQuick.Layouts 1.15
+import QtQuick.Dialogs
 
 ApplicationWindow {
     visible: true
@@ -11,6 +12,16 @@ ApplicationWindow {
 
     Material.theme: Material.Dark
     Material.accent: Material.Blue
+
+        FileDialog {
+        id: fileDialog
+        title: "Select parquet file"
+        nameFilters: ["Parquet files (*.parquet)"]
+        onAccepted: {
+            console.log("Selected:", selectedFile)
+            bridge.loadChart(selectedFile)
+        }
+    }
 
     RowLayout {
         anchors.fill: parent
@@ -32,10 +43,15 @@ ApplicationWindow {
                     color: "white"
                 }
 
+                Button { text: "Show chart" 
+                         onClicked: fileDialog.open()
+                }
+
                 Button { text: "Speculation bubble" }
                 Button { text: "The wall strategy" }
-                # defined urls/sources for news, only selected stocks, maybe some sentiment analysis included
+                // defined urls/sources for news, only selected stocks, maybe some sentiment analysis included
                 Button { text: "News tracker" } 
+
                 Button { text: "3T strategy"
                          onClicked: bridge.run3T()
                 }

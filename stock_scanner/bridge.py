@@ -13,3 +13,7 @@ class Backend(QObject):
     def run3T(self) -> None:
         self.worker = Worker()
         self.worker.start()
+
+    @Slot(str)
+    def loadChart(self, file_url: str) -> None:
+        print("Selected file:", file_url)
