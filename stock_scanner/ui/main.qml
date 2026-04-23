@@ -32,7 +32,7 @@ ApplicationWindow {
                     color: "white"
                 }
 
-                Button { text: "Show chart" }
+                Button { text: "Speculation bubble" }
                 Button { text: "The wall strategy" }
                 Button { text: "3T strategy"
                          onClicked: bridge.run3T()
