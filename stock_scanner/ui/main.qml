@@ -24,35 +24,13 @@ ApplicationWindow {
         }
     }
 
+    property string chartSource: ""
+
     Connections {
         target: bridge
 
-        function onCandlesReady(data) {
-            candles.clear()
-
-            let minY = 999999
-            let maxY = -999999
-
-            for (let i = 0; i < data.length; i++) {
-                let d = data[i]
-
-                candles.append(
-                    d.x,
-                    d.open,
-                    d.high,
-                    d.low,
-                    d.close
-                )
-
-                minY = Math.min(minY, d.low)
-                maxY = Math.max(maxY, d.high)
-            }
-
-            axisX.min = 0
-            axisX.max = data.length
-
-            axisY.min = minY
-            axisY.max = maxY
+        function onImageReady(source) {
+            chartSource = source
         }
     }
 
@@ -121,30 +99,22 @@ ApplicationWindow {
                     radius: 8
                     color: "#2a2a2a"
 
-                    // Label {
-                    //     id: fileLabel
-                    //     text: "No file selected"
-                    //     anchors.centerIn: parent
-                    //     color: "#aaaaaa"
-                    //     font.pixelSize: 16
-                    // }
+                    Label {
+                        id: placeholder
+                        text: chartSource ? "" : "No file selected"
+                        anchors.centerIn: parent
+                        color: "#aaaaaa"
+                        font.pixelSize: 16
+                        visible: !chartSource
+                    }
 
-                    ChartView {
-                        id: chart
+                    Image {
+                        id: chartImage
                         Layout.fillWidth: true
                         Layout.fillHeight: true
-                        antialiasing: true
-
-                        ValueAxis { id: axisX }
-                        ValueAxis { id: axisY }
-
-                        CandlestickSeries {
-                            id: candles
-                            increasingColor: "#00ff99"
-                            decreasingColor: "#ff4444"
-                            axisX: axisX
-                            axisY: axisY
-                        }
+                        fillMode: Image.PreserveAspectFit
+                        source: chartSource
+                        visible: chartSource !== ""
                     }
                 }
             }
