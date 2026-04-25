@@ -1,25 +1,16 @@
 import sys
 import traceback
-from pathlib import Path
 
-from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtWidgets import QApplication
 
-from stock_scanner.bridge import Backend
+from stock_scanner.ui.main_window import MainWindow
 
 
 def main() -> None:
     try:
         app = QApplication(sys.argv)
-        engine = QQmlApplicationEngine()
-        backend = Backend()
-
-        engine.rootContext().setContextProperty("bridge", backend)
-        qml_file = Path(__file__).resolve().parent / "ui" / "main.qml"
-        engine.load(str(qml_file))
-
-        if not engine.rootObjects():
-            raise RuntimeError("QML failed to load")
+        window = MainWindow()
+        window.show()
 
         sys.exit(app.exec())
 
