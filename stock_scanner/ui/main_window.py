@@ -1,11 +1,6 @@
-import webbrowser
-from pathlib import Path
 from typing import Optional
 
-import pandas as pd
-from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
-    QFileDialog,
     QHBoxLayout,
     QLabel,
     QMainWindow,
@@ -14,7 +9,11 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from stock_scanner.ui.chart_widget import ChartWidget
+from stock_scanner.ui.windows.chart_window import ChartWindow
+from stock_scanner.ui.windows.news_tracker_window import NewsTrackerWindow
+from stock_scanner.ui.windows.speculation_window import SpeculationWindow
+from stock_scanner.ui.windows.three_tier_window import ThreeTierWindow
+from stock_scanner.ui.windows.wall_strategy_window import WallStrategyWindow
 
 
 class MainWindow(QMainWindow):
@@ -24,22 +23,45 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Stock Scanner")
         self.resize(1200, 800)
 
-        self.df: Optional[pd.DataFrame] = None
-        self.symbol: Optional[str] = None
+        # Initialize all windows (state preservation)
+        self.chart_window = ChartWindow()
+        self.three_tier_window = ThreeTierWindow()
+        self.wall_window = WallStrategyWindow()
+        self.speculation_window = SpeculationWindow()
+        self.news_tracker_window = NewsTrackerWindow()
+
+        # Connect back buttons
+        self.chart_window.backRequested.connect(self.show_main_menu)
+        self.three_tier_window.backRequested.connect(self.show_main_menu)
+        self.wall_window.backRequested.connect(self.show_main_menu)
+        self.speculation_window.backRequested.connect(self.show_main_menu)
+        self.news_tracker_window.backRequested.connect(self.show_main_menu)
+
+        self.current_window: Optional[QWidget] = None
 
         # === CENTRAL ===
         central = QWidget()
         self.setCentralWidget(central)
 
+        # === SIDEBAR ===
         title = QLabel("Strategies")
         title.setStyleSheet("font-size: 16px; font-weight: bold;")
 
         show_chart_btn = QPushButton("Show chart")
-        show_chart_btn.clicked.connect(self.load_chart)
+        show_chart_btn.clicked.connect(lambda: self.show_window(self.chart_window))
+
         the_wall = QPushButton("The wall strategy")
+        the_wall.clicked.connect(lambda: self.show_window(self.wall_window))
+
         three_tier = QPushButton("Three-tier strategy")
+        three_tier.clicked.connect(lambda: self.show_window(self.three_tier_window))
+
         speculation = QPushButton("Speculation bubble")
+        speculation.clicked.connect(lambda: self.show_window(self.speculation_window))
+
         news_tracker = QPushButton("News tracker")
+        news_tracker.clicked.connect(lambda: self.show_window(self.news_tracker_window))
+
         settings_btn = QPushButton("Settings")
 
         sidebar = QVBoxLayout()
@@ -52,37 +74,20 @@ class MainWindow(QMainWindow):
         sidebar.addStretch()
         sidebar.addWidget(settings_btn)
 
-        sidebar_widget = QWidget()
-        sidebar_widget.setLayout(sidebar)
-        sidebar_widget.setStyleSheet("background-color: #252526;")
+        self.sidebar_widget = QWidget()
+        self.sidebar_widget.setLayout(sidebar)
+        self.sidebar_widget.setStyleSheet("background-color: #252526;")
 
-        # MAIN PANEL
-        # toolbar (góra)
-        self.tv_button = QPushButton("Open in TradingView")
-        self.tv_button.setEnabled(False)  # na start wyłączony
-        self.tv_button.clicked.connect(self.open_tradingview)
+        # === WINDOW CONTAINER ===
+        self.window_container = QWidget()
+        container_layout = QVBoxLayout(self.window_container)
+        container_layout.setContentsMargins(0, 0, 0, 0)
+        self.window_container.setLayout(container_layout)
 
-        toolbar = QHBoxLayout()
-        toolbar.addWidget(self.tv_button)
-        toolbar.addStretch()
-
-        # chart area
-        self.chart = ChartWidget()
-        self.chart.setVisible(False)
-
-        # placeholder
-        self.placeholder = QLabel("Load a parquet file to display chart")
-        self.placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.placeholder.setStyleSheet("color: gray; font-size: 14px;")
-
-        main_panel = QVBoxLayout()
-        main_panel.addLayout(toolbar)
-        main_panel.addWidget(self.placeholder)
-        main_panel.addWidget(self.chart)
-
+        # === MAIN LAYOUT ===
         main_layout = QHBoxLayout(central)
-        main_layout.addWidget(sidebar_widget, 1)
-        main_layout.addLayout(main_panel, 4)
+        main_layout.addWidget(self.sidebar_widget, 1)
+        main_layout.addWidget(self.window_container, 4)
 
         self.setStyleSheet("""
             QMainWindow {
@@ -114,41 +119,30 @@ class MainWindow(QMainWindow):
             }
         """)
 
-    def load_chart(self) -> None:
-        file_path, _ = QFileDialog.getOpenFileName(
-            self, "Select parquet file", "", "Parquet Files (*.parquet)"
-        )
+        # Show main menu on start
+        self.show_main_menu()
 
-        if not file_path:
-            return
+    def show_window(self, window: QWidget) -> None:
+        """Switch to a strategy window while keeping sidebar."""
+        # Remove previous window
+        if self.current_window:
+            layout = self.window_container.layout()
+            if layout:
+                layout.removeWidget(self.current_window)
+                self.current_window.hide()
 
-        df = pd.read_parquet(file_path)
+        # Add new window
+        self.current_window = window
+        layout = self.window_container.layout()
+        if layout:
+            layout.addWidget(window)
+        window.show()
 
-        if df.empty or "Close" not in df.columns:
-            print("Invalid data")
-            return
-
-        self.df = df
-        self.symbol = Path(file_path).stem
-
-        # pokaż wykres
-        if self.symbol is None:
-            return
-
-        self.chart.plot(df, self.symbol)
-        self.chart.setVisible(True)
-
-        # ukryj placeholder
-        self.placeholder.setVisible(False)
-
-        # aktywuj TradingView
-        self.tv_button.setEnabled(True)
-
-    def open_tradingview(self) -> None:
-        if not self.symbol:
-            return
-
-        symbol = self.symbol.replace("_WA", "")
-        url = f"https://pl.tradingview.com/chart/?symbol=GPW%3A{symbol}"
-
-        webbrowser.open(url)
+    def show_main_menu(self) -> None:
+        """Return to main menu."""
+        if self.current_window:
+            layout = self.window_container.layout()
+            if layout:
+                layout.removeWidget(self.current_window)
+            self.current_window.hide()
+            self.current_window = None
