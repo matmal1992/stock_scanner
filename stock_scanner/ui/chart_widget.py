@@ -3,7 +3,7 @@ from matplotlib.backends.backend_qt import NavigationToolbar2QT
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
-from PySide6.QtWidgets import QVBoxLayout, QWidget
+from PySide6.QtWidgets import QHBoxLayout, QPushButton, QVBoxLayout, QWidget
 
 
 class ChartWidget(QWidget):
@@ -15,7 +15,26 @@ class ChartWidget(QWidget):
         self.toolbar = NavigationToolbar2QT(self.canvas, self)
 
         layout = QVBoxLayout()
-        layout.addWidget(self.toolbar)
+        toolbar_layout = QHBoxLayout()
+        for action in self.toolbar.actions():
+            if action.isSeparator():
+                continue
+            button = QPushButton(action.text())
+            button.clicked.connect(action.trigger)
+            button.setEnabled(action.isEnabled())
+
+            def update_enabled(btn=button, act=action):  # type: ignore[no-untyped-def]
+                btn.setEnabled(act.isEnabled())
+
+            action.changed.connect(update_enabled)
+            button.setStyleSheet(
+                "QPushButton { background-color: #1e1e1e; color: white; border: 1px solid #555; padding: 5px; }"
+                "QPushButton:hover { background-color: #333333; }"
+                "QPushButton:pressed { background-color: #444444; }"
+                "QPushButton:disabled { color: #888; }"
+            )
+            toolbar_layout.addWidget(button)
+        layout.addLayout(toolbar_layout)
         layout.addWidget(self.canvas)
         self.setLayout(layout)
 
@@ -34,7 +53,6 @@ class ChartWidget(QWidget):
             self.ax.plot(df.index, df["Close"], linewidth=1.5, color="#00ff99")
             self.ax.set_title(f"{title} (Line Chart)")
         else:
-            # Plot candlestick chart
             self._plot_candlestick(df)
             self.ax.set_title(f"{title} (Candlestick)")
 
@@ -56,7 +74,6 @@ class ChartWidget(QWidget):
             low_price = row["Low"]
             close_price = row["Close"]
 
-            # Determine color
             if close_price >= open_price:
                 color = "#00ff99"  # Green for up
                 body_height = close_price - open_price
@@ -66,12 +83,9 @@ class ChartWidget(QWidget):
                 body_height = open_price - close_price
                 body_bottom = close_price
 
-            # Draw wick (high-low line)
             self.ax.vlines(i, low_price, high_price, colors=color, linewidth=0.5)
 
-            # Draw body (open-close rectangle)
             if body_height == 0:
-                # If open == close, draw a horizontal line
                 self.ax.hlines(open_price, i - width / 2, i + width / 2, colors=color, linewidth=1)
             else:
                 rect = Rectangle(
@@ -84,7 +98,6 @@ class ChartWidget(QWidget):
                 )
                 self.ax.add_patch(rect)
 
-        # Set x-axis labels
         all_dates = df.index
         self.ax.set_xlim(-1, len(df))
         self.ax.set_xticks(range(len(df)))

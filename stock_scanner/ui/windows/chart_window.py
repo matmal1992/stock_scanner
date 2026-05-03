@@ -52,8 +52,9 @@ class ChartWindow(BaseWindow):
         self.setLayout(layout)
 
     def load_chart(self) -> None:
+        parquet_dir = Path(__file__).parent.parent.parent / "data" / "parquet"
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Select parquet file", "", "Parquet Files (*.parquet)"
+            self, "Select parquet file", str(parquet_dir), "Parquet Files (*.parquet)"
         )
 
         if not file_path:
