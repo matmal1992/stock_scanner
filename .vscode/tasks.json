@@ -4,7 +4,10 @@
          {
             "label": "Set up environment",
             "type": "shell",
-            "command": "uv sync --all-extras",
+            "command": [ 
+                "python -m pip install uv;",
+                "python -m uv sync --all-extras; python -m uv run pre-commit install"
+            ],
             "problemMatcher": [],
             "presentation": {
                 "reveal": "always",
@@ -14,22 +17,25 @@
         {
             "label": "Run tests",
             "type": "shell",
-            "command": "uv run pytest --cov=.",
+            "command": "python -m uv run pytest --cov=.",
             "problemMatcher": []
         },
         {
-            "label": "Run main.py",
+            "label": "Build EXE",
             "type": "shell",
-            "command": "uv sync",
+            "command": "powershell",
             "args": [
-                "run",
-                "python",
-                "-m",
-                "stock_scanner.main"
+                "-Command",
+                "Remove-Item -Recurse -Force build/*; uv run pyinstaller --onefile --name stock_scanner --distpath build stock_scanner/main.py"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"
-            }
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
         }
     ]
 }
