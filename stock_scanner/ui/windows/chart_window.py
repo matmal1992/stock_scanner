@@ -1,3 +1,4 @@
+import webbrowser
 from pathlib import Path
 from typing import Optional
 
@@ -27,9 +28,14 @@ class ChartWindow(BaseWindow):
         load_btn = QPushButton("Load Chart")
         load_btn.clicked.connect(self.load_chart)
 
+        self.tv_btn = QPushButton("Open in TradingView")
+        self.tv_btn.setEnabled(False)
+        self.tv_btn.clicked.connect(self.open_tradingview)
+
         toolbar = QHBoxLayout()
         toolbar.addWidget(back_btn)
         toolbar.addWidget(load_btn)
+        toolbar.addWidget(self.tv_btn)
         toolbar.addStretch()
 
         self.chart_widget = ChartWidget()
@@ -66,3 +72,14 @@ class ChartWindow(BaseWindow):
             self.chart_widget.plot(df, self.symbol)
             self.chart_widget.setVisible(True)
             self.placeholder.setVisible(False)
+            self.tv_btn.setEnabled(True)
+
+    def open_tradingview(self) -> None:
+        """Open the current symbol in TradingView."""
+        if not self.symbol:
+            return
+
+        symbol = self.symbol.replace("_WA", "")
+        url = f"https://pl.tradingview.com/chart/?symbol=GPW%3A{symbol}"
+
+        webbrowser.open(url)
