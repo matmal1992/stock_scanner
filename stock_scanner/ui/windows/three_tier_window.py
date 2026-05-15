@@ -1,4 +1,5 @@
 from PySide6.QtCore import QThread
+from PySide6.QtGui import QShowEvent
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QTextEdit, QVBoxLayout
 
 from stock_scanner.ui.windows.base_window import BaseWindow
@@ -59,7 +60,7 @@ class ThreeTierWindow(BaseWindow):
 
         self.setLayout(layout)
 
-    def showEvent(self, event) -> None:
+    def showEvent(self, event: QShowEvent) -> None:
         super().showEvent(event)
 
         if not self.strategy_finished and self.thread is None:
@@ -85,7 +86,7 @@ class ThreeTierWindow(BaseWindow):
         self.thread.start()
 
     def on_logs_updated(self, text: str) -> None:
-        self.console.setPlainText(text)
+        self.console.append(text)
 
     def on_error(self, error: str) -> None:
         self.console.append(error)

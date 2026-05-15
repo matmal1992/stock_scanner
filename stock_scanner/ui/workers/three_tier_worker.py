@@ -1,9 +1,10 @@
-import io
 import traceback
 from contextlib import redirect_stderr, redirect_stdout
+from typing import TextIO, cast
 
 from PySide6.QtCore import QObject, Signal
 
+from stock_scanner.core.io_utils import EmittingStream
 from stock_scanner.scanners.three_tier_scanner import run_3t_strategy
 
 
@@ -13,14 +14,12 @@ class ThreeTierWorker(QObject):
     errorOccurred = Signal(str)
 
     def run(self) -> None:
-        buffer = io.StringIO()
-
         try:
-            with redirect_stdout(buffer), redirect_stderr(buffer):
-                run_3t_strategy()
+            stream = EmittingStream(self.logUpdated)
+            safe_stream = cast(TextIO, stream)
 
-            output = buffer.getvalue()
-            self.logUpdated.emit(output)
+            with redirect_stdout(safe_stream), redirect_stderr(safe_stream):
+                run_3t_strategy()
 
         except Exception:
             self.errorOccurred.emit(traceback.format_exc())

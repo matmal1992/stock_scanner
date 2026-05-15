@@ -1,6 +1,8 @@
+import io
 from pathlib import Path
 
 import pandas as pd
+from PySide6.QtCore import Signal
 
 
 def read_parquet(path: Path) -> pd.DataFrame | None:
@@ -39,3 +41,17 @@ def load_tickers(txt_path: Path) -> list[str]:
                     tickers.append(t)
 
     return tickers
+
+
+class EmittingStream(io.TextIOBase):
+    def __init__(self, signal: Signal) -> None:
+        super().__init__()
+        self.signal = signal
+
+    def write(self, text: str) -> int:
+        if text.strip():
+            self.signal.emit(text)
+        return len(text)
+
+    def flush(self) -> None:
+        pass
