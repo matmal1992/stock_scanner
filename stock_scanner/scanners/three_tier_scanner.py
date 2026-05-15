@@ -2,9 +2,9 @@ from stock_scanner.config import CONFIG_1D
 from stock_scanner.download.downloader import run_download
 
 
-def run_3t_strategy() -> None:
+def run_3t_strategy(progress_callback=None) -> None:
     print("===== STAGE 1: DOWNLOAD first tier tickers =====")
-    run_download(CONFIG_1D, "<!-- T1_DOWNLOAD -->", "first")
+    run_download(CONFIG_1D, "<!-- T1_DOWNLOAD -->", "first", progress_callback)
 
     # print("\n===== ETAP 2: ANALIZA first tier tickers =====")
     # run_scan(PROFILE_T1)

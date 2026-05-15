@@ -12,6 +12,7 @@ class ThreeTierWorker(QObject):
     finished = Signal()
     logUpdated = Signal(str)
     errorOccurred = Signal(str)
+    progressUpdated = Signal(int)
 
     def run(self) -> None:
         try:
@@ -19,7 +20,7 @@ class ThreeTierWorker(QObject):
             safe_stream = cast(TextIO, stream)
 
             with redirect_stdout(safe_stream), redirect_stderr(safe_stream):
-                run_3t_strategy()
+                run_3t_strategy(progress_callback=self.progressUpdated.emit)
 
         except Exception:
             self.errorOccurred.emit(traceback.format_exc())

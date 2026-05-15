@@ -1,6 +1,6 @@
 from PySide6.QtCore import QThread
 from PySide6.QtGui import QShowEvent
-from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QTextEdit, QVBoxLayout
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QProgressBar, QPushButton, QTextEdit, QVBoxLayout
 
 from stock_scanner.ui.windows.base_window import BaseWindow
 from stock_scanner.ui.workers.three_tier_worker import ThreeTierWorker
@@ -53,9 +53,15 @@ class ThreeTierWindow(BaseWindow):
         self.console = QTextEdit()
         self.console.setReadOnly(True)
 
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setRange(0, 100)
+        self.progress_bar.setValue(0)
+        self.progress_bar.setTextVisible(True)
+
         layout.addLayout(top_bar)
         layout.addWidget(title_label)
         layout.addWidget(self.status_label)
+        layout.addWidget(self.progress_bar)
         layout.addWidget(self.console)
 
         self.setLayout(layout)
@@ -76,6 +82,7 @@ class ThreeTierWindow(BaseWindow):
         self.worker.moveToThread(self.thread)
 
         self.thread.started.connect(self.worker.run)
+        self.worker.progressUpdated.connect(self.on_progress)
 
         self.worker.logUpdated.connect(self.on_logs_updated)
         self.worker.errorOccurred.connect(self.on_error)
@@ -100,3 +107,6 @@ class ThreeTierWindow(BaseWindow):
         self.console_btn.setEnabled(True)
         self.logs_btn.setEnabled(True)
         self.report_btn.setEnabled(True)
+
+    def on_progress(self, value: int) -> None:
+        self.progress_bar.setValue(value)

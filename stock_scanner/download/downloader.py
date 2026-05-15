@@ -1,9 +1,8 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
 import yfinance as yf
-from tqdm import tqdm
 
 from stock_scanner.config import DownloadConfig
 from stock_scanner.report.report_updater import update_down_section
@@ -77,80 +76,87 @@ def fetch_data(ticker: str, config: DownloadConfig) -> pd.DataFrame:
     return t.history(period=f"{config.period_days}d", interval=config.interval)
 
 
-def process_ticker(
-    ticker: str, config: DownloadConfig, results: dict[str, list]
-) -> None:
+def process_ticker(ticker: str, config: DownloadConfig, results: dict[str, list]) -> None:
     try:
-        filename = f"{ticker}.parquet"
-        filepath = config.data_dir / filename
+        filepath = config.data_dir / f"{ticker}.parquet"
 
-        # 1. skip dla intraday
+        # 0. SKIP LOGIC (intraday only)
         if config.interval in ["15m", "5m"]:
             if should_skip_ticker(filepath, config.interval_minutes):
+                print(f"SKIPPED {ticker}")
                 results["skipped"].append(ticker)
                 return
 
-        t = yf.Ticker(ticker)
+        # 1. CURRENT DATA
+        df = fetch_history(ticker, period=f"{config.period_days}d", interval=config.interval)
 
-        # 2. brak pliku → full download
-        if not filepath.exists():
-            df = t.history(period=f"{config.period_days}d", interval=config.interval)
+        # 2. FALLBACK (only for classification, NOT decision)
+        df_max = fetch_history(ticker, period="max", interval="1d")
 
-        else:
-            df_existing = pd.read_parquet(filepath)
+        # 3. SINGLE DECISION POINT
+        status = classify_ticker(df, df_max)
+        results[status].append(ticker)
 
-            if df_existing.empty:
-                df = t.history(
-                    period=f"{config.period_days}d", interval=config.interval
-                )
-
-            else:
-                # 3. incremental update
-                last_ts = df_existing.index.max()
-
-                if config.interval == "1d":
-                    start = last_ts + timedelta(days=1)
-                elif config.interval == "15m":
-                    start = last_ts + timedelta(minutes=15)
-                elif config.interval == "5m":
-                    start = last_ts + timedelta(minutes=5)
-                else:
-                    start = last_ts
-
-                df_new = t.history(start=start, interval=config.interval)
-
-                if not df_new.empty:
-                    df = pd.concat([df_existing, df_new])
-                    df = df[~df.index.duplicated(keep="last")]
-                    df.sort_index(inplace=True)
-                else:
-                    df = df_existing
-
-        # 4. zapis
-        if not df.empty:
+        # 4. SAVE ONLY IF VALID
+        if status == "updated":
             df.to_parquet(filepath)
-            results["updated"].append(ticker)
-            return
-
-        # 5. fallback diagnostyczny
-        df_max = t.history(period="max", interval="1d")
-
-        if df_max.empty:
-            results["delisted_or_invalid"].append(ticker)
-        else:
-            results["short_history"].append(ticker)
 
     except Exception as e:
         print(f"ERROR {ticker}: {e}")
         results["error"].append(ticker)
 
 
-def run_download(config: DownloadConfig, report_tag: str, report_stage: str) -> None:
+def is_valid_df(df: pd.DataFrame) -> bool:
+    if df is None or df.empty:
+        return False
+
+    if "Close" not in df.columns:
+        return False
+
+    if df["Close"].dropna().empty:
+        return False
+
+    return True
+
+
+def classify_ticker(df: pd.DataFrame | None, df_max: pd.DataFrame | None) -> str:
+    # brak danych kompletnie
+    if df is None or df.empty:
+        if df_max is None or df_max.empty:
+            return "delisted_or_invalid"
+        return "short_history"
+
+    # brak kluczowych kolumn
+    if "Close" not in df.columns:
+        return "delisted_or_invalid"
+
+    # same NaN / śmieci
+    if df["Close"].dropna().empty:
+        return "delisted_or_invalid"
+
+    # bardzo mało danych → niepełna historia
+    if len(df) < 5:
+        return "short_history"
+
+    return "updated"
+
+
+def fetch_history(ticker: str, period: str, interval: str) -> pd.DataFrame:
+    try:
+        return yf.Ticker(ticker).history(period=period, interval=interval)
+    except Exception:
+        return pd.DataFrame()
+
+
+def run_download(
+    config: DownloadConfig, report_tag: str, report_stage: str, progress_callback=None
+) -> None:
     if config.interval == "1d" and is_T1_data_actual(config):
         print("Skip D1 download — already updated today")
         return
 
     tickers = load_tickers(config.tickers_path)
+    total = len(tickers)
 
     results: dict[str, list[str]] = {
         "updated": [],
@@ -160,12 +166,13 @@ def run_download(config: DownloadConfig, report_tag: str, report_stage: str) -> 
         "error": [],
     }
 
-    for ticker in tqdm(tickers, desc=f"Pobieranie {config.interval}", unit="ticker"):
+    for i, ticker in enumerate(tickers, start=1):
         process_ticker(ticker, config, results)
+
+        if progress_callback:
+            progress_callback(int((i / total) * 100))
 
     update_down_section(results, report_tag, report_stage)
 
-    current_datetime_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
     with open(config.last_update_path, "w") as f:
-        f.write(current_datetime_str)
+        f.write(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
