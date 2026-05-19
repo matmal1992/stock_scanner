@@ -1,7 +1,16 @@
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+
+def get_project_root() -> Path:
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).resolve().parent.parent
+    else:
+        return Path(__file__).resolve().parent.parent
+
+
+BASE_DIR = get_project_root()
 report_path = BASE_DIR / "report.html"
 
 

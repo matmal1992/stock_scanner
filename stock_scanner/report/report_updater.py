@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from matplotlib import typing
 
 from stock_scanner.config import report_path
@@ -38,14 +40,30 @@ def build_filter_stats_html(stats: dict | None) -> str:
     return html
 
 
+# def write_section(location: str, content_html: str) -> None:
+#     with open(report_path, "r", encoding="utf-8") as f:
+#         html = f.read()
+
+#     html = html.replace(str(location), content_html)
+
+#     with open(report_path, "w", encoding="utf-8") as f:
+#         f.write(html)
+
+
 def write_section(location: str, content_html: str) -> None:
-    with open(report_path, "r", encoding="utf-8") as f:
-        html = f.read()
+    report_file = Path(report_path)
+
+    if not report_file.exists():
+        report_file.write_text(
+            "<html><body><!-- DOWN_SECTION --></body></html>",
+            encoding="utf-8",
+        )
+
+    html = report_file.read_text(encoding="utf-8")
 
     html = html.replace(str(location), content_html)
 
-    with open(report_path, "w", encoding="utf-8") as f:
-        f.write(html)
+    report_file.write_text(html, encoding="utf-8")
 
 
 def update_filter_section(

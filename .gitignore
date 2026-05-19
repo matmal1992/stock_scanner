@@ -16,3 +16,7 @@ __pycache__/
 *.lock
 *.coverage
 *.egg-info
+
+#build
+build/*
+*.spec
