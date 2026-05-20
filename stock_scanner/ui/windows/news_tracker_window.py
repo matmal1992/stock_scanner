@@ -1,7 +1,8 @@
 from PySide6.QtCore import QThread
 from PySide6.QtGui import QShowEvent
-from PySide6.QtWidgets import QLabel, QPushButton, QTextEdit, QVBoxLayout
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QTextEdit, QVBoxLayout
 
+from stock_scanner.ui.gui_elements.Lines import HLine, VLine
 from stock_scanner.ui.windows.base_window import BaseWindow
 
 
@@ -15,34 +16,41 @@ class NewsTrackerWindow(BaseWindow):
         # self.worker: NewsTrackerWorker | None = None
 
     def setup_ui(self) -> None:
-        layout = QVBoxLayout()
-
-        back_btn = QPushButton("← Back")
-        back_btn.clicked.connect(self.backRequested.emit)
-
+        add_btn = QPushButton("Add")
+        remove_btn = QPushButton("Remove")
         stop_btn = QPushButton("Stop tracking")
         stop_btn.setEnabled(False)
-
-        title_label = QLabel("News Tracker")
-        title_label.setStyleSheet("font-size: 18px; font-weight: bold;")
-
-        self.status_label = QLabel("Tracker not working")
-        self.status_label.setStyleSheet("color: orange; font-size: 14px;")
+        add_btn.setEnabled(False)
+        remove_btn.setEnabled(False)
 
         self.status = QTextEdit()
         self.status.setReadOnly(True)
 
-        status_label = QLabel("News Tracker Window - Ready to implement")
-        status_label.setStyleSheet("color: #00ccff; font-size: 14px;")
+        self.status_label = QLabel("Tracker not working")
+        self.status_label.setStyleSheet("color: orange; font-size: 14px;")
 
-        layout.addWidget(back_btn)
-        layout.addWidget(stop_btn)
-        layout.addWidget(title_label)
-        layout.addWidget(status_label)
-        layout.addWidget(self.status)
-        layout.addStretch()
+        btn_list_layout = QHBoxLayout()
+        btn_list_layout.addWidget(add_btn)
+        btn_list_layout.addWidget(remove_btn)
+        btn_list_layout.addWidget(stop_btn)
 
-        self.setLayout(layout)
+        list_layout = QVBoxLayout()
+        list_layout.addLayout(btn_list_layout)
+        list_layout.addWidget(QLabel("tracked tickers list"))
+
+        upper_layout = QHBoxLayout()
+        upper_layout.addLayout(list_layout, stretch=1)
+        upper_layout.addWidget(VLine())
+        upper_layout.addWidget(QLabel("live chart"), stretch=2)
+
+        main_layout = QVBoxLayout()
+        main_layout.addLayout(upper_layout, stretch=1)
+        main_layout.addWidget(HLine())
+        main_layout.addWidget(self.status_label)
+        main_layout.addWidget(self.status, stretch=1)
+        main_layout.addStretch()
+
+        self.setLayout(main_layout)
 
     def showEvent(self, event: QShowEvent) -> None:
         super().showEvent(event)
