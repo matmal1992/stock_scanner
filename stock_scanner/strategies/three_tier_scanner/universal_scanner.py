@@ -1,7 +1,7 @@
 import pandas as pd
 
 from stock_scanner.core.io_utils import load_tickers, read_parquet, save_tickers
-from stock_scanner.report.report_updater import update_filter_section
+from stock_scanner.strategies.three_tier_scanner.report_updater import update_filter_section
 
 
 def run_scan(profile: dict) -> None:

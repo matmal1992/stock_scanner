@@ -6,7 +6,7 @@ import yfinance as yf
 from PySide6.QtCore import Signal
 
 from stock_scanner.download.config import DownloadConfig
-from stock_scanner.report.report_updater import update_down_section
+from stock_scanner.strategies.three_tier_scanner.report_updater import update_down_section
 
 
 def is_T1_data_actual(config: DownloadConfig) -> bool:
