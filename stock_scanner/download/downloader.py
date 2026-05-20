@@ -3,8 +3,9 @@ from pathlib import Path
 
 import pandas as pd
 import yfinance as yf
+from PySide6.QtCore import Signal
 
-from stock_scanner.config import DownloadConfig
+from stock_scanner.download.config import DownloadConfig
 from stock_scanner.report.report_updater import update_down_section
 
 
@@ -149,7 +150,10 @@ def fetch_history(ticker: str, period: str, interval: str) -> pd.DataFrame:
 
 
 def run_download(
-    config: DownloadConfig, report_tag: str, report_stage: str, progress_callback=None
+    config: DownloadConfig,
+    report_tag: str,
+    report_stage: str,
+    progress_callback: Signal | None = None,
 ) -> None:
     if config.interval == "1d" and is_T1_data_actual(config):
         print("Skip D1 download — already updated today")

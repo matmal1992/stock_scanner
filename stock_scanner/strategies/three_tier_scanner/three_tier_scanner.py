@@ -1,8 +1,10 @@
-from stock_scanner.config import CONFIG_1D
+from PySide6.QtCore import Signal
+
+from stock_scanner.download.config import CONFIG_1D
 from stock_scanner.download.downloader import run_download
 
 
-def run_3t_strategy(progress_callback=None) -> None:
+def run_3t_strategy(progress_callback: Signal | None = None) -> None:
     print("===== STAGE 1: DOWNLOAD first tier tickers =====")
     run_download(CONFIG_1D, "<!-- T1_DOWNLOAD -->", "first", progress_callback)
 
