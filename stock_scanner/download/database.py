@@ -1,0 +1,111 @@
+import sqlite3
+from datetime import datetime
+from pathlib import Path
+
+DB_PATH = Path("rss.db")
+
+
+def get_connection() -> sqlite3.Connection:
+    return sqlite3.connect(DB_PATH)
+
+
+def init_db() -> None:
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS entries (
+        id TEXT PRIMARY KEY,
+        title TEXT,
+        link TEXT,
+        published TEXT,
+
+        llm_status TEXT DEFAULT 'pending',
+        sentiment TEXT,
+        processed_at TEXT
+    )
+    """)
+
+    conn.commit()
+    conn.close()
+
+
+def insert_entry(entry: object) -> bool:
+    conn = get_connection()
+    cur = conn.cursor()
+
+    try:
+        entry_id = getattr(entry, "id", getattr(entry, "link", None))
+        if not entry_id:
+            return False
+
+        cur.execute(
+            """
+        INSERT INTO entries (id, title, link, published)
+        VALUES (?, ?, ?, ?)
+        """,
+            (
+                entry_id,
+                getattr(entry, "title", "Brak tytułu"),
+                getattr(entry, "link", ""),
+                getattr(entry, "published", ""),
+            ),
+        )
+
+        conn.commit()
+        return True
+
+    except sqlite3.IntegrityError:
+        # duplikat → ignorujemy
+        return False
+
+    finally:
+        conn.close()
+
+
+def get_all_entries() -> list[tuple[str, str, str]]:
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("SELECT title, link, published FROM entries ORDER BY published DESC")
+
+    rows = cur.fetchall()
+    conn.close()
+
+    return rows
+
+
+def get_pending_entries(limit: int = 10) -> list[tuple[str, str]]:
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        """
+    SELECT id, title FROM entries
+    WHERE llm_status = 'pending'
+    LIMIT ?
+    """,
+        (limit,),
+    )
+
+    rows = cur.fetchall()
+    conn.close()
+
+    return rows
+
+
+def update_sentiment(entry_id: str, sentiment: str) -> None:
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        """
+    UPDATE entries
+    SET sentiment = ?, llm_status = 'done', processed_at = ?
+    WHERE id = ?
+    """,
+        (sentiment, datetime.utcnow().isoformat(), entry_id),
+    )
+
+    conn.commit()
+    conn.close()

@@ -1,6 +1,6 @@
 import traceback
 
-from PySide6.QtCore import QThread
+from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QTextEdit, QVBoxLayout
 
 from stock_scanner.ui.gui_elements.Lines import HLine, VLine
@@ -14,8 +14,14 @@ class NewsTrackerWindow(BaseWindow):
     def __init__(self) -> None:
         super().__init__("News Tracker")
 
-        self.thread: QThread | None = None
         self.worker: RSSWorker | None = None
+
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.on_timer)
+
+    def on_timer(self) -> None:
+        if self.worker is None:
+            self.start_rss()
 
     def setup_ui(self) -> None:
         add_btn = QPushButton("Add")
@@ -58,34 +64,30 @@ class NewsTrackerWindow(BaseWindow):
         self.setLayout(main_layout)
 
     def start_rss(self) -> None:
-        self.thread = QThread()
+        if self.worker is not None:
+            return
+
         self.worker = RSSWorker()
-
-        self.worker.moveToThread(self.thread)
-
-        self.thread.started.connect(self.worker.run)
 
         self.worker.log.connect(self.on_log)
         self.worker.error.connect(self.on_error)
         self.worker.data_ready.connect(self.on_data_ready)
+        self.worker.finished.connect(self.on_finished)
+        self.worker.finished.connect(lambda: setattr(self, "worker", None))
 
-        # najpierw quit thread
-        self.worker.finished.connect(self.thread.quit)
+        self.status_label.setText("Pobieranie...")
+        self.status_label.setStyleSheet("color: #ffaa00; font-size: 14px;")
 
-        #  po zakończeniu thread cleanup
-        self.thread.finished.connect(self.worker.deleteLater)
-        self.thread.finished.connect(self.thread.deleteLater)
-
-        # reset referencji
-        self.thread.finished.connect(lambda: setattr(self, "thread", None))
-        self.thread.finished.connect(lambda: setattr(self, "worker", None))
-
-        self.thread.start()
+        self.worker.run()
+        self.timer.start(60000)
 
     def on_log(self, text: str) -> None:
         self.status.append(f"[LOG] {text}")
 
     def on_error(self, e: str) -> None:
+        self.status.append(f"[ERROR] {e}")
+        self.status_label.setText("Błąd!")
+        self.status_label.setStyleSheet("color: red; font-size: 14px;")
         print("ERROR:", e)
         print(traceback.format_exc())
 
@@ -101,7 +103,6 @@ class NewsTrackerWindow(BaseWindow):
         self.status_label.setText("RSS pobrany")
         self.status_label.setStyleSheet("color: #00ff99;")
 
-        self.thread = None
         self.worker = None
 
     # def showEvent(self, event: QShowEvent) -> None:
