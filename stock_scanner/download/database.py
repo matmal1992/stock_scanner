@@ -1,8 +1,17 @@
 import sqlite3
+import sys
 from datetime import datetime
 from pathlib import Path
 
-DB_PATH = Path("rss.db")
+# DB_PATH = Path(__file__).parent.parent.parent / "data" / "rss.db"
+# print("DB PATH:", DB_PATH.resolve())
+if getattr(sys, "frozen", False):
+    BASE_DIR = Path(sys.executable).parent.parent
+else:
+    BASE_DIR = Path(__file__).parent.parent.parent
+
+DB_PATH = BASE_DIR / "data" / "rss.db"
+DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 
 def get_connection() -> sqlite3.Connection:

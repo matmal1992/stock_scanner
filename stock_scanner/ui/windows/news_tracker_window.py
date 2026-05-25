@@ -79,7 +79,7 @@ class NewsTrackerWindow(BaseWindow):
         self.status_label.setStyleSheet("color: #ffaa00; font-size: 14px;")
 
         self.worker.run()
-        self.timer.start(60000)
+        self.timer.start(10000)
 
     def on_log(self, text: str) -> None:
         self.status.append(f"[LOG] {text}")
@@ -104,45 +104,3 @@ class NewsTrackerWindow(BaseWindow):
         self.status_label.setStyleSheet("color: #00ff99;")
 
         self.worker = None
-
-    # def showEvent(self, event: QShowEvent) -> None:
-    #     super().showEvent(event)
-
-    #     if not self.tracker_off and self.thread is None:
-    #         self.start_strategy()
-
-    # def start_strategy(self) -> None:
-    #     self.status_label.setText("Tracking news...")
-    #     self.status_label.setStyleSheet("color: #00ff99;")
-
-    #     self.thread = QThread()
-    #     # self.worker = NewsTrackerWorker()
-
-    #     self.worker.moveToThread(self.thread)
-
-    #     self.thread.started.connect(self.worker.run)
-    #     self.worker.progressUpdated.connect(self.on_progress)
-
-    #     self.worker.logUpdated.connect(self.on_logs_updated)
-    #     self.worker.errorOccurred.connect(self.on_error)
-    #     self.worker.finished.connect(self.on_finished)
-
-    #     self.worker.finished.connect(self.thread.quit)
-
-    #     self.thread.start()
-
-    # def on_logs_updated(self, text: str) -> None:
-    #     self.status.append(text)
-
-    # def on_error(self, error: str) -> None:
-    #     self.status.append(error)
-
-    # def on_finished(self) -> None:
-    #     self.tracker_off = True
-
-    #     self.status_label.setText("Strategy finished")
-    #     self.status_label.setStyleSheet("color: #00ff99;")
-
-    #     self.console_btn.setEnabled(True)
-    #     self.logs_btn.setEnabled(True)
-    #     self.report_btn.setEnabled(True)
