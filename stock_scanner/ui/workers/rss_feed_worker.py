@@ -9,7 +9,7 @@ class RSSWorker(QObject):
     finished = Signal()
     error = Signal(str)
     log = Signal(str)
-    data_ready = Signal(list)
+    data_ready = Signal(list, bool)
 
     def __init__(self, parent: QObject | None = None) -> None:
         super().__init__(parent)
@@ -51,16 +51,18 @@ class RSSWorker(QObject):
             return
 
         today_entries = []
-        for e in feed.entries[:5]:
-            title = getattr(e, "title", "Brak tytułu")
+        found_new = False
+        for entry in feed.entries[:5]:
+            title = getattr(entry, "title", "Brak tytułu")
             today_entries.append(title)
             try:
-                insert_entry(e)
+                if insert_entry(entry):
+                    found_new = True
             except Exception as entry_error:
                 self.log.emit(f"Błąd przy dodawaniu wpisu: {str(entry_error)}")
 
         if today_entries:
-            self.data_ready.emit(today_entries)
+            self.data_ready.emit(today_entries, found_new)
         else:
             self.log.emit("Nie znaleziono wpisów do wyświetlenia")
 

@@ -1,7 +1,8 @@
 import traceback
+from datetime import datetime
 
 from PySide6.QtCore import QTimer
-from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QTextEdit, QVBoxLayout
+from PySide6.QtWidgets import QAbstractItemView, QHBoxLayout, QLabel, QListWidget, QPushButton, QVBoxLayout
 
 from stock_scanner.ui.gui_elements.Lines import HLine, VLine
 from stock_scanner.ui.windows.base_window import BaseWindow
@@ -15,8 +16,11 @@ class NewsTrackerWindow(BaseWindow):
         super().__init__("News Tracker")
 
         self.worker: RSSWorker | None = None
+        self.latest_titles: list[str] = []
+        self.fetch_started_at: datetime | None = None
 
         self.timer = QTimer()
+        self.timer.setInterval(10000)
         self.timer.timeout.connect(self.on_timer)
 
     def on_timer(self) -> None:
@@ -33,8 +37,9 @@ class NewsTrackerWindow(BaseWindow):
         get_rss_feed_btn = QPushButton("Get RSS feed")
         get_rss_feed_btn.clicked.connect(self.start_rss)
 
-        self.status = QTextEdit()
-        self.status.setReadOnly(True)
+        self.status = QListWidget()
+        self.status.setAlternatingRowColors(True)
+        self.status.setSelectionMode(QAbstractItemView.NoSelection)
 
         self.status_label = QLabel("Tracker not working")
         self.status_label.setStyleSheet("color: orange; font-size: 14px;")
@@ -75,32 +80,62 @@ class NewsTrackerWindow(BaseWindow):
         self.worker.finished.connect(self.on_finished)
         self.worker.finished.connect(lambda: setattr(self, "worker", None))
 
+        self.fetch_started_at = datetime.now()
+        start_time = self.fetch_started_at.strftime("[%H:%M:%S]")
+        self._set_status_item(0, f"Pobieranie... {start_time}")
+
         self.status_label.setText("Pobieranie...")
         self.status_label.setStyleSheet("color: #ffaa00; font-size: 14px;")
 
         self.worker.run()
-        self.timer.start(10000)
+        if not self.timer.isActive():
+            self.timer.start()
 
     def on_log(self, text: str) -> None:
-        self.status.append(f"[LOG] {text}")
+        now = datetime.now().strftime("[%H:%M:%S]")
+        self._set_status_item(0, f"{now} Status: {text}")
 
     def on_error(self, e: str) -> None:
-        self.status.append(f"[ERROR] {e}")
+        now = datetime.now()
+        error_time = now.strftime("[%H:%M:%S]")
+        self._set_status_item(0, f"{error_time} Błąd: {e}")
         self.status_label.setText("Błąd!")
         self.status_label.setStyleSheet("color: red; font-size: 14px;")
         print("ERROR:", e)
         print(traceback.format_exc())
 
-    def on_data_ready(self, titles: list) -> None:
-        self.status.append("\nNajnowsze wiadomości:\n")
+    def on_data_ready(self, titles: list, has_new_entries: bool) -> None:
+        now = datetime.now()
+        time_str = now.strftime("[%H:%M:%S]")
 
-        for title in titles:
-            self.status.append(f"• {title}")
+        if has_new_entries:
+            self._set_status_item(0, f"Nowe wpisy: {time_str}")
+            for title in titles:
+                self._add_status_item(f"{time_str} • {title}")
+            self.status_label.setText("RSS zaktualizowany")
+            self.status_label.setStyleSheet("color: #00ff99; font-size: 14px;")
+        else:
+            self._set_status_item(0, f"Brak nowych wpisów: {time_str}")
+            self.status_label.setText("Brak zmian")
+            self.status_label.setStyleSheet("color: #ffaa00; font-size: 14px;")
 
     def on_finished(self) -> None:
-        self.status.append("\nZakończono.\n")
+        now = datetime.now()
+        finished_text = now.strftime("[%H:%M:%S] Gotowy")
+        self._set_status_item(0, finished_text)
+        self.status_label.setText(finished_text)
+        self.status_label.setStyleSheet("color: #00ff99; font-size: 14px;")
 
-        self.status_label.setText("RSS pobrany")
-        self.status_label.setStyleSheet("color: #00ff99;")
+    def _update_status_list(self, lines: list[str]) -> None:
+        self.status.clear()
+        self.status.addItems(lines)
 
-        self.worker = None
+    def _set_status_item(self, index: int, text: str) -> None:
+        """Set status item at index, creating if needed."""
+        while self.status.count() <= index:
+            self.status.addItem("")
+        self.status.item(index).setText(text)
+
+    def _add_status_item(self, text: str) -> None:
+        """Add a new item to status list without clearing."""
+        self.status.addItem(text)
