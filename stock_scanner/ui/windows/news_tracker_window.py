@@ -2,7 +2,14 @@ import traceback
 from datetime import datetime
 
 from PySide6.QtCore import QTimer
-from PySide6.QtWidgets import QAbstractItemView, QHBoxLayout, QLabel, QListWidget, QPushButton, QVBoxLayout
+from PySide6.QtWidgets import (
+    QAbstractItemView,
+    QHBoxLayout,
+    QLabel,
+    QListWidget,
+    QPushButton,
+    QVBoxLayout,
+)
 
 from stock_scanner.ui.gui_elements.Lines import HLine, VLine
 from stock_scanner.ui.windows.base_window import BaseWindow
@@ -38,7 +45,7 @@ class NewsTrackerWindow(BaseWindow):
         get_rss_feed_btn.clicked.connect(self.start_rss)
 
         self.status = QListWidget()
-        self.status.setAlternatingRowColors(True)
+        self.status.setAlternatingRowColors(False)
         self.status.setSelectionMode(QAbstractItemView.NoSelection)
 
         self.status_label = QLabel("Tracker not working")
