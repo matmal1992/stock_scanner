@@ -50,11 +50,12 @@ class RSSWorker(QObject):
             self.finished.emit()
             return
 
-        today_entries = []
+        today_entries: list[tuple[str, str]] = []
         found_new = False
         for entry in feed.entries[:5]:
             title = getattr(entry, "title", "Brak tytułu")
-            today_entries.append(title)
+            published = getattr(entry, "published", "")
+            today_entries.append((published, title))
             try:
                 if insert_entry(entry):
                     found_new = True

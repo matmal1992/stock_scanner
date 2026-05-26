@@ -111,14 +111,15 @@ class NewsTrackerWindow(BaseWindow):
         print("ERROR:", e)
         print(traceback.format_exc())
 
-    def on_data_ready(self, titles: list, has_new_entries: bool) -> None:
+    def on_data_ready(self, items: list[tuple[str, str]], has_new_entries: bool) -> None:
         now = datetime.now()
         time_str = now.strftime("[%H:%M:%S]")
 
         if has_new_entries:
             self._set_status_item(0, f"Nowe wpisy: {time_str}")
-            for title in titles:
-                self._add_status_item(f"{time_str} • {title}")
+            for published, title in items:
+                pub_text = f"{published} • " if published else ""
+                self._add_status_item(f"{time_str} • {pub_text}{title}")
             self.status_label.setText("RSS zaktualizowany")
             self.status_label.setStyleSheet("color: #00ff99; font-size: 14px;")
         else:
@@ -128,10 +129,10 @@ class NewsTrackerWindow(BaseWindow):
 
     def on_finished(self) -> None:
         now = datetime.now()
-        finished_text = now.strftime("[%H:%M:%S] Gotowy")
-        self._set_status_item(0, finished_text)
-        self.status_label.setText(finished_text)
-        self.status_label.setStyleSheet("color: #00ff99; font-size: 14px;")
+        # finished_text = now.strftime("Ostatnia aktualizacja: [%H:%M:%S]")
+        # self._set_status_item(0, finished_text)
+        # self.status_label.setText(finished_text)
+        # self.status_label.setStyleSheet("color: #00ff99; font-size: 14px;")
 
     def _update_status_list(self, lines: list[str]) -> None:
         self.status.clear()
