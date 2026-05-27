@@ -1,3 +1,8 @@
+import calendar
+import email.utils
+from datetime import timezone
+from typing import Any
+
 import feedparser
 from PySide6.QtCore import QObject, QUrl, Signal
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
@@ -14,7 +19,7 @@ class RSSWorker(QObject):
     def __init__(self, parent: QObject | None = None) -> None:
         super().__init__(parent)
         self.manager = QNetworkAccessManager(self)
-        self.reply = None
+        self.reply: QNetworkReply | None = None
 
     def run(self) -> None:
         url = QUrl("https://biznes.pap.pl/rss")
@@ -26,6 +31,22 @@ class RSSWorker(QObject):
         assert self.reply is not None
         self.reply.finished.connect(self._on_finished)
 
+    def _parse_published_ts(self, entry: Any) -> int | None:
+        if getattr(entry, "published_parsed", None) is not None:
+            return int(calendar.timegm(entry.published_parsed))
+
+        published_str = getattr(entry, "published", "")
+        if not published_str:
+            return None
+
+        try:
+            dt = email.utils.parsedate_to_datetime(published_str)
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            return int(dt.timestamp())
+        except Exception:
+            return None
+
     def _on_finished(self) -> None:
         reply = self.reply
         if reply is None:
@@ -33,13 +54,13 @@ class RSSWorker(QObject):
             self.finished.emit()
             return
 
-        if reply.error() != QNetworkReply.NoError:
+        if reply.error() != QNetworkReply.NetworkError.NoError:
             self.error.emit(f"Błąd sieciowy RSS: {reply.errorString()}")
             reply.deleteLater()
             self.finished.emit()
             return
 
-        data = bytes(reply.readAll())
+        data = reply.readAll().data()
         reply.deleteLater()
 
         feed = feedparser.parse(data)
@@ -51,12 +72,12 @@ class RSSWorker(QObject):
             self.finished.emit()
             return
 
-        today_entries: list[tuple[str, str]] = []
+        today_entries: list[tuple[int | None, str]] = []
         found_new = False
         for entry in feed.entries[:5]:
             title = getattr(entry, "title", "Brak tytułu")
-            published = getattr(entry, "published", "")
-            today_entries.append((published, title))
+            published_ts = self._parse_published_ts(entry)
+            today_entries.append((published_ts, title))
             try:
                 if insert_entry(entry):
                     found_new = True

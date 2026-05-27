@@ -46,7 +46,7 @@ class NewsTrackerWindow(BaseWindow):
 
         self.status = QListWidget()
         self.status.setAlternatingRowColors(False)
-        self.status.setSelectionMode(QAbstractItemView.NoSelection)
+        self.status.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
 
         self.status_label = QLabel("Tracker not working")
         self.status_label.setStyleSheet("color: orange; font-size: 14px;")
@@ -75,6 +75,17 @@ class NewsTrackerWindow(BaseWindow):
 
         self.setLayout(main_layout)
 
+    def format_timestamp(self, ts: int | None) -> str:
+        if not ts:
+            return ""
+        try:
+            ts = int(ts)
+        except (ValueError, TypeError):
+            return ""
+
+        dt = datetime.fromtimestamp(ts)
+        return dt.strftime("%d %b %H:%M:%S")
+
     def start_rss(self) -> None:
         if self.worker is not None:
             return
@@ -84,17 +95,9 @@ class NewsTrackerWindow(BaseWindow):
         self.worker.log.connect(self.on_log)
         self.worker.error.connect(self.on_error)
         self.worker.data_ready.connect(self.on_data_ready)
-        # self.worker.finished.connect(self.on_finished)
         self.worker.finished.connect(lambda: setattr(self, "worker", None))
-
-        # self.fetch_started_at = datetime.now()
-        # start_time = self.fetch_started_at.strftime("[%H:%M:%S]")
-        # self._set_status_item(0, f"Pobieranie... {start_time}")
-
-        # self.status_label.setText("Pobieranie...")
-        # self.status_label.setStyleSheet("color: #ffaa00; font-size: 14px;")
-
         self.worker.run()
+
         if not self.timer.isActive():
             self.timer.start()
 
@@ -111,28 +114,18 @@ class NewsTrackerWindow(BaseWindow):
         print("ERROR:", e)
         print(traceback.format_exc())
 
-    def on_data_ready(self, items: list[tuple[str, str]], has_new_entries: bool) -> None:
+    def on_data_ready(self, items: list[tuple[int | None, str]], has_new_entries: bool) -> None:
         now = datetime.now()
         time_str = now.strftime("[%H:%M:%S]")
 
         if has_new_entries:
             self._set_status_item(0, f"Nowe wpisy: {time_str}")
             for published, title in items:
-                pub_text = f"{published} • " if published else ""
+                formatted = self.format_timestamp(published)
+                pub_text = f"{formatted} • " if formatted else ""
                 self._add_status_item(f"{pub_text}{title}")
-            # self.status_label.setText("RSS zaktualizowany")
-            # self.status_label.setStyleSheet("color: #00ff99; font-size: 14px;")
         else:
             self._set_status_item(0, f"{time_str}: Brak nowych wpisów")
-            # self.status_label.setText("Brak zmian")
-            # self.status_label.setStyleSheet("color: #ffaa00; font-size: 14px;")
-
-    # def on_finished(self) -> None:
-    #     now = datetime.now()
-    #     # finished_text = now.strftime("Ostatnia aktualizacja: [%H:%M:%S]")
-    #     # self._set_status_item(0, finished_text)
-    #     # self.status_label.setText(finished_text)
-    #     # self.status_label.setStyleSheet("color: #00ff99; font-size: 14px;")
 
     def _update_status_list(self, lines: list[str]) -> None:
         self.status.clear()

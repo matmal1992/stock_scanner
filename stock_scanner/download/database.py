@@ -27,7 +27,7 @@ def init_db() -> None:
         id TEXT PRIMARY KEY,
         title TEXT,
         link TEXT,
-        published TEXT,
+        published INTEGER,
 
         llm_status TEXT DEFAULT 'pending',
         sentiment TEXT,
@@ -39,6 +39,14 @@ def init_db() -> None:
     conn.close()
 
 
+def parse_rss_date(date_str: str) -> int | None:
+    try:
+        dt = datetime.strptime(date_str, "%a, %d %b %Y %H:%M:%S %z")
+        return int(dt.timestamp())
+    except Exception:
+        return None
+
+
 def insert_entry(entry: object) -> bool:
     conn = get_connection()
     cur = conn.cursor()
@@ -47,6 +55,9 @@ def insert_entry(entry: object) -> bool:
         entry_id = getattr(entry, "id", getattr(entry, "link", None))
         if not entry_id:
             return False
+
+        published_str = getattr(entry, "published", "")
+        published_ts = parse_rss_date(published_str)
 
         cur.execute(
             """
@@ -57,7 +68,7 @@ def insert_entry(entry: object) -> bool:
                 entry_id,
                 getattr(entry, "title", "Brak tytułu"),
                 getattr(entry, "link", ""),
-                getattr(entry, "published", ""),
+                published_ts,
             ),
         )
 
