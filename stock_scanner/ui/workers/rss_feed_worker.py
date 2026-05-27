@@ -23,6 +23,7 @@ class RSSWorker(QObject):
         request = QNetworkRequest(url)
         request.setRawHeader(b"User-Agent", b"Mozilla/5.0")
         self.reply = self.manager.get(request)
+        assert self.reply is not None
         self.reply.finished.connect(self._on_finished)
 
     def _on_finished(self) -> None:
