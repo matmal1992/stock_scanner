@@ -12,6 +12,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
 )
 
+from stock_scanner.core.email_alerts import send_gmail_alert
 from stock_scanner.core.telegram import send_telegram_message
 from stock_scanner.ui.gui_elements.Lines import HLine, VLine
 from stock_scanner.ui.windows.base_window import BaseWindow
@@ -101,6 +102,11 @@ class NewsTrackerWindow(BaseWindow):
             logger.info("Telegram notification sent")
         else:
             logger.warning("Telegram notification not sent (missing config or error)")
+
+        if send_gmail_alert("Stock Scanner Alert", f"<b>Get RSS feed</b> clicked at {now}"):
+            logger.info("Gmail notification sent")
+        else:
+            logger.warning("Gmail notification not sent (missing config or error)")
 
         self.worker = RSSWorker()
         self.worker.log.connect(self.on_log)
