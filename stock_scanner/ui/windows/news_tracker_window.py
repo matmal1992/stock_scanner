@@ -1,3 +1,4 @@
+import logging
 import traceback
 from datetime import datetime
 
@@ -14,6 +15,8 @@ from PySide6.QtWidgets import (
 from stock_scanner.ui.gui_elements.Lines import HLine, VLine
 from stock_scanner.ui.windows.base_window import BaseWindow
 from stock_scanner.ui.workers.rss_feed_worker import RSSWorker
+
+logger = logging.getLogger(__name__)
 
 
 class NewsTrackerWindow(BaseWindow):
@@ -91,7 +94,6 @@ class NewsTrackerWindow(BaseWindow):
             return
 
         self.worker = RSSWorker()
-
         self.worker.log.connect(self.on_log)
         self.worker.error.connect(self.on_error)
         self.worker.data_ready.connect(self.on_data_ready)
@@ -111,8 +113,8 @@ class NewsTrackerWindow(BaseWindow):
         self._set_status_item(0, f"{error_time} Błąd: {e}")
         self.status_label.setText("Błąd!")
         self.status_label.setStyleSheet("color: red; font-size: 14px;")
-        print("ERROR:", e)
-        print(traceback.format_exc())
+        logger.info("ERROR:", e)
+        logger.info(traceback.format_exc())
 
     def on_data_ready(self, items: list[tuple[int | None, str]], has_new_entries: bool) -> None:
         now = datetime.now()
@@ -120,6 +122,7 @@ class NewsTrackerWindow(BaseWindow):
 
         if has_new_entries:
             self._set_status_item(0, f"Nowe wpisy: {time_str}")
+            logger.info("Nowe wpisy")
             for published, title in items:
                 formatted = self.format_timestamp(published)
                 pub_text = f"{formatted} • " if formatted else ""
