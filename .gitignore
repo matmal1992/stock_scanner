@@ -12,6 +12,7 @@ __pycache__/
 !first_tier_list.txt
 *.html
 *.db
+config.json
 
 #environment
 *.lock

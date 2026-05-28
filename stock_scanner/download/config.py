@@ -12,6 +12,7 @@ def get_project_root() -> Path:
 
 BASE_DIR = get_project_root()
 report_path = BASE_DIR / "report.html"
+email_config_path = BASE_DIR / "stock_scanner" / "core" / "config.json"
 
 
 @dataclass
