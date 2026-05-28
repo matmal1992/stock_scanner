@@ -2,7 +2,7 @@ import logging
 import traceback
 from datetime import datetime
 
-from PySide6.QtCore import QTimer
+from PySide6.QtCore import QThread, QTimer
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QHBoxLayout,
@@ -14,8 +14,10 @@ from PySide6.QtWidgets import (
 
 from stock_scanner.core.email_alerts import send_gmail_alert
 from stock_scanner.core.telegram import send_telegram_message
+from stock_scanner.download.database import get_connection
 from stock_scanner.ui.gui_elements.Lines import HLine, VLine
 from stock_scanner.ui.windows.base_window import BaseWindow
+from stock_scanner.ui.workers.llm_test_worker import LLMTestWorker
 from stock_scanner.ui.workers.rss_feed_worker import RSSWorker
 
 logger = logging.getLogger(__name__)
@@ -28,6 +30,8 @@ class NewsTrackerWindow(BaseWindow):
         super().__init__("News Tracker")
 
         self.worker: RSSWorker | None = None
+        self.llm_thread: QThread | None = None
+        self.llm_worker: LLMTestWorker | None = None
         self.latest_titles: list[str] = []
         self.fetch_started_at: datetime | None = None
 
@@ -42,12 +46,13 @@ class NewsTrackerWindow(BaseWindow):
     def setup_ui(self) -> None:
         add_btn = QPushButton("Add")
         remove_btn = QPushButton("Remove")
-        stop_btn = QPushButton("Stop tracking")
-        stop_btn.setEnabled(False)
+        self.test_llm_btn = QPushButton("Test LLM")
+        self.test_llm_btn.setEnabled(False)
         add_btn.setEnabled(False)
         remove_btn.setEnabled(False)
         get_rss_feed_btn = QPushButton("Get RSS feed")
         get_rss_feed_btn.clicked.connect(self.start_rss)
+        self.test_llm_btn.clicked.connect(self.on_test_llm_clicked)
 
         self.status = QListWidget()
         self.status.setAlternatingRowColors(False)
@@ -59,7 +64,7 @@ class NewsTrackerWindow(BaseWindow):
         btn_list_layout = QHBoxLayout()
         btn_list_layout.addWidget(add_btn)
         btn_list_layout.addWidget(remove_btn)
-        btn_list_layout.addWidget(stop_btn)
+        btn_list_layout.addWidget(self.test_llm_btn)
 
         list_layout = QVBoxLayout()
         list_layout.addLayout(btn_list_layout)
@@ -138,12 +143,15 @@ class NewsTrackerWindow(BaseWindow):
         if has_new_entries:
             self._set_status_item(0, f"Nowe wpisy: {time_str}")
             logger.info("Nowe wpisy")
-            for published, title in items:
-                formatted = self.format_timestamp(published)
-                pub_text = f"{formatted} • " if formatted else ""
-                self._add_status_item(f"{pub_text}{title}")
+            self.test_llm_btn.setEnabled(True)
         else:
             self._set_status_item(0, f"{time_str}: Brak nowych wpisów")
+            self.test_llm_btn.setEnabled(self._has_rss_entries())
+
+        for published, title in items:
+            formatted = self.format_timestamp(published)
+            pub_text = f"{formatted} • " if formatted else ""
+            self._add_status_item(f"{pub_text}{title}")
 
     def _update_status_list(self, lines: list[str]) -> None:
         self.status.clear()
@@ -158,3 +166,57 @@ class NewsTrackerWindow(BaseWindow):
     def _add_status_item(self, text: str) -> None:
         """Add a new item to status list without clearing."""
         self.status.addItem(text)
+
+    def _has_rss_entries(self) -> bool:
+        try:
+            conn = get_connection()
+            cur = conn.cursor()
+            cur.execute("SELECT 1 FROM entries LIMIT 1")
+            exists = cur.fetchone() is not None
+            return exists
+        except Exception:
+            return False
+        finally:
+            try:
+                conn.close()
+            except Exception:
+                pass
+
+    def on_test_llm_clicked(self) -> None:
+        if self.llm_thread is not None:
+            return
+
+        self.status_label.setText("Wysyłanie zapytania do LLM...")
+        self.status_label.setStyleSheet("color: orange; font-size: 14px;")
+        self.test_llm_btn.setEnabled(False)
+
+        self.llm_thread = QThread()
+        self.llm_worker = LLMTestWorker()
+        self.llm_worker.moveToThread(self.llm_thread)
+
+        self.llm_thread.started.connect(self.llm_worker.run)
+        self.llm_worker.result.connect(self.on_llm_result)
+        self.llm_worker.error.connect(self.on_error)
+        self.llm_worker.log.connect(self.on_log)
+        self.llm_worker.finished.connect(self.on_llm_finished)
+        self.llm_worker.finished.connect(self.llm_thread.quit)
+        self.llm_thread.finished.connect(self._cleanup_llm_thread)
+
+        self.llm_thread.start()
+
+    def on_llm_result(self, result: str) -> None:
+        self._set_status_item(0, "Wynik LLM:")
+        self._add_status_item(result)
+        self.status_label.setText("LLM zakończony")
+        self.status_label.setStyleSheet("color: #00ff99; font-size: 14px;")
+
+    def on_llm_finished(self) -> None:
+        self.test_llm_btn.setEnabled(self._has_rss_entries())
+
+    def _cleanup_llm_thread(self) -> None:
+        if self.llm_worker is not None:
+            self.llm_worker.deleteLater()
+            self.llm_worker = None
+        if self.llm_thread is not None:
+            self.llm_thread.deleteLater()
+            self.llm_thread = None
