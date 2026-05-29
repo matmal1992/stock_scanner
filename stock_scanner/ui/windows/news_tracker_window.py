@@ -17,7 +17,7 @@ from stock_scanner.core.telegram import send_telegram_message
 from stock_scanner.download.database import get_connection
 from stock_scanner.ui.gui_elements.Lines import HLine, VLine
 from stock_scanner.ui.windows.base_window import BaseWindow
-from stock_scanner.ui.workers.llm_test_worker import LLMTestWorker
+from stock_scanner.ui.workers.llm_test_worker import GeminiWorker
 from stock_scanner.ui.workers.rss_feed_worker import RSSWorker
 
 logger = logging.getLogger(__name__)
@@ -31,7 +31,7 @@ class NewsTrackerWindow(BaseWindow):
 
         self.worker: RSSWorker | None = None
         self.llm_thread: QThread | None = None
-        self.llm_worker: LLMTestWorker | None = None
+        self.llm_worker: GeminiWorker | None = None
         self.latest_titles: list[str] = []
         self.fetch_started_at: datetime | None = None
 
@@ -183,26 +183,35 @@ class NewsTrackerWindow(BaseWindow):
                 pass
 
     def on_test_llm_clicked(self) -> None:
-        if self.llm_thread is not None:
-            return
+        # if self.llm_thread is not None:
+        #     return
+
+        # self.status_label.setText("Wysyłanie zapytania do LLM...")
+        # self.status_label.setStyleSheet("color: orange; font-size: 14px;")
+        # self.test_llm_btn.setEnabled(False)
+
+        # self.llm_thread = QThread()
+        # self.llm_worker = LLMTestWorker()
+        # self.llm_worker.moveToThread(self.llm_thread)
+
+        # self.llm_thread.started.connect(self.llm_worker.run)
+        # self.llm_worker.result.connect(self.on_llm_result)
+        # self.llm_worker.error.connect(self.on_error)
+        # self.llm_worker.log.connect(self.on_log)
+        # self.llm_worker.finished.connect(self.on_llm_finished)
+        # self.llm_worker.finished.connect(self.llm_thread.quit)
+        # self.llm_thread.finished.connect(self._cleanup_llm_thread)
+
+        # self.llm_thread.start()
 
         self.status_label.setText("Wysyłanie zapytania do LLM...")
-        self.status_label.setStyleSheet("color: orange; font-size: 14px;")
-        self.test_llm_btn.setEnabled(False)
+        # self.send_button.setEnabled(False) # Blokujemy przycisk na czas pracy
 
-        self.llm_thread = QThread()
-        self.llm_worker = LLMTestWorker()
-        self.llm_worker.moveToThread(self.llm_thread)
-
-        self.llm_thread.started.connect(self.llm_worker.run)
-        self.llm_worker.result.connect(self.on_llm_result)
-        self.llm_worker.error.connect(self.on_error)
-        self.llm_worker.log.connect(self.on_log)
-        self.llm_worker.finished.connect(self.on_llm_finished)
-        self.llm_worker.finished.connect(self.llm_thread.quit)
-        self.llm_thread.finished.connect(self._cleanup_llm_thread)
-
-        self.llm_thread.start()
+        # Uruchamiamy pracownika w osobnym wątku
+        self.worker = GeminiWorker()
+        # logger.info("Starting GeminiWorker thread")
+        self.worker.response_received.connect(self.on_llm_result)
+        self.worker.start()
 
     def on_llm_result(self, result: str) -> None:
         self._set_status_item(0, "Wynik LLM:")

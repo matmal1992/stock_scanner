@@ -18,7 +18,8 @@ dependencies = [
     "pytest-cov",
     "pyinstaller",
     "PySide6",
-    "feedparser"
+    "feedparser",
+    "google-genai"
 ]
 
 [project.optional-dependencies]

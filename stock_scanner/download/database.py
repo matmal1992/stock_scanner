@@ -3,8 +3,6 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-# DB_PATH = Path(__file__).parent.parent.parent / "data" / "rss.db"
-# print("DB PATH:", DB_PATH.resolve())
 if getattr(sys, "frozen", False):
     BASE_DIR = Path(sys.executable).parent.parent
 else:
