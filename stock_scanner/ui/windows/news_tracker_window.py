@@ -133,7 +133,7 @@ class NewsTrackerWindow(BaseWindow):
         self._set_status_item(0, f"{error_time} Błąd: {e}")
         self.status_label.setText("Błąd!")
         self.status_label.setStyleSheet("color: red; font-size: 14px;")
-        logger.info("ERROR:", e)
+        logger.info(f"ERROR: {e}")
         logger.info(traceback.format_exc())
 
     def on_data_ready(self, items: list[tuple[int | None, str]], has_new_entries: bool) -> None:

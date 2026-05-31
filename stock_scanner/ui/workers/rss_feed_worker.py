@@ -22,7 +22,8 @@ class RSSWorker(QObject):
         self.reply: QNetworkReply | None = None
 
     def run(self) -> None:
-        url = QUrl("https://biznes.pap.pl/rss")
+        # url = QUrl("https://biznes.pap.pl/rss")
+        url = QUrl("https://www.bankier.pl/rss/gielda.xml")
         self.log.emit("Start pobierania RSS from " + url.toString())
 
         request = QNetworkRequest(url)
