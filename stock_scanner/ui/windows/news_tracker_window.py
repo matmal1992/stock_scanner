@@ -134,22 +134,27 @@ class NewsTrackerWindow(BaseWindow):
         logger.info(f"ERROR: {e}")
         logger.info(traceback.format_exc())
 
-    def on_data_ready(self, items: list[tuple[int | None, str]], has_new_entries: bool) -> None:
+    def on_data_ready(
+        self, items: list[tuple[str, str, int | None]], has_new_entries: bool
+    ) -> None:
         now = datetime.now()
         time_str = now.strftime("[%H:%M:%S]")
 
         if has_new_entries:
-            self._set_status_item(0, f"Nowe wpisy: {time_str}")
+            status_text = f"Nowe wpisy: {time_str}"
             logger.info("Nowe wpisy")
             self.test_llm_btn.setEnabled(True)
         else:
-            self._set_status_item(0, f"{time_str}: Brak nowych wpisów")
+            status_text = f"{time_str}: Brak nowych wpisów"
             self.test_llm_btn.setEnabled(self._has_rss_entries())
 
-        for published, title in items:
+        lines = [status_text]
+        for title, link, published in items:
             formatted = self.format_timestamp(published)
             pub_text = f"{formatted} • " if formatted else ""
-            self._add_status_item(f"{pub_text}{title}")
+            lines.append(f"{pub_text}{title}")
+
+        self._update_status_list(lines)
 
     def _update_status_list(self, lines: list[str]) -> None:
         self.status.clear()

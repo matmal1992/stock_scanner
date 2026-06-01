@@ -7,7 +7,7 @@ import feedparser
 from PySide6.QtCore import QObject, QUrl, Signal
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
 
-from stock_scanner.download.database import insert_entry
+from stock_scanner.download.database import get_all_entries, insert_entry
 
 
 class RSSWorker(QObject):
@@ -73,21 +73,18 @@ class RSSWorker(QObject):
             self.finished.emit()
             return
 
-        today_entries: list[tuple[int | None, str]] = []
         found_new = False
         for entry in feed.entries[:5]:
-            title = getattr(entry, "title", "Brak tytułu")
-            published_ts = self._parse_published_ts(entry)
-            today_entries.append((published_ts, title))
             try:
                 if insert_entry(entry):
                     found_new = True
             except Exception as entry_error:
                 self.log.emit(f"Błąd przy dodawaniu wpisu: {str(entry_error)}")
 
-        if today_entries:
-            self.data_ready.emit(today_entries, found_new)
+        entries = get_all_entries()
+        if entries:
+            self.data_ready.emit(entries, found_new)
         else:
-            self.log.emit("Nie znaleziono wpisów do wyświetlenia")
+            self.log.emit("Nie znaleziono wpisów w bazie danych do wyświetlenia")
 
         self.finished.emit()
