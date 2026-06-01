@@ -1,3 +1,4 @@
+import json
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -12,7 +13,20 @@ def get_project_root() -> Path:
 
 BASE_DIR = get_project_root()
 report_path = BASE_DIR / "report.html"
-email_config_path = BASE_DIR / "stock_scanner" / "core" / "config.json"
+alert_config_path = BASE_DIR / "stock_scanner" / "core" / "config.json"
+
+
+def load_config() -> dict:
+    if not alert_config_path.exists():
+        print(f"CONFIG NOT FOUND: {alert_config_path}")
+        return {"path_error": " "}
+
+    try:
+        with open(alert_config_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"CONFIG ERROR: {e}")
+        return {"load_error": " "}
 
 
 @dataclass

@@ -93,6 +93,17 @@ def get_all_entries() -> list[tuple[str, str, str]]:
     return rows
 
 
+def get_first_entry() -> tuple[str, str]:
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT title, link FROM entries ORDER BY published DESC LIMIT 1")
+        row = cur.fetchone()
+        return ("No entries", "") if row is None else (row[0], row[1])
+    finally:
+        conn.close()
+
+
 def get_pending_entries(limit: int = 10) -> list[tuple[str, str]]:
     conn = get_connection()
     cur = conn.cursor()

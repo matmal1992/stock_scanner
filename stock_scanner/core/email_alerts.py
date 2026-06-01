@@ -1,29 +1,12 @@
-import json
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-from stock_scanner.download.config import email_config_path
-
-
-def _load_config() -> dict | None:
-    if not email_config_path.exists():
-        print(f"CONFIG NOT FOUND: {email_config_path}")
-        return None
-
-    try:
-        with open(email_config_path, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception as e:
-        print(f"CONFIG ERROR: {e}")
-        return None
+from stock_scanner.download.config import load_config
 
 
 def send_gmail_alert(subject: str, message: str) -> bool:
-    config = _load_config()
-    if not config:
-        return False
-
+    config = load_config()
     gmail_address = config.get("gmail_address")
     gmail_password = config.get("gmail_password")
     recipient = config.get("recipient")
