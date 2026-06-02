@@ -7,6 +7,7 @@ import feedparser
 from PySide6.QtCore import QObject, QUrl, Signal
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
 
+from stock_scanner.core.telegram import send_telegram_message
 from stock_scanner.download.database import get_all_entries, insert_entry
 
 
@@ -24,7 +25,6 @@ class RSSWorker(QObject):
         self.reply: QNetworkReply | None = None
 
     def run(self) -> None:
-        # url = QUrl("https://biznes.pap.pl/rss")
         url = QUrl("https://www.bankier.pl/rss/gielda.xml")
         self.log.emit("Start pobierania RSS from " + url.toString())
 
@@ -91,6 +91,7 @@ class RSSWorker(QObject):
                     if matched:
                         tickers_str = ", ".join(matched)
                         print(f"[ALERT] {tickers_str} → {title}")
+                        send_telegram_message(f"ALERT: {tickers_str} → {title}")
 
                         # opcjonalnie log do UI
                         self.log.emit(f"ALERT: {tickers_str} → {title}")

@@ -99,13 +99,7 @@ class NewsTrackerWindow(BaseWindow):
         if self.worker is not None:
             return
 
-        # now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         logger.info("Get RSS feed button clicked")
-
-        # if send_gmail_alert("Stock Scanner Alert", f"<b>Get RSS feed</b> clicked at {now}"):
-        #     logger.info("Gmail notification sent")
-        # else:
-        #     logger.warning("Gmail notification not sent (missing config or error)")
 
         self.worker = RSSWorker()
         self.worker.log.connect(self.on_log)
@@ -118,12 +112,12 @@ class NewsTrackerWindow(BaseWindow):
             self.timer.start()
 
     def on_log(self, text: str) -> None:
-        now = datetime.now().strftime("[%H:%M:%S]")
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self._set_status_item(0, f"{now} Status: {text}")
 
     def on_error(self, e: str) -> None:
         now = datetime.now()
-        error_time = now.strftime("[%H:%M:%S]")
+        error_time = now.strftime("%Y-%m-%d %H:%M:%S")
         self._set_status_item(0, f"{error_time} Błąd: {e}")
         self.status_label.setText("Błąd!")
         self.status_label.setStyleSheet("color: red; font-size: 14px;")
@@ -134,7 +128,7 @@ class NewsTrackerWindow(BaseWindow):
         self, items: list[tuple[str, str, int | None]], has_new_entries: bool
     ) -> None:
         now = datetime.now()
-        time_str = now.strftime("[%H:%M:%S]")
+        time_str = now.strftime("%Y-%m-%d %H:%M:%S")
 
         if has_new_entries:
             status_text = f"Nowe wpisy: {time_str}"

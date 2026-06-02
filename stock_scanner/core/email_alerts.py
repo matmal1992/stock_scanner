@@ -1,8 +1,11 @@
+import logging
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 from stock_scanner.download.config import load_config
+
+logger = logging.getLogger(__name__)
 
 
 def send_gmail_alert(subject: str, message: str) -> bool:
@@ -12,7 +15,7 @@ def send_gmail_alert(subject: str, message: str) -> bool:
     recipient = config.get("recipient")
 
     if not gmail_address or not gmail_password or not recipient:
-        print("CONFIG INCOMPLETE")
+        logger.warning("CONFIG INCOMPLETE")
         return False
 
     try:
@@ -27,9 +30,9 @@ def send_gmail_alert(subject: str, message: str) -> bool:
             server.login(gmail_address, gmail_password)
             server.send_message(msg)
 
-        print("EMAIL SENT")
+        logger.info("EMAIL SENT")
         return True
 
     except Exception as e:
-        print(f"EMAIL ERROR: {e}")
+        logger.error(f"EMAIL ERROR: {e}")
         return False
