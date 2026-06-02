@@ -16,6 +16,8 @@ class RSSWorker(QObject):
     log = Signal(str)
     data_ready = Signal(list, bool)
 
+    WATCHLIST = ["KGHM", "CDPROJEKT", "ORLEN", "CREOTECH"]
+
     def __init__(self, parent: QObject | None = None) -> None:
         super().__init__(parent)
         self.manager = QNetworkAccessManager(self)
@@ -48,6 +50,10 @@ class RSSWorker(QObject):
         except Exception:
             return None
 
+    def _check_for_tickers(self, title: str) -> list[str]:
+        title_upper = title.upper()
+        return [ticker for ticker in self.WATCHLIST if ticker in title_upper]
+
     def _on_finished(self) -> None:
         reply = self.reply
         if reply is None:
@@ -78,6 +84,17 @@ class RSSWorker(QObject):
             try:
                 if insert_entry(entry):
                     found_new = True
+
+                    title = getattr(entry, "title", "")
+                    matched = self._check_for_tickers(title)
+
+                    if matched:
+                        tickers_str = ", ".join(matched)
+                        print(f"[ALERT] {tickers_str} → {title}")
+
+                        # opcjonalnie log do UI
+                        self.log.emit(f"ALERT: {tickers_str} → {title}")
+
             except Exception as entry_error:
                 self.log.emit(f"Błąd przy dodawaniu wpisu: {str(entry_error)}")
 
