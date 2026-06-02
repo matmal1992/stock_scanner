@@ -12,6 +12,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
 )
 
+from stock_scanner.core.telegram import send_telegram_message
 from stock_scanner.download.database import get_connection
 from stock_scanner.ui.gui_elements.Lines import HLine, VLine
 from stock_scanner.ui.windows.base_window import BaseWindow
@@ -100,11 +101,6 @@ class NewsTrackerWindow(BaseWindow):
 
         # now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         logger.info("Get RSS feed button clicked")
-
-        # if send_telegram_message(f"<b>Get RSS feed</b> clicked at {now}"):
-        #     logger.info("Telegram notification sent")
-        # else:
-        #     logger.warning("Telegram notification not sent (missing config or error)")
 
         # if send_gmail_alert("Stock Scanner Alert", f"<b>Get RSS feed</b> clicked at {now}"):
         #     logger.info("Gmail notification sent")
@@ -206,6 +202,11 @@ class NewsTrackerWindow(BaseWindow):
         # self.llm_thread.finished.connect(self._cleanup_llm_thread)
 
         # self.llm_thread.start()
+
+        if send_telegram_message("Hello from Stock Scanner!"):
+            logger.info("Telegram notification sent")
+        else:
+            logger.warning("Telegram notification not sent (missing config or error)")
 
         self.status_label.setText("Wysyłanie zapytania do LLM...")
         # self.send_button.setEnabled(False) # Blokujemy przycisk na czas pracy
