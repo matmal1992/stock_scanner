@@ -35,6 +35,7 @@ def main() -> None:
     try:
         configure_logging()
         init_db()
+
         app = QApplication(sys.argv)
         window = MainWindow()
         window.show()

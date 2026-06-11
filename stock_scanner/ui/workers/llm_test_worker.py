@@ -2,7 +2,7 @@ from google.genai import Client, types
 from PySide6.QtCore import QThread, Signal
 
 from stock_scanner.download.config import load_config
-from stock_scanner.download.database import get_first_entry
+from stock_scanner.download.database_useless import get_first_entry
 
 
 class GeminiWorker(QThread):

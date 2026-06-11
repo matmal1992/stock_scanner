@@ -2,7 +2,6 @@ import logging
 import traceback
 from datetime import datetime
 
-import feedparser
 from PySide6.QtCore import QThread, QTimer
 from PySide6.QtWidgets import (
     QAbstractItemView,
@@ -17,6 +16,7 @@ from stock_scanner.core.telegram import send_telegram_message
 from stock_scanner.download.database import get_connection
 from stock_scanner.ui.gui_elements.Lines import HLine, VLine
 from stock_scanner.ui.windows.base_window import BaseWindow
+from stock_scanner.ui.workers.google_news_worker import GoogleNewsWorker
 from stock_scanner.ui.workers.llm_test_worker import GeminiWorker
 from stock_scanner.ui.workers.rss_feed_worker import RSSWorker
 
@@ -29,7 +29,8 @@ class NewsTrackerWindow(BaseWindow):
     def __init__(self) -> None:
         super().__init__("News Tracker")
 
-        self.worker: RSSWorker | None = None
+        self.rss_worker: RSSWorker | None = None
+        self.google_worker: GoogleNewsWorker | None = None
         self.llm_thread: QThread | None = None
         self.llm_worker: GeminiWorker | None = None
         self.latest_titles: list[str] = []
@@ -40,8 +41,8 @@ class NewsTrackerWindow(BaseWindow):
         self.timer.timeout.connect(self.on_timer)
 
     def on_timer(self) -> None:
-        if self.worker is None:
-            self.start_rss()
+        if self.rss_worker is None:
+            self.getting_news()
 
     def setup_ui(self) -> None:
         add_btn = QPushButton("Add")
@@ -50,10 +51,8 @@ class NewsTrackerWindow(BaseWindow):
         self.test_llm_btn.setEnabled(False)
         add_btn.setEnabled(False)
         remove_btn.setEnabled(False)
-        get_rss_feed_btn = QPushButton("Get RSS feed")
-        get_google_news_btn = QPushButton("Get Google News")
-        get_rss_feed_btn.clicked.connect(self.start_rss)
-        get_google_news_btn.clicked.connect(self.get_google_news)
+        get_news_btn = QPushButton("Get RSS feed")
+        get_news_btn.clicked.connect(self.getting_news)
         self.test_llm_btn.clicked.connect(self.on_test_llm_clicked)
 
         self.status = QListWidget()
@@ -81,8 +80,7 @@ class NewsTrackerWindow(BaseWindow):
         main_layout.addLayout(upper_layout, stretch=1)
         main_layout.addWidget(HLine())
         main_layout.addWidget(self.status_label)
-        main_layout.addWidget(get_rss_feed_btn)
-        main_layout.addWidget(get_google_news_btn)
+        main_layout.addWidget(get_news_btn)
         main_layout.addWidget(self.status, stretch=1)
         main_layout.addStretch()
 
@@ -99,57 +97,28 @@ class NewsTrackerWindow(BaseWindow):
         dt = datetime.fromtimestamp(ts)
         return dt.strftime("%d %b %H:%M:%S")
 
-    def start_rss(self) -> None:
-        if self.worker is not None:
+    def getting_news(self) -> None:
+        if self.rss_worker is not None or self.google_worker is not None:
             return
 
-        logger.info("Get RSS feed button clicked")
+        logger.info("Fetching RSS + Google News")
 
-        self.worker = RSSWorker()
-        self.worker.log.connect(self.on_log)
-        self.worker.error.connect(self.on_error)
-        self.worker.data_ready.connect(self.on_data_ready)
-        self.worker.finished.connect(lambda: setattr(self, "worker", None))
-        self.worker.run()
+        self.rss_worker = RSSWorker()
+        self.rss_worker.log.connect(self.on_log)
+        self.rss_worker.error.connect(self.on_error)
+        self.rss_worker.data_ready.connect(self.on_data_ready)
+        self.rss_worker.finished.connect(lambda: setattr(self, "rss_worker", None))
+        self.rss_worker.run()
+
+        self.google_worker = GoogleNewsWorker()
+        self.google_worker.log.connect(self.on_log)
+        self.google_worker.error.connect(self.on_error)
+        self.google_worker.data_ready.connect(self.on_data_ready)
+        self.google_worker.finished.connect(lambda: setattr(self, "google_worker", None))
+        self.google_worker.run()
 
         if not self.timer.isActive():
             self.timer.start()
-
-    def get_google_news(self) -> None:
-        try:
-            query = '"Creotech Instruments" site:bankier.pl OR site:stockwatch.pl'
-
-            url = (
-                "https://news.google.com/rss/search?"
-                f"q={query.replace(' ', '+')}"
-                "&hl=pl&gl=PL&ceid=PL:pl"
-            )
-
-            feed = feedparser.parse(url)
-
-            if not feed.entries:
-                self._update_status_list(["Brak wyników z Google News (PL)"])
-                return
-
-            lines = ["Google News (PL, top 5):"]
-
-            for entry in feed.entries[:5]:
-                title = entry.title
-                published = entry.get("published_parsed")
-
-                if published:
-                    dt = datetime(*published[:6])
-                    time_str = dt.strftime("%d %b %H:%M")
-                    lines.append(f"{time_str} • {title}")
-                else:
-                    lines.append(title)
-
-            self._update_status_list(lines)
-            self.status_label.setText("Pobrano Google News (PL)")
-            self.status_label.setStyleSheet("color: #00ff99; font-size: 14px;")
-
-        except Exception as e:
-            self.on_error(f"Google News error: {e}")
 
     def on_log(self, text: str) -> None:
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -176,13 +145,18 @@ class NewsTrackerWindow(BaseWindow):
             self.test_llm_btn.setEnabled(True)
         else:
             status_text = f"{time_str}: Brak nowych wpisów"
-            self.test_llm_btn.setEnabled(self._has_rss_entries())
+            self.test_llm_btn.setEnabled(self._has_entries())
 
         lines = [status_text]
-        for title, link, published in items:
-            formatted = self.format_timestamp(published)
-            pub_text = f"{formatted} • " if formatted else ""
-            lines.append(f"{pub_text}{title}")
+        for title, link, published, source, source_type in items:
+            prefix = f"[{source_type.upper()}:{source}]"
+
+            if published:
+                dt = datetime.fromtimestamp(published)
+                time_str = dt.strftime("%d %b %H:%M")
+                lines.append(f"{time_str} {prefix} {title}")
+            else:
+                lines.append(f"{prefix} {title}")
 
         self._update_status_list(lines)
 
@@ -200,7 +174,7 @@ class NewsTrackerWindow(BaseWindow):
         """Add a new item to status list without clearing."""
         self.status.addItem(text)
 
-    def _has_rss_entries(self) -> bool:
+    def _has_entries(self) -> bool:
         try:
             conn = get_connection()
             cur = conn.cursor()
@@ -258,7 +232,7 @@ class NewsTrackerWindow(BaseWindow):
         self.status_label.setStyleSheet("color: #00ff99; font-size: 14px;")
 
     def on_llm_finished(self) -> None:
-        self.test_llm_btn.setEnabled(self._has_rss_entries())
+        self.test_llm_btn.setEnabled(self._has_entries())
 
     def _cleanup_llm_thread(self) -> None:
         if self.llm_worker is not None:

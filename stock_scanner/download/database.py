@@ -8,7 +8,7 @@ if getattr(sys, "frozen", False):
 else:
     BASE_DIR = Path(__file__).parent.parent.parent
 
-DB_PATH = BASE_DIR / "data" / "rss.db"
+DB_PATH = BASE_DIR / "data" / "database.db"
 DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 
@@ -23,9 +23,15 @@ def init_db() -> None:
     cur.execute("""
     CREATE TABLE IF NOT EXISTS entries (
         id TEXT PRIMARY KEY,
+        source_type TEXT,
+        source TEXT,
+
         title TEXT,
         link TEXT,
         published INTEGER,
+
+        query TEXT,
+        inserted_at TEXT,
 
         llm_status TEXT DEFAULT 'pending',
         sentiment TEXT,
@@ -37,36 +43,46 @@ def init_db() -> None:
     conn.close()
 
 
-def parse_rss_date(date_str: str) -> int | None:
-    try:
-        dt = datetime.strptime(date_str, "%a, %d %b %Y %H:%M:%S %z")
-        return int(dt.timestamp())
-    except Exception:
-        return None
-
-
-def insert_entry(entry: object) -> bool:
+def insert_entry(entry: object, source_type: str, query: str | None = None) -> bool:
     conn = get_connection()
     cur = conn.cursor()
 
     try:
-        entry_id = getattr(entry, "id", getattr(entry, "link", None))
+        entry_id = getattr(entry, "id", None) or getattr(entry, "link", None)
         if not entry_id:
             return False
 
-        published_str = getattr(entry, "published", "")
-        published_ts = parse_rss_date(published_str)
+        title = getattr(entry, "title", "")
+        link = getattr(entry, "link", "")
+
+        source = "unknown"
+        if "bankier.pl" in link:
+            source = "bankier"
+        elif "stockwatch.pl" in link:
+            source = "stockwatch"
+
+        published_ts = None
+        if getattr(entry, "published_parsed", None):
+            dt = datetime(*entry.published_parsed[:6])
+            published_ts = int(dt.timestamp())
 
         cur.execute(
             """
-        INSERT INTO entries (id, title, link, published)
-        VALUES (?, ?, ?, ?)
-        """,
+            INSERT INTO entries (
+                id, source_type, source, title, link, published,
+                query, inserted_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
             (
                 entry_id,
-                getattr(entry, "title", "Brak tytułu"),
-                getattr(entry, "link", ""),
+                source_type,
+                source,
+                title,
+                link,
                 published_ts,
+                query,
+                datetime.utcnow().isoformat(),
             ),
         )
 
@@ -74,67 +90,40 @@ def insert_entry(entry: object) -> bool:
         return True
 
     except sqlite3.IntegrityError:
-        # duplikat → ignorujemy
         return False
 
     finally:
         conn.close()
 
 
-def get_all_entries() -> list[tuple[str, str, str]]:
-    conn = get_connection()
-    cur = conn.cursor()
-
-    cur.execute("SELECT title, link, published FROM entries ORDER BY published DESC")
-
-    rows = cur.fetchall()
-    conn.close()
-
-    return rows
-
-
-def get_first_entry() -> tuple[str, str]:
-    conn = get_connection()
-    try:
-        cur = conn.cursor()
-        cur.execute("SELECT title, link FROM entries ORDER BY published DESC LIMIT 1")
-        row = cur.fetchone()
-        return ("No entries", "") if row is None else (row[0], row[1])
-    finally:
-        conn.close()
-
-
-def get_pending_entries(limit: int = 10) -> list[tuple[str, str]]:
+def get_latest_entries(limit_per_source: int = 5):
     conn = get_connection()
     cur = conn.cursor()
 
     cur.execute(
         """
-    SELECT id, title FROM entries
-    WHERE llm_status = 'pending'
-    LIMIT ?
+        SELECT title, link, published, source, source_type
+        FROM entries
+        WHERE source_type = 'rss'
+        ORDER BY published DESC
+        LIMIT ?
     """,
-        (limit,),
+        (limit_per_source,),
     )
-
-    rows = cur.fetchall()
-    conn.close()
-
-    return rows
-
-
-def update_sentiment(entry_id: str, sentiment: str) -> None:
-    conn = get_connection()
-    cur = conn.cursor()
+    rss_rows = cur.fetchall()
 
     cur.execute(
         """
-    UPDATE entries
-    SET sentiment = ?, llm_status = 'done', processed_at = ?
-    WHERE id = ?
+        SELECT title, link, published, source, source_type
+        FROM entries
+        WHERE source_type = 'google'
+        ORDER BY published DESC
+        LIMIT ?
     """,
-        (sentiment, datetime.utcnow().isoformat(), entry_id),
+        (limit_per_source,),
     )
+    google_rows = cur.fetchall()
 
-    conn.commit()
     conn.close()
+
+    return rss_rows + google_rows

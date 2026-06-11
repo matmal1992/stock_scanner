@@ -8,7 +8,7 @@ from PySide6.QtCore import QObject, QUrl, Signal
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
 
 from stock_scanner.core.telegram import send_telegram_message
-from stock_scanner.download.database import get_all_entries, insert_entry
+from stock_scanner.download.database import get_latest_entries, insert_entry
 
 
 class RSSWorker(QObject):
@@ -82,7 +82,7 @@ class RSSWorker(QObject):
         found_new = False
         for entry in feed.entries[:5]:
             try:
-                if insert_entry(entry):
+                if insert_entry(entry, source_type="rss"):
                     found_new = True
 
                     title = getattr(entry, "title", "")
@@ -99,7 +99,7 @@ class RSSWorker(QObject):
             except Exception as entry_error:
                 self.log.emit(f"Błąd przy dodawaniu wpisu: {str(entry_error)}")
 
-        entries = get_all_entries()
+        entries = get_latest_entries()
         if entries:
             self.data_ready.emit(entries, found_new)
         else:
