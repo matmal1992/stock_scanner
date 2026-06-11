@@ -2,6 +2,7 @@ import logging
 import traceback
 from datetime import datetime
 
+import feedparser
 from PySide6.QtCore import QThread, QTimer
 from PySide6.QtWidgets import (
     QAbstractItemView,
@@ -50,7 +51,9 @@ class NewsTrackerWindow(BaseWindow):
         add_btn.setEnabled(False)
         remove_btn.setEnabled(False)
         get_rss_feed_btn = QPushButton("Get RSS feed")
+        get_google_news_btn = QPushButton("Get Google News")
         get_rss_feed_btn.clicked.connect(self.start_rss)
+        get_google_news_btn.clicked.connect(self.get_google_news)
         self.test_llm_btn.clicked.connect(self.on_test_llm_clicked)
 
         self.status = QListWidget()
@@ -79,6 +82,7 @@ class NewsTrackerWindow(BaseWindow):
         main_layout.addWidget(HLine())
         main_layout.addWidget(self.status_label)
         main_layout.addWidget(get_rss_feed_btn)
+        main_layout.addWidget(get_google_news_btn)
         main_layout.addWidget(self.status, stretch=1)
         main_layout.addStretch()
 
@@ -110,6 +114,42 @@ class NewsTrackerWindow(BaseWindow):
 
         if not self.timer.isActive():
             self.timer.start()
+
+    def get_google_news(self) -> None:
+        try:
+            query = '"Creotech Instruments" site:bankier.pl OR site:stockwatch.pl'
+
+            url = (
+                "https://news.google.com/rss/search?"
+                f"q={query.replace(' ', '+')}"
+                "&hl=pl&gl=PL&ceid=PL:pl"
+            )
+
+            feed = feedparser.parse(url)
+
+            if not feed.entries:
+                self._update_status_list(["Brak wyników z Google News (PL)"])
+                return
+
+            lines = ["Google News (PL, top 5):"]
+
+            for entry in feed.entries[:5]:
+                title = entry.title
+                published = entry.get("published_parsed")
+
+                if published:
+                    dt = datetime(*published[:6])
+                    time_str = dt.strftime("%d %b %H:%M")
+                    lines.append(f"{time_str} • {title}")
+                else:
+                    lines.append(title)
+
+            self._update_status_list(lines)
+            self.status_label.setText("Pobrano Google News (PL)")
+            self.status_label.setStyleSheet("color: #00ff99; font-size: 14px;")
+
+        except Exception as e:
+            self.on_error(f"Google News error: {e}")
 
     def on_log(self, text: str) -> None:
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
