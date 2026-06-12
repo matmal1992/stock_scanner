@@ -1,7 +1,11 @@
+import logging
 import sqlite3
 import sys
 from datetime import datetime
 from pathlib import Path
+from typing import Protocol
+
+logger = logging.getLogger(__name__)
 
 if getattr(sys, "frozen", False):
     BASE_DIR = Path(sys.executable).parent.parent
@@ -10,6 +14,13 @@ else:
 
 DB_PATH = BASE_DIR / "data" / "database.db"
 DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+
+
+class FeedEntry(Protocol):
+    id: str | None
+    link: str
+    title: str
+    published_parsed: tuple[int, int, int, int, int, int] | None
 
 
 def get_connection() -> sqlite3.Connection:
@@ -24,7 +35,6 @@ def init_db() -> None:
     CREATE TABLE IF NOT EXISTS entries (
         id TEXT PRIMARY KEY,
         source_type TEXT,
-        source TEXT,
 
         title TEXT,
         link TEXT,
@@ -43,7 +53,7 @@ def init_db() -> None:
     conn.close()
 
 
-def insert_entry(entry: object, source_type: str, query: str | None = None) -> bool:
+def insert_entry(entry: FeedEntry, source_type: str, query: str | None = None) -> bool:
     conn = get_connection()
     cur = conn.cursor()
 
@@ -55,29 +65,24 @@ def insert_entry(entry: object, source_type: str, query: str | None = None) -> b
         title = getattr(entry, "title", "")
         link = getattr(entry, "link", "")
 
-        source = "unknown"
-        if "bankier.pl" in link:
-            source = "bankier"
-        elif "stockwatch.pl" in link:
-            source = "stockwatch"
-
         published_ts = None
-        if getattr(entry, "published_parsed", None):
-            dt = datetime(*entry.published_parsed[:6])
+        published_parsed = getattr(entry, "published_parsed", None)
+
+        if published_parsed is not None:
+            dt = datetime(*published_parsed[:6])
             published_ts = int(dt.timestamp())
 
         cur.execute(
             """
             INSERT INTO entries (
-                id, source_type, source, title, link, published,
+                id, source_type, title, link, published,
                 query, inserted_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 entry_id,
                 source_type,
-                source,
                 title,
                 link,
                 published_ts,
@@ -96,13 +101,13 @@ def insert_entry(entry: object, source_type: str, query: str | None = None) -> b
         conn.close()
 
 
-def get_latest_entries(limit_per_source: int = 5):
+def get_latest_entries(limit_per_source: int = 5) -> list[tuple[str, str, int | None, str, str]]:
     conn = get_connection()
     cur = conn.cursor()
 
     cur.execute(
         """
-        SELECT title, link, published, source, source_type
+        SELECT title, link, published, source_type
         FROM entries
         WHERE source_type = 'rss'
         ORDER BY published DESC
@@ -114,7 +119,7 @@ def get_latest_entries(limit_per_source: int = 5):
 
     cur.execute(
         """
-        SELECT title, link, published, source, source_type
+        SELECT title, link, published, source_type
         FROM entries
         WHERE source_type = 'google'
         ORDER BY published DESC

@@ -1,3 +1,5 @@
+import logging
+
 import feedparser
 from PySide6.QtCore import QObject, Signal
 
@@ -5,6 +7,8 @@ from stock_scanner.download.database import (
     get_latest_entries,
     insert_entry,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class GoogleNewsWorker(QObject):
@@ -36,10 +40,6 @@ class GoogleNewsWorker(QObject):
 
             for entry in feed.entries[:10]:
                 try:
-                    link = entry.link
-                    if not ("bankier.pl" in link or "stockwatch.pl" in link):
-                        continue
-
                     if insert_entry(entry, source_type="google", query=query):
                         found_new = True
 

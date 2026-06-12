@@ -134,7 +134,7 @@ class NewsTrackerWindow(BaseWindow):
         logger.info(traceback.format_exc())
 
     def on_data_ready(
-        self, items: list[tuple[str, str, int | None]], has_new_entries: bool
+        self, items: list[tuple[str, str, int | None, str]], has_new_entries: bool
     ) -> None:
         now = datetime.now()
         time_str = now.strftime("%Y-%m-%d %H:%M:%S")
@@ -148,8 +148,8 @@ class NewsTrackerWindow(BaseWindow):
             self.test_llm_btn.setEnabled(self._has_entries())
 
         lines = [status_text]
-        for title, link, published, source, source_type in items:
-            prefix = f"[{source_type.upper()}:{source}]"
+        for title, link, published, source_type in items:
+            prefix = f"[{source_type.upper()}]"
 
             if published:
                 dt = datetime.fromtimestamp(published)
@@ -219,7 +219,6 @@ class NewsTrackerWindow(BaseWindow):
         self.status_label.setText("Wysyłanie zapytania do LLM...")
         # self.send_button.setEnabled(False) # Blokujemy przycisk na czas pracy
 
-        # Uruchamiamy pracownika w osobnym wątku
         self.worker = GeminiWorker()
         # logger.info("Starting GeminiWorker thread")
         self.worker.response_received.connect(self.on_llm_result)
