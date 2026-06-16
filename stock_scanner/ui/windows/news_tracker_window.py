@@ -6,6 +6,7 @@ from PySide6.QtCore import QThread, QTimer
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QHBoxLayout,
+    QInputDialog,
     QLabel,
     QListWidget,
     QPushButton,
@@ -19,6 +20,7 @@ from stock_scanner.ui.windows.base_window import BaseWindow
 from stock_scanner.ui.workers.google_news_worker import GoogleNewsWorker
 from stock_scanner.ui.workers.llm_test_worker import GeminiWorker
 from stock_scanner.ui.workers.rss_feed_worker import RSSWorker
+from stock_scanner.ui.workers.website_worker import WebsiteWorker
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +37,8 @@ class NewsTrackerWindow(BaseWindow):
         self.llm_worker: GeminiWorker | None = None
         self.latest_titles: list[str] = []
         self.fetch_started_at: datetime | None = None
+        self.website_thread: QThread | None = None
+        self.website_worker: WebsiteWorker | None = None
 
         self.timer = QTimer()
         self.timer.setInterval(10000)
@@ -54,6 +58,8 @@ class NewsTrackerWindow(BaseWindow):
         get_news_btn = QPushButton("Get RSS feed")
         get_news_btn.clicked.connect(self.getting_news)
         self.test_llm_btn.clicked.connect(self.on_test_llm_clicked)
+        extract_btn = QPushButton("Extract text")
+        extract_btn.clicked.connect(self.on_extract_text_clicked)
 
         self.status = QListWidget()
         self.status.setAlternatingRowColors(False)
@@ -81,6 +87,7 @@ class NewsTrackerWindow(BaseWindow):
         main_layout.addWidget(HLine())
         main_layout.addWidget(self.status_label)
         main_layout.addWidget(get_news_btn)
+        main_layout.addWidget(extract_btn)
         main_layout.addWidget(self.status, stretch=1)
         main_layout.addStretch()
 
@@ -190,37 +197,14 @@ class NewsTrackerWindow(BaseWindow):
                 pass
 
     def on_test_llm_clicked(self) -> None:
-        # if self.llm_thread is not None:
-        #     return
-
-        # self.status_label.setText("Wysyłanie zapytania do LLM...")
-        # self.status_label.setStyleSheet("color: orange; font-size: 14px;")
-        # self.test_llm_btn.setEnabled(False)
-
-        # self.llm_thread = QThread()
-        # self.llm_worker = LLMTestWorker()
-        # self.llm_worker.moveToThread(self.llm_thread)
-
-        # self.llm_thread.started.connect(self.llm_worker.run)
-        # self.llm_worker.result.connect(self.on_llm_result)
-        # self.llm_worker.error.connect(self.on_error)
-        # self.llm_worker.log.connect(self.on_log)
-        # self.llm_worker.finished.connect(self.on_llm_finished)
-        # self.llm_worker.finished.connect(self.llm_thread.quit)
-        # self.llm_thread.finished.connect(self._cleanup_llm_thread)
-
-        # self.llm_thread.start()
-
         if send_telegram_message("Hello from Stock Scanner!"):
             logger.info("Telegram notification sent")
         else:
             logger.warning("Telegram notification not sent (missing config or error)")
 
         self.status_label.setText("Wysyłanie zapytania do LLM...")
-        # self.send_button.setEnabled(False) # Blokujemy przycisk na czas pracy
-
         self.worker = GeminiWorker()
-        # logger.info("Starting GeminiWorker thread")
+
         self.worker.response_received.connect(self.on_llm_result)
         self.worker.start()
 
@@ -240,3 +224,42 @@ class NewsTrackerWindow(BaseWindow):
         if self.llm_thread is not None:
             self.llm_thread.deleteLater()
             self.llm_thread = None
+
+    def on_extract_text_clicked(self) -> None:
+        if self.website_thread is not None:
+            return
+
+        url, ok = QInputDialog.getText(self, "Extract text", "Podaj URL:")
+        if not ok or not url:
+            return
+
+        self.status_label.setText("Scrapowanie strony...")
+        self.status_label.setStyleSheet("color: orange; font-size: 14px;")
+
+        self.website_thread = QThread()
+        self.website_worker = WebsiteWorker(url)
+        self.website_worker.moveToThread(self.website_thread)
+
+        self.website_thread.started.connect(self.website_worker.run)
+        self.website_worker.result.connect(self.on_website_result)
+        self.website_worker.error.connect(self.on_error)
+        self.website_worker.log.connect(self.on_log)
+
+        self.website_worker.finished.connect(self.website_thread.quit)
+        self.website_worker.finished.connect(self._cleanup_website_thread)
+        self.website_thread.finished.connect(self.website_thread.deleteLater)
+
+        self.website_thread.start()
+
+    def on_website_result(self, path: str) -> None:
+        self._add_status_item(f"Zapisano plik: {path}")
+        self.status_label.setText("Gotowe")
+        self.status_label.setStyleSheet("color: #00ff99; font-size: 14px;")
+
+    def _cleanup_website_thread(self) -> None:
+        if self.website_worker is not None:
+            self.website_worker.deleteLater()
+            self.website_worker = None
+
+        if self.website_thread is not None:
+            self.website_thread = None
