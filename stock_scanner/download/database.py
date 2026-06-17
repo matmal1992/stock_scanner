@@ -132,3 +132,25 @@ def get_latest_entries(limit_per_source: int = 5) -> list[tuple[str, str, int | 
     conn.close()
 
     return rss_rows + google_rows
+
+
+def get_first_entry_link() -> str | None:
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        """
+        SELECT link
+        FROM entries
+        ORDER BY published DESC
+        LIMIT 1
+        """
+    )
+
+    row = cur.fetchone()
+    conn.close()
+
+    if row:
+        return row[0]
+
+    return None

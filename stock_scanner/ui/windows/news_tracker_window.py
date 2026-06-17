@@ -14,7 +14,7 @@ from PySide6.QtWidgets import (
 )
 
 from stock_scanner.core.telegram import send_telegram_message
-from stock_scanner.download.database import get_connection
+from stock_scanner.download.database import get_connection, get_first_entry_link
 from stock_scanner.ui.gui_elements.Lines import HLine, VLine
 from stock_scanner.ui.windows.base_window import BaseWindow
 from stock_scanner.ui.workers.google_news_worker import GoogleNewsWorker
@@ -60,6 +60,7 @@ class NewsTrackerWindow(BaseWindow):
         self.test_llm_btn.clicked.connect(self.on_test_llm_clicked)
         extract_btn = QPushButton("Extract text")
         extract_btn.clicked.connect(self.on_extract_text_clicked)
+        self.first_entry_link = QLabel("Latest entry link: N/A")
 
         self.status = QListWidget()
         self.status.setAlternatingRowColors(False)
@@ -80,7 +81,7 @@ class NewsTrackerWindow(BaseWindow):
         upper_layout = QHBoxLayout()
         upper_layout.addLayout(list_layout, stretch=1)
         upper_layout.addWidget(VLine())
-        upper_layout.addWidget(QLabel("live chart"), stretch=2)
+        upper_layout.addWidget(self.first_entry_link, stretch=2)
 
         main_layout = QVBoxLayout()
         main_layout.addLayout(upper_layout, stretch=1)
@@ -126,6 +127,9 @@ class NewsTrackerWindow(BaseWindow):
 
         if not self.timer.isActive():
             self.timer.start()
+
+        link = get_first_entry_link()
+        self.first_entry_link.setText(f"Latest entry link: {link or 'N/A'}")
 
     def on_log(self, text: str) -> None:
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
