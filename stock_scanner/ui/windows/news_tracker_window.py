@@ -12,12 +12,11 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
 )
 
-from stock_scanner.core.telegram import send_telegram_message
 from stock_scanner.download.database import get_connection, get_first_entry_link
 from stock_scanner.ui.gui_elements.Lines import HLine, VLine
 from stock_scanner.ui.windows.base_window import BaseWindow
 from stock_scanner.ui.workers.google_news_worker import GoogleNewsWorker
-from stock_scanner.ui.workers.llm_test_worker import GeminiWorker
+from stock_scanner.ui.workers.llm_test_worker import LLMWorker
 from stock_scanner.ui.workers.rss_feed_worker import RSSWorker
 from stock_scanner.ui.workers.website_worker import WebsiteWorker
 
@@ -33,7 +32,7 @@ class NewsTrackerWindow(BaseWindow):
         self.rss_worker: RSSWorker | None = None
         self.google_worker: GoogleNewsWorker | None = None
         self.llm_thread: QThread | None = None
-        self.llm_worker: GeminiWorker | None = None
+        self.llm_worker: LLMWorker | None = None
         self.latest_titles: list[str] = []
         self.fetch_started_at: datetime | None = None
         self.website_thread: QThread | None = None
@@ -197,25 +196,17 @@ class NewsTrackerWindow(BaseWindow):
                 pass
 
     def on_test_llm_clicked(self) -> None:
-        if send_telegram_message("Hello from Stock Scanner!"):
-            logger.info("Telegram notification sent")
-        else:
-            logger.warning("Telegram notification not sent (missing config or error)")
-
         self.status_label.setText("Wysyłanie zapytania do LLM...")
-        self.worker = GeminiWorker()
+        # self.worker = LLMWorker()
 
-        self.worker.response_received.connect(self.on_llm_result)
-        self.worker.start()
+        # self.worker.response_received.connect(self.on_llm_result)
+        # self.worker.start()
 
     def on_llm_result(self, result: str) -> None:
         self._set_status_item(0, "Wynik LLM:")
         self._add_status_item(result)
         self.status_label.setText("LLM zakończony")
         self.status_label.setStyleSheet("color: #00ff99; font-size: 14px;")
-
-    def on_llm_finished(self) -> None:
-        self.test_llm_btn.setEnabled(self._has_entries())
 
     def _cleanup_llm_thread(self) -> None:
         if self.llm_worker is not None:
@@ -250,10 +241,12 @@ class NewsTrackerWindow(BaseWindow):
 
         self.website_thread.start()
 
-    def on_website_result(self, path: str) -> None:
-        self._add_status_item(f"Zapisano plik: {path}")
+    def on_website_result(self, article_text: str) -> None:
         self.status_label.setText("Gotowe")
         self.status_label.setStyleSheet("color: #00ff99; font-size: 14px;")
+        self.llm_worker = LLMWorker(article_text)
+        self.llm_worker.response_received.connect(self.on_llm_result)
+        self.llm_worker.start()
 
     def _cleanup_website_thread(self) -> None:
         if self.website_worker is not None:

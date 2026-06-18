@@ -95,7 +95,8 @@ class WebsiteWorker(QObject):
 
             path.write_text(clean_text, encoding="utf-8")
 
-            self.result.emit(str(path))
+            # self.result.emit(str(path))
+            self.result.emit(clean_text)
             self.finished.emit()
 
         except Exception as e:
