@@ -6,7 +6,6 @@ from PySide6.QtCore import QThread, QTimer
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QHBoxLayout,
-    QInputDialog,
     QLabel,
     QListWidget,
     QPushButton,
@@ -60,7 +59,7 @@ class NewsTrackerWindow(BaseWindow):
         self.test_llm_btn.clicked.connect(self.on_test_llm_clicked)
         extract_btn = QPushButton("Extract text")
         extract_btn.clicked.connect(self.on_extract_text_clicked)
-        self.first_entry_link = QLabel("Latest entry link: N/A")
+        self.first_entry_link: str
 
         self.status = QListWidget()
         self.status.setAlternatingRowColors(False)
@@ -81,7 +80,7 @@ class NewsTrackerWindow(BaseWindow):
         upper_layout = QHBoxLayout()
         upper_layout.addLayout(list_layout, stretch=1)
         upper_layout.addWidget(VLine())
-        upper_layout.addWidget(self.first_entry_link, stretch=2)
+        # upper_layout.addWidget(self.first_entry_link, stretch=2)
 
         main_layout = QVBoxLayout()
         main_layout.addLayout(upper_layout, stretch=1)
@@ -127,9 +126,6 @@ class NewsTrackerWindow(BaseWindow):
 
         if not self.timer.isActive():
             self.timer.start()
-
-        link = get_first_entry_link()
-        self.first_entry_link.setText(f"Latest entry link: {link or 'N/A'}")
 
     def on_log(self, text: str) -> None:
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -233,15 +229,14 @@ class NewsTrackerWindow(BaseWindow):
         if self.website_thread is not None:
             return
 
-        url, ok = QInputDialog.getText(self, "Extract text", "Podaj URL:")
-        if not ok or not url:
-            return
+        self.first_entry_link = get_first_entry_link()
+        logger.info("first_entry_link: %s", self.first_entry_link)
 
         self.status_label.setText("Scrapowanie strony...")
         self.status_label.setStyleSheet("color: orange; font-size: 14px;")
 
         self.website_thread = QThread()
-        self.website_worker = WebsiteWorker(url)
+        self.website_worker = WebsiteWorker(self.first_entry_link)
         self.website_worker.moveToThread(self.website_thread)
 
         self.website_thread.started.connect(self.website_worker.run)

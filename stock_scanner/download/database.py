@@ -134,7 +134,7 @@ def get_latest_entries(limit_per_source: int = 5) -> list[tuple[str, str, int | 
     return rss_rows + google_rows
 
 
-def get_first_entry_link() -> str | None:
+def get_first_entry_link() -> str:
     conn = get_connection()
     cur = conn.cursor()
 
@@ -153,4 +153,4 @@ def get_first_entry_link() -> str | None:
     if row:
         return row[0]
 
-    return None
+    return "Latest entry link: N/A"

@@ -71,11 +71,9 @@ class WebsiteWorker(QObject):
 
                 soup = BeautifulSoup(html, "html.parser")
 
-                # usuń śmieci
                 for tag in soup(["script", "style", "noscript", "header", "footer", "nav"]):
                     tag.decompose()
 
-                # spróbuj znaleźć article
                 article = soup.find("article")
 
                 if article:
@@ -89,7 +87,6 @@ class WebsiteWorker(QObject):
             if not text or len(text) < 200:
                 raise ValueError("Za mało treści (możliwy paywall / blokada)")
 
-            # 🧹 final cleaning pod LLM
             clean_text = self._prepare_for_llm(text)
 
             filename = f"article_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
