@@ -23,6 +23,7 @@ dependencies = [
     "cloudscraper",
     "beautifulsoup4",
     "trafilatura",
+    "newspaper3k",
 ]
 
 [project.optional-dependencies]

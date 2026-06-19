@@ -4,6 +4,7 @@ from pathlib import Path
 
 import cloudscraper
 from bs4 import BeautifulSoup
+from newspaper import Article
 from PySide6.QtCore import QObject, Signal
 
 logger = logging.getLogger(__name__)
@@ -95,14 +96,22 @@ class WebsiteWorker(QObject):
 
             path.write_text(clean_text, encoding="utf-8")
 
-            # self.result.emit(str(path))
-            self.result.emit(clean_text)
+            newspaper_text = self.get_article_text(self.url)
+            self.result.emit(newspaper_text)
+            # self.result.emit(clean_text)
             self.finished.emit()
 
         except Exception as e:
             logger.exception("Website worker error")
             self.error.emit(f"Website worker error: {e}")
             self.finished.emit()
+
+    def get_article_text(url: str) -> str:
+        article = Article(url)
+        article.download()
+        article.parse()
+
+        return article.text
 
     def _prepare_for_llm(self, text: str) -> str:
         lines = text.splitlines()

@@ -31,6 +31,10 @@ class LLMWorker(QThread):
     def run(self) -> None:
         try:
             client = Client(api_key=self.config.get("gemini_api_key"))
+            is_valid_article = self.is_valid_article(self.article_text)
+            if not is_valid_article:
+                self.response_received.emit("Nieprawidłowy artykuł: zawiera niepożądane treści.")
+                return
             prompt = self.build_prompt()
 
             response = client.models.generate_content(
@@ -48,3 +52,17 @@ class LLMWorker(QThread):
     def build_prompt(self) -> str:
         prompt = f"{self.my_prompt}\n\nTreść artykułu: {self.article_text}"
         return prompt
+
+    def is_valid_article(text: str) -> bool:
+        bad_keywords = [
+            "pliki cookie",
+            "cookies",
+            "zaakceptuj",
+            "odrzuć",
+            "reklam",
+            "prywatności",
+        ]
+
+        text_lower = text.lower()
+
+        return not any(word in text_lower for word in bad_keywords)
