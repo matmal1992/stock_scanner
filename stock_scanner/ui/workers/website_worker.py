@@ -96,9 +96,13 @@ class WebsiteWorker(QObject):
 
             path.write_text(clean_text, encoding="utf-8")
 
-            newspaper_text = self.get_article_text(self.url)
+            try:
+                newspaper_text = self.get_article_text(self.url)
+            except Exception as exc:
+                self.log.emit(f"newspaper fallback error: {exc}")
+                newspaper_text = clean_text
+
             self.result.emit(newspaper_text)
-            # self.result.emit(clean_text)
             self.finished.emit()
 
         except Exception as e:
@@ -106,7 +110,7 @@ class WebsiteWorker(QObject):
             self.error.emit(f"Website worker error: {e}")
             self.finished.emit()
 
-    def get_article_text(url: str) -> str:
+    def get_article_text(self, url: str) -> str:
         article = Article(url)
         article.download()
         article.parse()

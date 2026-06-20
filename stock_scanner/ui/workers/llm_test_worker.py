@@ -53,7 +53,7 @@ class LLMWorker(QThread):
         prompt = f"{self.my_prompt}\n\nTreść artykułu: {self.article_text}"
         return prompt
 
-    def is_valid_article(text: str) -> bool:
+    def is_valid_article(self, text: str) -> bool:
         bad_keywords = [
             "pliki cookie",
             "cookies",

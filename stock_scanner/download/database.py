@@ -67,7 +67,6 @@ def insert_entry(entry: FeedEntry, source_type: str, query: str | None = None) -
 
         published_ts = None
         published_parsed = getattr(entry, "published_parsed", None)
-
         if published_parsed is not None:
             dt = datetime(*published_parsed[:6])
             published_ts = int(dt.timestamp())

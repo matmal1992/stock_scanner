@@ -37,6 +37,7 @@ class NewsTrackerWindow(BaseWindow):
         self.fetch_started_at: datetime | None = None
         self.website_thread: QThread | None = None
         self.website_worker: WebsiteWorker | None = None
+        self.status_links: list[str] = []
 
         self.timer = QTimer()
         self.timer.setInterval(10000)
@@ -62,7 +63,7 @@ class NewsTrackerWindow(BaseWindow):
 
         self.status = QListWidget()
         self.status.setAlternatingRowColors(False)
-        self.status.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
+        self.status.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
 
         self.status_label = QLabel("Tracker not working")
         self.status_label.setStyleSheet("color: orange; font-size: 14px;")
@@ -154,8 +155,10 @@ class NewsTrackerWindow(BaseWindow):
             self.test_llm_btn.setEnabled(self._has_entries())
 
         lines = [status_text]
+        self.status_links = []
         for title, link, published, source_type in items:
             prefix = f"[{source_type.upper()}]"
+            self.status_links.append(link)
 
             if published:
                 dt = datetime.fromtimestamp(published)
@@ -220,7 +223,13 @@ class NewsTrackerWindow(BaseWindow):
         if self.website_thread is not None:
             return
 
-        self.first_entry_link = get_first_entry_link()
+        selected_row = self.status.currentRow()
+        if selected_row > 0 and selected_row - 1 < len(self.status_links):
+            self.first_entry_link = self.status_links[selected_row - 1]
+        else:
+            self.first_entry_link = get_first_entry_link()
+
+        print("Scraping link:", self.first_entry_link)
         logger.info("first_entry_link: %s", self.first_entry_link)
 
         self.status_label.setText("Scrapowanie strony...")
@@ -242,6 +251,7 @@ class NewsTrackerWindow(BaseWindow):
         self.website_thread.start()
 
     def on_website_result(self, article_text: str) -> None:
+        print("Scraped text:", article_text)
         self.status_label.setText("Gotowe")
         self.status_label.setStyleSheet("color: #00ff99; font-size: 14px;")
         self.llm_worker = LLMWorker(article_text)
