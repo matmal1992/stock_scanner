@@ -153,3 +153,19 @@ def get_first_entry_link() -> str:
         return row[0]
 
     return "Latest entry link: N/A"
+
+
+def has_entries() -> bool:
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT 1 FROM entries LIMIT 1")
+        exists = cur.fetchone() is not None
+        return exists
+    except Exception:
+        return False
+    finally:
+        try:
+            conn.close()
+        except Exception:
+            pass

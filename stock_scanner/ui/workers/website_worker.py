@@ -5,7 +5,7 @@ from pathlib import Path
 from PySide6.QtCore import QObject, Signal
 
 from stock_scanner.download.scrapers import (
-    clean_text_for_llm,
+    # clean_text_for_llm,
     extract_text_bs4,
     extract_text_newspaper,
     get_html,
@@ -20,38 +20,41 @@ class WebsiteWorker(QObject):
     log = Signal(str)
     result = Signal(str)
 
-    def __init__(self, url: str) -> None:
+    def __init__(self, url: str, type: str = "bs4") -> None:
         super().__init__()
         self.url = url
+        self.type = type
 
     def run(self) -> None:
         try:
             self.log.emit(f"Pobieranie: {self.url}")
             html = get_html(self.url)
-            self.log.emit("Parsowanie HTML (BeautifulSoup)...")
-            text = extract_text_bs4(html)
+            self.log.emit("Parsowanie HTML...")
 
-            if not text or len(text) < 200:
-                raise ValueError("Za mało treści (możliwy paywall / blokada)")
+            text = ""
 
-            clean_text = clean_text_for_llm(text)
+            if self.type == "bs4":
+                try:
+                    self.log.emit("Próba parsowania przez bs4...")
+                    text = extract_text_bs4(html)
+                except Exception as exc:
+                    self.log.emit(f"bs4 fallback error: {exc}")
+
+            if self.type == "newspaper":
+                try:
+                    self.log.emit("Próba parsowania przez newspaper...")
+                    text = extract_text_newspaper(self.url)
+                except Exception as exc:
+                    self.log.emit(f"newspaper fallback error: {exc}")
+
+            # clean_text = clean_text_for_llm(text)
 
             filename = f"article_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
-
             path = Path("data") / filename
-
             path.parent.mkdir(exist_ok=True)
+            path.write_text(text, encoding="utf-8")
 
-            path.write_text(clean_text, encoding="utf-8")
-
-            try:
-                self.log.emit("Próba parsowania przez newspaper...")
-                newspaper_text = extract_text_newspaper(self.url)
-            except Exception as exc:
-                self.log.emit(f"newspaper fallback error: {exc}")
-                newspaper_text = clean_text
-
-            self.result.emit(newspaper_text)
+            self.result.emit(text)
             self.finished.emit()
 
         except Exception as e:
