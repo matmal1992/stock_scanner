@@ -1,3 +1,5 @@
+from time import time
+
 from google.genai import Client
 from openai import OpenAI
 from PySide6.QtCore import QThread, Signal
@@ -84,3 +86,83 @@ class GPTWorker(QThread):
 
     def build_prompt(self) -> str:
         return f"{my_prompt}\n\nTreść artykułu:\n{self.article_text}"
+
+
+import time
+
+import pyautogui
+import pyperclip
+
+
+class ManualPromptWorker(QThread):
+    response_received = Signal(str)
+    INPUT_BOX = (650, 950)
+    SEND_BUTTON = (1325, 950)
+    # RESPONSE_AREA = (4530, 440)  # miejsce gdzie zaczyna się odpowiedź
+    RESPONSE_REGION = (550, 370, 800, 200)
+    cancel_point = (1325, 890)
+    copy_point = (595, 440)
+
+    def send_prompt(prompt):
+        # klik w input
+        # pyautogui.click(INPUT_BOX)
+        click_debug(INPUT_BOX[0], INPUT_BOX[1], "INPUT_BOX")
+        time.sleep(0.5)
+
+        # wpisz prompt
+        pyautogui.write(prompt, interval=0.02)
+
+        # wyślij
+        pyautogui.press("enter")
+
+    def get_response():
+        time.sleep(15)  # czekaj aż model odpowie (możesz poprawić później)
+        pyautogui.press("end")
+        pyautogui.click(cancel_point)
+        pyautogui.click(copy_point)
+        pyautogui.click()
+
+        # zaznacz wszystko od odpowiedzi
+        # print("Zaznaczenie przez dragging")
+        # select_response()
+        # time.sleep(5)
+
+        # print("Kopiowanie Ctrl + c")
+        # pyautogui.hotkey("ctrl", "c")
+        # time.sleep(5)
+
+        print("Wklejanie Ctrl + v")
+        return pyperclip.paste()
+
+    def click_debug(x, y, label=""):
+        print(f"🖱️ Klik: {label} -> ({x}, {y})")
+
+        # ruch kursora (wizualny debug)
+        pyautogui.moveTo(x, y, duration=0.3)
+
+        # małe „mrugnięcie”
+        pyautogui.click()
+        time.sleep(0.2)
+
+    def select_response():
+        pyautogui.press("end")
+        # x, y, w, h = RESPONSE_REGION
+        # img = pyautogui.screenshot(region=(x, y, w, h))
+        # img.save("region_test.png")
+
+        # pyautogui.moveTo(x, y, duration=0.5)
+        pyautogui.click(x, y)
+        # pyautogui.mouseDown()
+
+        # przeciągnij przez cały obszar odpowiedzi
+        # pyautogui.moveTo(x + w, y + h, duration=0.5)
+
+        # pyautogui.mouseUp()
+
+        # === TEST ===
+        prompt = "Napisz krótkie zdanie o AI"
+
+        send_prompt(prompt)
+        response = get_response()
+
+        print("📨 RESPONSE:\n", response)
