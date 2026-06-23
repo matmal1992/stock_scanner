@@ -7,17 +7,19 @@ from PySide6.QtCore import QThread, Signal
 from stock_scanner.download.config import load_config
 
 my_prompt = (
-    "Przeanalizuj jego treść podanego tekstu i oceń jego potencjał "
+    "Przeanalizuj zawartość podanego linku i oceń jego potencjał "
     "w kontekście wzrostu lub spadku danego instrumentu na giełdzie, "
-    "którego dotyczy ten wpis. Jako output oczekuję 2 rzeczy: instrumentu"
+    "którego dotyczy ten link. Jako output oczekuję 2 rzeczy: instrumentu"
     "lub spółki, której artykuł dotyczy. Jeśli nie ma jasno sprecyzowanej"
     " informacji o instrumencie, wydedukuj z artykułu jaki instrument"
     " giełdowy może najmocniej zareagować na podany artykuł. Druga rzecz to"
-    " chcę, abyś ocenił potencjał wzrostu lub spadku: Silny wzrost, Wzrost, Neutralny, Spadek, "
+    "ocena potencjału wzrostu lub spadku: Silny wzrost, Wzrost, Neutralny, Spadek, "
     "Silny spadek. Całą analizę wykonaj samodzielnie w oparciu o dane "
     "techniczne, opinie maklerów i innych profesjonalistów, strategie, "
     "prognozy i inne czynniki, które uznasz za istotne dla danej "
-    "spółki/instrumentu. Analiza ma charakter wyłącznie edukacyjny/"
+    "spółki/instrumentu. A więc, oczekuję odpowiedzi złożonej z maksymalnie "
+    " czterech słów. Na przykład Creotech Instruments (może być też symbol "
+    "giełdowy CRI), Silny wzrost. Ta analiza ma charakter wyłącznie edukacyjny/"
     "informacyjny i nie stanowi porady inwestycyjnej."
 )
 
@@ -96,17 +98,22 @@ import pyperclip
 
 class ManualPromptWorker(QThread):
     response_received = Signal(str)
-    INPUT_BOX = (650, 950)
-    SEND_BUTTON = (1325, 950)
-    # RESPONSE_AREA = (4530, 440)  # miejsce gdzie zaczyna się odpowiedź
-    RESPONSE_REGION = (550, 370, 800, 200)
+    input_box = (650, 950)
+    send_button = (1325, 950)
     cancel_point = (1325, 890)
     copy_point = (595, 440)
+    empty_field = (400, 950)
+    link_to_read: str
 
-    def send_prompt(prompt):
+    def __init__(self, link: str) -> None:
+        super().__init__()
+        self.link_to_read = link
+
+    def send_prompt(self, prompt: str) -> None:
+        print("sending prompt")
         # klik w input
         # pyautogui.click(INPUT_BOX)
-        click_debug(INPUT_BOX[0], INPUT_BOX[1], "INPUT_BOX")
+        self.click_debug(self.input_box[0], self.input_box[1], "INPUT_BOX")
         time.sleep(0.5)
 
         # wpisz prompt
@@ -115,11 +122,11 @@ class ManualPromptWorker(QThread):
         # wyślij
         pyautogui.press("enter")
 
-    def get_response():
+    def get_response(self):
         time.sleep(15)  # czekaj aż model odpowie (możesz poprawić później)
         pyautogui.press("end")
-        pyautogui.click(cancel_point)
-        pyautogui.click(copy_point)
+        pyautogui.click(self.cancel_point)
+        pyautogui.click(self.copy_point)
         pyautogui.click()
 
         # zaznacz wszystko od odpowiedzi
@@ -134,8 +141,8 @@ class ManualPromptWorker(QThread):
         print("Wklejanie Ctrl + v")
         return pyperclip.paste()
 
-    def click_debug(x, y, label=""):
-        print(f"🖱️ Klik: {label} -> ({x}, {y})")
+    def click_debug(self, x, y, label="") -> None:
+        print(f"Klik: {label} -> ({x}, {y})")
 
         # ruch kursora (wizualny debug)
         pyautogui.moveTo(x, y, duration=0.3)
@@ -144,25 +151,41 @@ class ManualPromptWorker(QThread):
         pyautogui.click()
         time.sleep(0.2)
 
-    def select_response():
-        pyautogui.press("end")
-        # x, y, w, h = RESPONSE_REGION
-        # img = pyautogui.screenshot(region=(x, y, w, h))
-        # img.save("region_test.png")
+    def build_prompt(self) -> str:
+        return f"{my_prompt}\n\nLink:\n{self.link_to_read}"
 
-        # pyautogui.moveTo(x, y, duration=0.5)
-        pyautogui.click(x, y)
-        # pyautogui.mouseDown()
+    def run(self) -> None:
+        print("Worker started")
 
-        # przeciągnij przez cały obszar odpowiedzi
-        # pyautogui.moveTo(x + w, y + h, duration=0.5)
+        prompt = self.build_prompt()
 
-        # pyautogui.mouseUp()
+        self.send_prompt(prompt)
+        response = self.get_response()
 
-        # === TEST ===
-        prompt = "Napisz krótkie zdanie o AI"
+        self.response_received.emit(response)
 
-        send_prompt(prompt)
-        response = get_response()
+        print("RESPONSE:\n", response)
 
-        print("📨 RESPONSE:\n", response)
+    # def select_response(self) -> None:
+    #     pyautogui.press("end")
+    #     # x, y, w, h = RESPONSE_REGION
+    #     # img = pyautogui.screenshot(region=(x, y, w, h))
+    #     # img.save("region_test.png")
+
+    #     # pyautogui.moveTo(x, y, duration=0.5)
+    #     pyautogui.click(self.empty_field)
+    #     # pyautogui.mouseDown()
+
+    #     # przeciągnij przez cały obszar odpowiedzi
+    #     # pyautogui.moveTo(x + w, y + h, duration=0.5)
+
+    #     # pyautogui.mouseUp()
+
+    #     # === TEST ===
+    #     prompt = self.build_prompt()
+
+    #     self.send_prompt(prompt)
+    #     response = self.get_response()
+    #     self.response_received.emit(response)
+
+    #     print("RESPONSE:\n", response)

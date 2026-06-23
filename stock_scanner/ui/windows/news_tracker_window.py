@@ -16,6 +16,7 @@ from stock_scanner.download.database import get_first_entry_link, has_entries
 from stock_scanner.ui.gui_elements.Lines import HLine, VLine
 from stock_scanner.ui.windows.base_window import BaseWindow
 from stock_scanner.ui.workers.google_news_worker import GoogleNewsWorker
+from stock_scanner.ui.workers.llm_worker import ManualPromptWorker
 from stock_scanner.ui.workers.rss_feed_worker import RSSWorker
 from stock_scanner.ui.workers.website_worker import WebsiteWorker
 
@@ -30,7 +31,7 @@ class NewsTrackerWindow(BaseWindow):
 
         self.rss_worker: RSSWorker | None = None
         self.google_worker: GoogleNewsWorker | None = None
-        # self.llm_worker: LLMWorker | None = None
+        self.llm_worker: ManualPromptWorker | None = None
         self.website_worker: WebsiteWorker | None = None
 
         # self.llm_thread: QThread | None = None
@@ -191,17 +192,19 @@ class NewsTrackerWindow(BaseWindow):
         self.status.addItem(text)
 
     def on_test_llm_clicked(self) -> None:
+        print("on_test_llm clicked")
         self.status_label.setText("Wysyłanie zapytania do LLM...")
-        # self.worker = GPTWorker()
+        self.llm_worker = ManualPromptWorker(get_first_entry_link())
+        self.llm_worker.response_received.connect(self.on_llm_result)
 
         # self.worker.response_received.connect(self.on_llm_result)
-        # self.worker.start()
+        self.llm_worker.start()
 
-    # def on_llm_result(self, result: str) -> None:
-    #     self._set_status_item(0, "Wynik LLM:")
-    #     self._add_status_item(result)
-    #     self.status_label.setText("LLM zakończony")
-    #     self.status_label.setStyleSheet("color: #00ff99; font-size: 14px;")
+    def on_llm_result(self, result: str) -> None:
+        self._set_status_item(0, "Wynik LLM:")
+        self._add_status_item(result)
+        self.status_label.setText("LLM zakończony")
+        self.status_label.setStyleSheet("color: #00ff99; font-size: 14px;")
 
     # def _cleanup_llm_thread(self) -> None:
     # if self.llm_worker is not None:

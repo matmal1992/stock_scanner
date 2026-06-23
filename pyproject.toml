@@ -25,6 +25,8 @@ dependencies = [
     "trafilatura",
     "newspaper3k",
     "openai",
+    "pyautogui",
+    "pyperclip",
 ]
 
 [project.optional-dependencies]
