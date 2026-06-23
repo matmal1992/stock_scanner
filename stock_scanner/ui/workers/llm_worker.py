@@ -111,15 +111,12 @@ class ManualPromptWorker(QThread):
 
     def send_prompt(self, prompt: str) -> None:
         print("sending prompt")
-        # klik w input
+
         # pyautogui.click(INPUT_BOX)
         self.click_debug(self.input_box[0], self.input_box[1], "INPUT_BOX")
         time.sleep(0.5)
 
-        # wpisz prompt
         pyautogui.write(prompt, interval=0.02)
-
-        # wyślij
         pyautogui.press("enter")
 
     def get_response(self):
@@ -129,30 +126,18 @@ class ManualPromptWorker(QThread):
         pyautogui.click(self.copy_point)
         pyautogui.click()
 
-        # zaznacz wszystko od odpowiedzi
-        # print("Zaznaczenie przez dragging")
-        # select_response()
-        # time.sleep(5)
-
-        # print("Kopiowanie Ctrl + c")
-        # pyautogui.hotkey("ctrl", "c")
-        # time.sleep(5)
-
         print("Wklejanie Ctrl + v")
         return pyperclip.paste()
 
     def click_debug(self, x, y, label="") -> None:
         print(f"Klik: {label} -> ({x}, {y})")
 
-        # ruch kursora (wizualny debug)
         pyautogui.moveTo(x, y, duration=0.3)
-
-        # małe „mrugnięcie”
         pyautogui.click()
         time.sleep(0.2)
 
     def build_prompt(self) -> str:
-        return f"{my_prompt}\n\nLink:\n{self.link_to_read}"
+        return f"{my_prompt} Link do analizy: {self.link_to_read}"
 
     def run(self) -> None:
         print("Worker started")
@@ -165,27 +150,3 @@ class ManualPromptWorker(QThread):
         self.response_received.emit(response)
 
         print("RESPONSE:\n", response)
-
-    # def select_response(self) -> None:
-    #     pyautogui.press("end")
-    #     # x, y, w, h = RESPONSE_REGION
-    #     # img = pyautogui.screenshot(region=(x, y, w, h))
-    #     # img.save("region_test.png")
-
-    #     # pyautogui.moveTo(x, y, duration=0.5)
-    #     pyautogui.click(self.empty_field)
-    #     # pyautogui.mouseDown()
-
-    #     # przeciągnij przez cały obszar odpowiedzi
-    #     # pyautogui.moveTo(x + w, y + h, duration=0.5)
-
-    #     # pyautogui.mouseUp()
-
-    #     # === TEST ===
-    #     prompt = self.build_prompt()
-
-    #     self.send_prompt(prompt)
-    #     response = self.get_response()
-    #     self.response_received.emit(response)
-
-    #     print("RESPONSE:\n", response)
