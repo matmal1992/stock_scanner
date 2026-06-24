@@ -5,7 +5,6 @@ from pathlib import Path
 from PySide6.QtCore import QObject, Signal
 
 from stock_scanner.download.scrapers import (
-    # clean_text_for_llm,
     extract_text_bs4,
     extract_text_newspaper,
     get_html,
@@ -14,7 +13,7 @@ from stock_scanner.download.scrapers import (
 logger = logging.getLogger(__name__)
 
 
-class WebsiteWorker(QObject):
+class ScraperWorker(QObject):
     finished = Signal()
     error = Signal(str)
     log = Signal(str)
@@ -46,8 +45,6 @@ class WebsiteWorker(QObject):
                     text = extract_text_newspaper(self.url)
                 except Exception as exc:
                     self.log.emit(f"newspaper fallback error: {exc}")
-
-            # clean_text = clean_text_for_llm(text)
 
             filename = f"article_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
             path = Path("data") / filename

@@ -1,6 +1,6 @@
 import pandas as pd
 
-from stock_scanner.core.io_utils import load_tickers, read_parquet, save_tickers
+from stock_scanner.core.utils import load_tickers, read_parquet, save_tickers
 from stock_scanner.strategies.three_tier_scanner.report_updater import update_filter_section
 
 

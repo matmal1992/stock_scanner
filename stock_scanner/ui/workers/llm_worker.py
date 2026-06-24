@@ -1,5 +1,7 @@
-from time import time
+import time
 
+import pyautogui
+import pyperclip
 from google.genai import Client
 from openai import OpenAI
 from PySide6.QtCore import QThread, Signal
@@ -56,9 +58,6 @@ class GeminiWorker(QThread):
         return prompt
 
 
-from PySide6.QtCore import QThread, Signal
-
-
 class GPTWorker(QThread):
     response_received = Signal(str)
 
@@ -90,12 +89,6 @@ class GPTWorker(QThread):
         return f"{my_prompt}\n\nTreść artykułu:\n{self.article_text}"
 
 
-import time
-
-import pyautogui
-import pyperclip
-
-
 class ManualPromptWorker(QThread):
     response_received = Signal(str)
     input_box = (650, 950)
@@ -119,7 +112,7 @@ class ManualPromptWorker(QThread):
         pyautogui.write(prompt, interval=0.02)
         pyautogui.press("enter")
 
-    def get_response(self):
+    def get_response(self) -> str:
         time.sleep(15)  # czekaj aż model odpowie (możesz poprawić później)
         pyautogui.press("end")
         pyautogui.click(self.cancel_point)
@@ -129,7 +122,7 @@ class ManualPromptWorker(QThread):
         print("Wklejanie Ctrl + v")
         return pyperclip.paste()
 
-    def click_debug(self, x, y, label="") -> None:
+    def click_debug(self, x: int, y: int, label: str = "") -> None:
         print(f"Klik: {label} -> ({x}, {y})")
 
         pyautogui.moveTo(x, y, duration=0.3)

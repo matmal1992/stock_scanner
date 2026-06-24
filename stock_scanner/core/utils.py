@@ -1,4 +1,5 @@
 import io
+from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
@@ -41,6 +42,18 @@ def load_tickers(txt_path: Path) -> list[str]:
                     tickers.append(t)
 
     return tickers
+
+
+def format_timestamp(ts: int | None) -> str:
+    if not ts:
+        return ""
+    try:
+        ts = int(ts)
+    except (ValueError, TypeError):
+        return ""
+
+    dt = datetime.fromtimestamp(ts)
+    return dt.strftime("%d %b %H:%M:%S")
 
 
 class EmittingStream(io.TextIOBase):

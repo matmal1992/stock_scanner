@@ -4,7 +4,7 @@ from typing import TextIO, cast
 
 from PySide6.QtCore import QObject, Signal
 
-from stock_scanner.core.io_utils import EmittingStream
+from stock_scanner.core.utils import EmittingStream
 from stock_scanner.strategies.three_tier_scanner.three_tier_scanner import run_3t_strategy
 
 

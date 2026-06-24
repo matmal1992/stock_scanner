@@ -4,21 +4,19 @@ from datetime import datetime
 
 from PySide6.QtCore import QThread
 from PySide6.QtWidgets import (
-    QAbstractItemView,
     QHBoxLayout,
     QLabel,
-    QListWidget,
     QPushButton,
     QVBoxLayout,
 )
 
 from stock_scanner.download.database import get_first_entry_link, has_entries
 from stock_scanner.ui.gui_elements.Lines import HLine, VLine
+from stock_scanner.ui.gui_elements.Lists import ListWidget
 from stock_scanner.ui.windows.base_window import BaseWindow
 from stock_scanner.ui.workers.google_news_worker import GoogleNewsWorker
 from stock_scanner.ui.workers.llm_worker import ManualPromptWorker
 from stock_scanner.ui.workers.rss_feed_worker import RSSWorker
-from stock_scanner.ui.workers.website_worker import WebsiteWorker
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +30,6 @@ class NewsTrackerWindow(BaseWindow):
         self.rss_worker: RSSWorker | None = None
         self.google_worker: GoogleNewsWorker | None = None
         self.llm_worker: ManualPromptWorker | None = None
-        self.website_worker: WebsiteWorker | None = None
 
         # self.llm_thread: QThread | None = None
         self.website_thread: QThread | None = None
@@ -58,15 +55,8 @@ class NewsTrackerWindow(BaseWindow):
         get_news_btn = QPushButton("Get feed")
         get_news_btn.clicked.connect(self.getting_news)
         self.test_llm_btn.clicked.connect(self.on_test_llm_clicked)
-        extract_bs4_btn = QPushButton("Extract bs4")
-        extract_newspaper_btn = QPushButton("Extract newspaper")
-        extract_bs4_btn.clicked.connect(lambda: self.on_extract_text_clicked("bs4"))
-        extract_newspaper_btn.clicked.connect(lambda: self.on_extract_text_clicked("newspaper"))
         self.first_entry_link: str
-
-        self.status = QListWidget()
-        self.status.setAlternatingRowColors(False)
-        self.status.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.status = ListWidget()
 
         self.status_label = QLabel("Tracker not working")
         self.status_label.setStyleSheet("color: orange; font-size: 14px;")
@@ -83,13 +73,9 @@ class NewsTrackerWindow(BaseWindow):
         upper_layout = QHBoxLayout()
         upper_layout.addLayout(list_layout, stretch=1)
         upper_layout.addWidget(VLine())
-        # upper_layout.addWidget(self.first_entry_link, stretch=2)
 
         test_buttons_box = QHBoxLayout()
         test_buttons_box.addWidget(get_news_btn)
-        test_buttons_box.addWidget(extract_bs4_btn)
-        test_buttons_box.addWidget(extract_newspaper_btn)
-        # test_buttons_box.addWidget(extract_playwright_btn)
 
         main_layout = QVBoxLayout()
         main_layout.addLayout(upper_layout, stretch=1)
@@ -100,17 +86,6 @@ class NewsTrackerWindow(BaseWindow):
         main_layout.addStretch()
 
         self.setLayout(main_layout)
-
-    def format_timestamp(self, ts: int | None) -> str:
-        if not ts:
-            return ""
-        try:
-            ts = int(ts)
-        except (ValueError, TypeError):
-            return ""
-
-        dt = datetime.fromtimestamp(ts)
-        return dt.strftime("%d %b %H:%M:%S")
 
     def getting_news(self) -> None:
         if self.rss_worker is not None or self.google_worker is not None:
@@ -175,21 +150,10 @@ class NewsTrackerWindow(BaseWindow):
             else:
                 lines.append(f"{prefix} {title}")
 
-        self._update_status_list(lines)
-
-    def _update_status_list(self, lines: list[str]) -> None:
-        self.status.clear()
-        self.status.addItems(lines)
+        self.status.set_items(lines, self.status_links)
 
     def _set_status_item(self, index: int, text: str) -> None:
-        """Set status item at index, creating if needed."""
-        while self.status.count() <= index:
-            self.status.addItem("")
-        self.status.item(index).setText(text)
-
-    def _add_status_item(self, text: str) -> None:
-        """Add a new item to status list without clearing."""
-        self.status.addItem(text)
+        self.status.set_item(index, text)
 
     def on_test_llm_clicked(self) -> None:
         print("on_test_llm clicked")
@@ -200,9 +164,7 @@ class NewsTrackerWindow(BaseWindow):
         # self.worker.response_received.connect(self.on_llm_result)
         self.llm_worker.start()
 
-    def on_llm_result(self, result: str) -> None:
-        self._set_status_item(0, "Wynik LLM:")
-        self._add_status_item(result)
+    def on_llm_result(self) -> None:
         self.status_label.setText("LLM zakończony")
         self.status_label.setStyleSheet("color: #00ff99; font-size: 14px;")
 
@@ -213,50 +175,3 @@ class NewsTrackerWindow(BaseWindow):
     # if self.llm_thread is not None:
     #     self.llm_thread.deleteLater()
     #     self.llm_thread = None
-
-    def on_extract_text_clicked(self, type: str) -> None:
-        if self.website_thread is not None:
-            return
-
-        selected_row = self.status.currentRow()
-        if selected_row > 0 and selected_row - 1 < len(self.status_links):
-            self.first_entry_link = self.status_links[selected_row - 1]
-        else:
-            self.first_entry_link = get_first_entry_link()
-
-        print("Scraping link:", self.first_entry_link)
-        logger.info("first_entry_link: %s", self.first_entry_link)
-
-        self.status_label.setText("Scrapowanie strony...")
-        self.status_label.setStyleSheet("color: orange; font-size: 14px;")
-
-        self.website_thread = QThread()
-        self.website_worker = WebsiteWorker(self.first_entry_link, type=type)
-        self.website_worker.moveToThread(self.website_thread)
-
-        self.website_thread.started.connect(self.website_worker.run)
-        self.website_worker.result.connect(self.on_website_result)
-        self.website_worker.error.connect(self.on_error)
-        self.website_worker.log.connect(self.on_log)
-
-        self.website_worker.finished.connect(self.website_thread.quit)
-        self.website_worker.finished.connect(self._cleanup_website_thread)
-        self.website_thread.finished.connect(self.website_thread.deleteLater)
-
-        self.website_thread.start()
-
-    def on_website_result(self, article_text: str) -> None:
-        print("Scraped text:", article_text)
-        self.status_label.setText("Gotowe")
-        self.status_label.setStyleSheet("color: #00ff99; font-size: 14px;")
-        # self.llm_worker = LLMWorker(article_text)
-        # self.llm_worker.response_received.connect(self.on_llm_result)
-        # self.llm_worker.start()
-
-    def _cleanup_website_thread(self) -> None:
-        if self.website_worker is not None:
-            self.website_worker.deleteLater()
-            self.website_worker = None
-
-        if self.website_thread is not None:
-            self.website_thread = None
