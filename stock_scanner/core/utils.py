@@ -68,3 +68,23 @@ class EmittingStream(io.TextIOBase):
 
     def flush(self) -> None:
         pass
+
+
+class NewsFormatter:
+    @staticmethod
+    def format(items):
+        lines = []
+        links = []
+
+        for title, link, published, source_type in items:
+            prefix = f"[{source_type.upper()}]"
+            links.append(link)
+
+            if published:
+                dt = datetime.fromtimestamp(published)
+                time_str = dt.strftime("%d %b %H:%M")
+                lines.append(f"{time_str} {prefix} {title}")
+            else:
+                lines.append(f"{prefix} {title}")
+
+        return lines, links

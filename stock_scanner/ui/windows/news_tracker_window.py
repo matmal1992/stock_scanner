@@ -3,19 +3,16 @@ import traceback
 from datetime import datetime
 
 from PySide6.QtCore import QThread
-from PySide6.QtWidgets import (
-    QHBoxLayout,
-    QLabel,
-    QPushButton,
-    QVBoxLayout,
-)
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QVBoxLayout
 
 from stock_scanner.download.database import get_first_entry_link, has_entries
 from stock_scanner.ui.gui_elements.Lines import HLine, VLine
 from stock_scanner.ui.gui_elements.Lists import ListWidget
 from stock_scanner.ui.windows.base_window import BaseWindow
-from stock_scanner.ui.workers.llm_worker import ManualPromptWorker
+from stock_scanner.ui.workers.llm_worker import ManualPromptWorker, LLMService
 from stock_scanner.download.news_fetcher import NewsFetcher
+from stock_scanner.core.utils import NewsFormatter
+from stock_scanner.ui.gui_elements.Labels import StatusLabel
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +22,9 @@ class NewsTrackerWindow(BaseWindow):
 
     def __init__(self) -> None:
         super().__init__("News Tracker")
-        self.llm_worker: ManualPromptWorker | None = None
+        # self.llm_worker: ManualPromptWorker | None = None
+        self.llm = LLMService()
+        self.llm.result.connect(self.on_llm_result)
         # self.llm_thread: QThread | None = None
         self.website_thread: QThread | None = None
 
@@ -56,9 +55,7 @@ class NewsTrackerWindow(BaseWindow):
         self.test_llm_btn.clicked.connect(self.on_test_llm_clicked)
         self.first_entry_link: str
         self.status = ListWidget()
-
-        self.status_label = QLabel("Tracker not working")
-        self.status_label.setStyleSheet("color: orange; font-size: 14px;")
+        self.status_label = StatusLabel()
 
         btn_list_layout = QHBoxLayout()
         btn_list_layout.addWidget(add_btn)
@@ -101,8 +98,7 @@ class NewsTrackerWindow(BaseWindow):
         now = datetime.now()
         error_time = now.strftime("%Y-%m-%d %H:%M:%S")
         self._set_status_item(0, f"{error_time} Błąd: {e}")
-        self.status_label.setText("Błąd!")
-        self.status_label.setStyleSheet("color: red; font-size: 14px;")
+        self.status_label.set_error("Error")
         logger.info(f"ERROR: {e}")
         logger.info(traceback.format_exc())
 
@@ -120,36 +116,19 @@ class NewsTrackerWindow(BaseWindow):
             status_text = f"{time_str}: Brak nowych wpisów"
             self.test_llm_btn.setEnabled(has_entries())
 
-        lines = [status_text]
-        self.status_links = []
-        for title, link, published, source_type in items:
-            prefix = f"[{source_type.upper()}]"
-            self.status_links.append(link)
-
-            if published:
-                dt = datetime.fromtimestamp(published)
-                time_str = dt.strftime("%d %b %H:%M")
-                lines.append(f"{time_str} {prefix} {title}")
-            else:
-                lines.append(f"{prefix} {title}")
-
-        self.status.set_items(lines, self.status_links)
+        lines, links = NewsFormatter.format(items)
+        self.status.set_items([status_text] + lines, links)
 
     def _set_status_item(self, index: int, text: str) -> None:
         self.status.set_item(index, text)
 
     def on_test_llm_clicked(self) -> None:
-        print("on_test_llm clicked")
-        self.status_label.setText("Wysyłanie zapytania do LLM...")
-        self.llm_worker = ManualPromptWorker(get_first_entry_link())
-        self.llm_worker.response_received.connect(self.on_llm_result)
-
-        # self.worker.response_received.connect(self.on_llm_result)
-        self.llm_worker.start()
+        link = self.status.get_selected_entry_link() or get_first_entry_link()
+        self.status_label.set_warning("Wysyłanie zapytania do LLM...")
+        self.llm.run(link)
 
     def on_llm_result(self) -> None:
-        self.status_label.setText("LLM zakończony")
-        self.status_label.setStyleSheet("color: #00ff99; font-size: 14px;")
+        self.status_label.set_ok("LLM zakończony")
 
     # def _cleanup_llm_thread(self) -> None:
     # if self.llm_worker is not None:
