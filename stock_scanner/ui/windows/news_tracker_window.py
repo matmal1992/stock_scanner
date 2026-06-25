@@ -14,9 +14,8 @@ from stock_scanner.download.database import get_first_entry_link, has_entries
 from stock_scanner.ui.gui_elements.Lines import HLine, VLine
 from stock_scanner.ui.gui_elements.Lists import ListWidget
 from stock_scanner.ui.windows.base_window import BaseWindow
-from stock_scanner.ui.workers.google_news_worker import GoogleNewsWorker
 from stock_scanner.ui.workers.llm_worker import ManualPromptWorker
-from stock_scanner.ui.workers.rss_feed_worker import RSSWorker
+from stock_scanner.download.news_fetcher import NewsFetcher
 
 logger = logging.getLogger(__name__)
 
@@ -26,16 +25,16 @@ class NewsTrackerWindow(BaseWindow):
 
     def __init__(self) -> None:
         super().__init__("News Tracker")
-
-        self.rss_worker: RSSWorker | None = None
-        self.google_worker: GoogleNewsWorker | None = None
         self.llm_worker: ManualPromptWorker | None = None
-
         # self.llm_thread: QThread | None = None
         self.website_thread: QThread | None = None
 
         self.latest_titles: list[str] = []
         self.status_links: list[str] = []
+        self.fetcher = NewsFetcher()
+        self.fetcher.data_ready.connect(self.on_data_ready)
+        self.fetcher.log.connect(self.on_log)
+        self.fetcher.error.connect(self.on_error)
 
     #     self.timer = QTimer()
     #     self.timer.setInterval(10000)
@@ -88,24 +87,8 @@ class NewsTrackerWindow(BaseWindow):
         self.setLayout(main_layout)
 
     def getting_news(self) -> None:
-        if self.rss_worker is not None or self.google_worker is not None:
-            return
-
         logger.info("Fetching RSS + Google News")
-
-        self.rss_worker = RSSWorker()
-        self.rss_worker.log.connect(self.on_log)
-        self.rss_worker.error.connect(self.on_error)
-        self.rss_worker.data_ready.connect(self.on_data_ready)
-        self.rss_worker.finished.connect(lambda: setattr(self, "rss_worker", None))
-        self.rss_worker.run()
-
-        self.google_worker = GoogleNewsWorker()
-        self.google_worker.log.connect(self.on_log)
-        self.google_worker.error.connect(self.on_error)
-        self.google_worker.data_ready.connect(self.on_data_ready)
-        self.google_worker.finished.connect(lambda: setattr(self, "google_worker", None))
-        self.google_worker.run()
+        self.fetcher.fetch()
 
         # if not self.timer.isActive():
         #     self.timer.start()
