@@ -1,14 +1,15 @@
 from PySide6.QtWidgets import QLabel
 
+
 class StatusLabel(QLabel):
-    def set_error(self, text="Błąd!"):
+    def set_error(self, text: str = "Błąd!") -> None:
         self.setText(text)
         self.setStyleSheet("color: red; font-size: 14px;")
 
-    def set_ok(self, text):
+    def set_ok(self, text: str) -> None:
         self.setText(text)
         self.setStyleSheet("color: #00ff99; font-size: 14px;")
 
-    def set_warning(self, text):
+    def set_warning(self, text: str) -> None:
         self.setText(text)
         self.setStyleSheet("color: orange; font-size: 14px;")

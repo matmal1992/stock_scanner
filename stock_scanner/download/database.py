@@ -3,7 +3,7 @@ import sqlite3
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Protocol
+from typing import Any, Protocol, TypedDict
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +21,14 @@ class FeedEntry(Protocol):
     link: str
     title: str
     published_parsed: tuple[int, int, int, int, int, int] | None
+
+
+class NewsRow(TypedDict):
+    id: str
+    title: str
+    link: str
+    published: int | None
+    source_type: str
 
 
 def get_connection() -> sqlite3.Connection:
@@ -155,17 +163,103 @@ def get_first_entry_link() -> str:
     return "Latest entry link: N/A"
 
 
-def has_entries() -> bool:
+def get_latest_entries_with_id(amount: int = 5) -> list[NewsRow]:
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        """
+        SELECT id, title, link, published, source_type
+        FROM entries
+        WHERE source_type = 'rss'
+        ORDER BY published DESC
+        LIMIT ?
+        """,
+        (amount,),
+    )
+    rss_rows = cur.fetchall()
+
+    cur.execute(
+        """
+        SELECT id, title, link, published, source_type
+        FROM entries
+        WHERE source_type = 'google'
+        ORDER BY published DESC
+        LIMIT ?
+        """,
+        (amount,),
+    )
+    google_rows = cur.fetchall()
+
+    conn.close()
+
+    return [to_dict(r) for r in (rss_rows + google_rows)]
+
+
+def to_dict(row: list[Any]) -> NewsRow:
+    return {
+        "id": row[0],
+        "title": row[1],
+        "link": row[2],
+        "published": row[3],
+        "source_type": row[4],
+    }
+
+
+def get_entry_link_by_id(entry_id: str) -> str | None:
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        """
+        SELECT link FROM entries WHERE id = ?
+        """,
+        (entry_id,),
+    )
+
+    row = cur.fetchone()
+    conn.close()
+
+    return row[0] if row else None
+
+
+def insert_entry_raw(
+    *,
+    entry_id: str,
+    title: str,
+    link: str,
+    published: int | None,
+    source_type: str,
+    query: str | None = None,
+) -> bool:
+    conn = get_connection()
+    cur = conn.cursor()
+
     try:
-        conn = get_connection()
-        cur = conn.cursor()
-        cur.execute("SELECT 1 FROM entries LIMIT 1")
-        exists = cur.fetchone() is not None
-        return exists
-    except Exception:
+        cur.execute(
+            """
+            INSERT INTO entries (
+                id, source_type, title, link, published,
+                query, inserted_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                entry_id,
+                source_type,
+                title,
+                link,
+                published,
+                query,
+                datetime.utcnow().isoformat(),
+            ),
+        )
+
+        conn.commit()
+        return True
+
+    except sqlite3.IntegrityError:
         return False
+
     finally:
-        try:
-            conn.close()
-        except Exception:
-            pass
+        conn.close()

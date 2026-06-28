@@ -4,7 +4,7 @@ import pyautogui
 import pyperclip
 from google.genai import Client
 from openai import OpenAI
-from PySide6.QtCore import QThread, Signal, QObject
+from PySide6.QtCore import QObject, QThread, Signal
 
 from stock_scanner.download.config import load_config
 
@@ -143,11 +143,12 @@ class ManualPromptWorker(QThread):
         self.response_received.emit(response)
 
         print("RESPONSE:\n", response)
-        
+
+
 class LLMService(QObject):
     result = Signal(str)
 
-    def run(self, link: str):
+    def run(self, link: str) -> None:
         self.worker = ManualPromptWorker(link)
         self.worker.response_received.connect(self.result)
         self.worker.start()

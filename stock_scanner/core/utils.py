@@ -1,9 +1,11 @@
 import io
 from datetime import datetime
 from pathlib import Path
+from typing import Any, Sequence
 
 import pandas as pd
-from PySide6.QtCore import Signal
+
+from stock_scanner.download.database import NewsRow
 
 
 def read_parquet(path: Path) -> pd.DataFrame | None:
@@ -57,7 +59,7 @@ def format_timestamp(ts: int | None) -> str:
 
 
 class EmittingStream(io.TextIOBase):
-    def __init__(self, signal: Signal) -> None:
+    def __init__(self, signal: Any) -> None:
         super().__init__()
         self.signal = signal
 
@@ -72,19 +74,38 @@ class EmittingStream(io.TextIOBase):
 
 class NewsFormatter:
     @staticmethod
-    def format(items):
-        lines = []
-        links = []
+    def format(rows: Sequence[NewsRow]) -> list[tuple[str, str]]:
+        result = []
 
-        for title, link, published, source_type in items:
+        for row in rows:
+            entry_id = row["id"]
+            title = row["title"]
+            published = row["published"]
+            source_type = row["source_type"]
+
             prefix = f"[{source_type.upper()}]"
-            links.append(link)
 
-            if published:
-                dt = datetime.fromtimestamp(published)
+            if published is not None:
+                dt = datetime.fromtimestamp(float(published))
                 time_str = dt.strftime("%d %b %H:%M")
-                lines.append(f"{time_str} {prefix} {title}")
+                text = f"{time_str} {prefix} {title}"
             else:
-                lines.append(f"{prefix} {title}")
+                text = f"{prefix} {title}"
 
-        return lines, links
+            result.append((text, entry_id))
+
+        return result
+
+
+class FeedAdapter:
+    @staticmethod
+    def to_db(item: tuple[str, str, int | None, str]) -> dict[str, Any]:
+        title, link, published, source_type = item
+
+        return {
+            "entry_id": link,
+            "title": title,
+            "link": link,
+            "published": published,
+            "source_type": source_type,
+        }
