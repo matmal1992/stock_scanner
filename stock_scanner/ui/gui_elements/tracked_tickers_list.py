@@ -1,4 +1,4 @@
-from typing import Dict, List, Sequence
+from typing import Dict, List
 
 from PySide6.QtWidgets import (
     QLineEdit,
@@ -6,28 +6,9 @@ from PySide6.QtWidgets import (
     QListWidgetItem,
     QPushButton,
     QVBoxLayout,
+    QHBoxLayout,
     QWidget,
 )
-
-
-class ListWidget(QListWidget):
-    def __init__(self) -> None:
-        super().__init__()
-        self._ids: list[str | None] = []
-
-    def set_items(self, items: Sequence[tuple[str, str | None]]) -> None:
-        self.clear()
-        self._ids = []
-
-        for text, entry_id in items:
-            self.addItem(text)
-            self._ids.append(entry_id)
-
-    def get_selected_id(self) -> str | None:
-        index = self.currentRow()
-        if 0 <= index < len(self._ids):
-            return self._ids[index]
-        return None
 
 
 class TrackedTickersList(QWidget):
@@ -49,12 +30,20 @@ class TrackedTickersList(QWidget):
         self.remove_btn.clicked.connect(self.on_remove_btn_clicked)
 
     def set_up_layout(self) -> None:
-        layout = QVBoxLayout()
-        layout.addWidget(self.ticker_input)
-        layout.addWidget(self.sources_input)
-        layout.addWidget(self.add_btn)
-        layout.addWidget(self.tracked_list)
-        self.setLayout(layout)
+        buttons_box = QHBoxLayout()
+        buttons_box.addWidget(self.ticker_input)
+        buttons_box.addSpacing(10)
+        buttons_box.addWidget(self.sources_input)
+        buttons_box.addSpacing(60)
+        buttons_box.addWidget(self.add_btn)
+        buttons_box.addSpacing(10)
+        buttons_box.addWidget(self.remove_btn)
+        
+        main_layout = QVBoxLayout()
+        main_layout.addLayout(buttons_box)
+        main_layout.addSpacing(10)
+        main_layout.addWidget(self.tracked_list)
+        self.setLayout(main_layout)
 
     def validate_input(self, ticker: str, sources: str) -> bool:
         ticker = ticker.strip().upper()
