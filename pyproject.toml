@@ -27,6 +27,10 @@ dependencies = [
     "openai",
     "pyautogui",
     "pyperclip",
+    "pytesseract",
+    "opencv-python",
+    "pillow",
+    "easyocr",
 ]
 
 [project.optional-dependencies]

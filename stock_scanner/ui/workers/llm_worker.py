@@ -5,6 +5,7 @@ import pyperclip
 from google.genai import Client
 from openai import OpenAI
 from PySide6.QtCore import QObject, QThread, Signal
+from stock_scanner.core.gui_automations import click_image
 
 from stock_scanner.download.config import load_config
 
@@ -133,16 +134,17 @@ class ManualPromptWorker(QThread):
         return f"{my_prompt} Link do analizy: {self.link_to_read}"
 
     def run(self) -> None:
-        print("Worker started")
+        # print("Worker started")
 
-        prompt = self.build_prompt()
+        # prompt = self.build_prompt()
 
-        self.send_prompt(prompt)
-        response = self.get_response()
+        # self.send_prompt(prompt)
+        # response = self.get_response()
 
-        self.response_received.emit(response)
+        # self.response_received.emit(response)
 
-        print("RESPONSE:\n", response)
+        # print("RESPONSE:\n", response)
+        click_image()
 
 
 class LLMService(QObject):
