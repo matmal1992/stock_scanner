@@ -10,11 +10,9 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from stock_scanner.ui.windows.news_tracker_window import NewsTrackerWindow
-
 
 class TrackedTickersList(QWidget):
-    def __init__(self, parent: NewsTrackerWindow) -> None:
+    def __init__(self, parent) -> None:
         super().__init__()
         self.parent_window = parent
         self.set_up_widgets()
@@ -23,6 +21,7 @@ class TrackedTickersList(QWidget):
     def set_up_widgets(self) -> None:
         self.ticker_list: List[Dict[str, str]] = []
         self.ticker_input = QLineEdit()
+        self.ticker_input.setFixedWidth(100)
         self.ticker_input.setPlaceholderText("Ticker")
         self.sources_input = QLineEdit()
         self.sources_input.setPlaceholderText("Sources")

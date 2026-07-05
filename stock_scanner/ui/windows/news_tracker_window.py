@@ -1,7 +1,6 @@
 import logging
 
 from PySide6.QtCore import QThread
-from PySide6.QtWidgets import QVBoxLayout
 
 from stock_scanner.ui.gui_elements.feed_list import NewsFeedList
 from stock_scanner.ui.gui_elements.Labels import StatusLabel
@@ -14,14 +13,15 @@ logger = logging.getLogger(__name__)
 
 class NewsTrackerWindow(BaseWindow):
     def __init__(self) -> None:
-        self.tracked_tickers = TrackedTickersList(self)
-        self.news_feed = NewsFeedList(self)
-
         super().__init__("News Tracker")
         self.llm = LLMService()
         # self.llm.result.connect(self.on_llm_result)
         self.website_thread: QThread | None = None
         self.notifications = StatusLabel(text="No notifications")
+        self.tracked_tickers = TrackedTickersList(self)
+        self.news_feed = NewsFeedList(self)
+
+        self.setup_window_layout()
 
     # self.llm_thread: QThread | None = None
     #     self.timer = QTimer()
@@ -32,16 +32,14 @@ class NewsTrackerWindow(BaseWindow):
     #     if self.rss_worker is None:
     #         self.getting_news()
 
-    def setup_ui(self) -> None:
+    def setup_window_layout(self) -> None:
         self.status_label = StatusLabel(text="Status: standby")
 
-        main_layout = QVBoxLayout()
-        main_layout.addWidget(self.tracked_tickers)
-        main_layout.addStretch(30)
-        main_layout.addWidget(self.news_feed, stretch=1)
-        main_layout.addWidget(self.notifications)
-
-        self.setLayout(main_layout)
+        self.content_layout.addWidget(self.tracked_tickers)
+        self.content_layout.addStretch(30)
+        self.content_layout.addWidget(self.news_feed)
+        self.content_layout.addStretch(10)
+        self.content_layout.addWidget(self.notifications)
 
     # def _cleanup_llm_thread(self) -> None:
     # if self.llm_worker is not None:

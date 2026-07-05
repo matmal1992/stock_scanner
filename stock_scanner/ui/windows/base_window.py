@@ -1,5 +1,5 @@
 from PySide6.QtCore import Signal
-from PySide6.QtWidgets import QLabel, QPushButton, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QVBoxLayout, QWidget
 
 
 class BaseWindow(QWidget):
@@ -16,18 +16,15 @@ class BaseWindow(QWidget):
     def setup_ui(self) -> None:
         layout = QVBoxLayout()
 
-        back_btn = QPushButton("← Back")
-        back_btn.clicked.connect(self.backRequested.emit)
+        # back_btn = QPushButton("← Back")
+        # back_btn.clicked.connect(self.backRequested.emit)
 
-        title_label = QLabel(self.title)
-        title_label.setStyleSheet("font-size: 18px; font-weight: bold;")
+        self.content_widget = QWidget()
+        self.content_layout = QVBoxLayout()
+        self.content_widget.setLayout(self.content_layout)
 
-        content_label = QLabel(f"{self.title} window - Implement your strategy here")
-        content_label.setStyleSheet("color: #888888; font-size: 14px;")
-
-        layout.addWidget(back_btn)
-        layout.addWidget(title_label)
-        layout.addWidget(content_label)
+        # layout.addWidget(back_btn)
+        layout.addWidget(self.content_widget)
         layout.addStretch()
 
         self.setLayout(layout)

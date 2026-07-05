@@ -17,14 +17,13 @@ from stock_scanner.download.database import (
     insert_entry_raw,
 )
 from stock_scanner.download.news_fetcher import NewsFetcher
-from stock_scanner.ui.windows.news_tracker_window import NewsTrackerWindow
 from stock_scanner.ui.workers.llm_worker import ManualPromptWorker
 
 
 class NewsFeedList(QWidget):
     selection_changed = Signal(str)
 
-    def __init__(self, parent: NewsTrackerWindow) -> None:
+    def __init__(self, parent) -> None:
         super().__init__()
         self.parent_window = parent
         self._ids: List[str | None] = []
@@ -52,8 +51,9 @@ class NewsFeedList(QWidget):
         test_buttons_box.addWidget(self.test_llm_btn)
 
         layout = QVBoxLayout()
-        layout.addWidget(self.feed_list)
         layout.addLayout(test_buttons_box)
+        layout.addWidget(self.feed_list)
+
         self.setLayout(layout)
 
     def set_items(self, items: Sequence[Tuple[str, str | None]]) -> None:

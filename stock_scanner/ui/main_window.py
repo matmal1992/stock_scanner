@@ -1,6 +1,7 @@
 from typing import Optional
 
 from PySide6.QtWidgets import (
+    QButtonGroup,
     QHBoxLayout,
     QLabel,
     QMainWindow,
@@ -47,32 +48,55 @@ class MainWindow(QMainWindow):
         title = QLabel("Strategies")
         title.setStyleSheet("font-size: 16px; font-weight: bold;")
 
-        show_chart_btn = QPushButton("Show chart")
-        show_chart_btn.clicked.connect(lambda: self.show_window(self.chart_window))
+        self.show_chart_btn = QPushButton("Show chart")
+        self.show_chart_btn.clicked.connect(
+            lambda: self.switch_window(self.chart_window, self.show_chart_btn)
+        )
+        self.show_chart_btn.setCheckable(True)
 
-        the_wall = QPushButton("The wall strategy")
-        the_wall.clicked.connect(lambda: self.show_window(self.wall_window))
+        self.the_wall = QPushButton("The wall strategy")
+        self.the_wall.clicked.connect(lambda: self.switch_window(self.wall_window, self.the_wall))
+        self.the_wall.setCheckable(True)
 
-        three_tier = QPushButton("Three-tier strategy")
-        three_tier.clicked.connect(lambda: self.show_window(self.three_tier_window))
+        self.three_tier = QPushButton("Three-tier strategy")
+        self.three_tier.clicked.connect(
+            lambda: self.switch_window(self.three_tier_window, self.three_tier)
+        )
+        self.three_tier.setCheckable(True)
 
-        speculation = QPushButton("Speculation bubble")
-        speculation.clicked.connect(lambda: self.show_window(self.speculation_window))
+        self.speculation = QPushButton("Speculation bubble")
+        self.speculation.clicked.connect(
+            lambda: self.switch_window(self.speculation_window, self.speculation)
+        )
+        self.speculation.setCheckable(True)
 
-        news_tracker = QPushButton("News tracker")
-        news_tracker.clicked.connect(lambda: self.show_window(self.news_tracker_window))
+        self.news_tracker = QPushButton("News tracker")
+        self.news_tracker.clicked.connect(
+            lambda: self.switch_window(self.news_tracker_window, self.news_tracker)
+        )
+        self.news_tracker.setCheckable(True)
 
-        settings_btn = QPushButton("Settings")
+        self.settings_btn = QPushButton("Settings")
+        self.settings_btn.setCheckable(True)
+
+        self.button_group = QButtonGroup(self)
+        self.button_group.setExclusive(True)
+        self.button_group.addButton(self.show_chart_btn)
+        self.button_group.addButton(self.the_wall)
+        self.button_group.addButton(self.three_tier)
+        self.button_group.addButton(self.speculation)
+        self.button_group.addButton(self.news_tracker)
+        self.button_group.addButton(self.settings_btn)
 
         sidebar = QVBoxLayout()
         sidebar.addWidget(title)
-        sidebar.addWidget(show_chart_btn)
-        sidebar.addWidget(the_wall)
-        sidebar.addWidget(three_tier)
-        sidebar.addWidget(speculation)
-        sidebar.addWidget(news_tracker)
+        sidebar.addWidget(self.show_chart_btn)
+        sidebar.addWidget(self.the_wall)
+        sidebar.addWidget(self.three_tier)
+        sidebar.addWidget(self.speculation)
+        sidebar.addWidget(self.news_tracker)
         sidebar.addStretch()
-        sidebar.addWidget(settings_btn)
+        sidebar.addWidget(self.settings_btn)
 
         self.sidebar_widget = QWidget()
         self.sidebar_widget.setLayout(sidebar)
@@ -117,10 +141,19 @@ class MainWindow(QMainWindow):
             QLabel {
                 color: #cccccc;
             }
+            
+            QPushButton:checked {
+                background-color: #3a3a3a;
+                border: 3px solid #666666;
+            }
         """)
 
         # Show main menu on start
         self.show_main_menu()
+
+    def switch_window(self, window: QWidget, button: QPushButton) -> None:
+        self.show_window(window)
+        button.setChecked(True)
 
     def show_window(self, window: QWidget) -> None:
         """Switch to a strategy window while keeping sidebar."""
