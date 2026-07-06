@@ -36,6 +36,19 @@
                 "panel": "shared"
             },
             "problemMatcher": []
+        },
+        {
+            "label": "Run gui_automations",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "-m",
+                "uv",
+                "run",
+                "python",
+                "${workspaceFolder}/stock_scanner/core/gui_automations.py"
+            ],
+            "problemMatcher": []
         }
     ]
 }

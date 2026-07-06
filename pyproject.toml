@@ -27,6 +27,8 @@ dependencies = [
     "pyperclip",
     "pytesseract",
     "deptry",
+    "mss",
+    "opencv-python",
 ]
 
 [project.optional-dependencies]
