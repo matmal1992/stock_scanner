@@ -22,15 +22,11 @@ dependencies = [
     "google-genai",
     "cloudscraper",
     "beautifulsoup4",
-    "trafilatura",
     "newspaper3k",
-    "openai",
     "pyautogui",
     "pyperclip",
     "pytesseract",
-    "opencv-python",
-    "pillow",
-    "easyocr",
+    "deptry",
 ]
 
 [project.optional-dependencies]
