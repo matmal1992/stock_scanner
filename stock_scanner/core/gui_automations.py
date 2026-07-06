@@ -10,7 +10,7 @@ import pyautogui
 
 def find_icon(template_path: str, threshold: float = 0.85) -> Optional[Tuple[int, int, float]]:
     with mss.MSS() as sct:
-        monitor = sct.monitors[0]  # wszystkie monitory
+        monitor = sct.monitors[0]
         screenshot = sct.grab(monitor)
 
         img = np.array(screenshot)
@@ -32,17 +32,26 @@ def find_icon(template_path: str, threshold: float = 0.85) -> Optional[Tuple[int
     return None
 
 
-def click_icon(template_path: str, threshold: float = 0.85) -> bool:
+def click_icon_and_scroll(template_path: str, threshold: float = 0.85) -> Optional[Tuple[int, int]]:
     result = find_icon(template_path, threshold)
 
-    if result:
-        x, y, score = result
-        pyautogui.click(x, y)
-        print(f"Kliknięto ikonę: ({x}, {y}) score={score}")
-        return True
+    if not result:
+        print("Nie znaleziono ikony")
+        return None
 
-    print("Nie znaleziono ikony")
-    return False
+    x, y, score = result
+    original_point = (x, y)
+    pyautogui.click(x, y)
+    print(f"Kliknięto ikonę: ({x}, {y}) score={score}")
+    time.sleep(3)
+    pyautogui.click(x - 200, y)
+    print("Kliknięto ikonę: w wolne pole")
+
+    time.sleep(0.5)
+    pyautogui.press("end")
+    print("Komenda scroll wykonana")
+
+    return original_point
 
 
 if __name__ == "__main__":
@@ -51,4 +60,4 @@ if __name__ == "__main__":
     print("Start za 3 sekundy...")
     time.sleep(3)
 
-    click_icon("stock_scanner/assets/zapytaj.png")
+    click_icon_and_scroll("stock_scanner/assets/zapytaj.png")
