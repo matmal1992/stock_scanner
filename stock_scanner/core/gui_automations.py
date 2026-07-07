@@ -3,12 +3,12 @@ from typing import Optional, Tuple
 
 import cv2
 import mss
-import mss.tools
 import numpy as np
 import pyautogui
+from cv2.typing import MatLike
 
 
-def find_icon(template_path: str, threshold: float = 0.85) -> Optional[Tuple[int, int, float]]:
+def get_screen_image() -> Tuple[MatLike, dict]:
     with mss.MSS() as sct:
         monitor = sct.monitors[0]
         screenshot = sct.grab(monitor)
@@ -16,6 +16,13 @@ def find_icon(template_path: str, threshold: float = 0.85) -> Optional[Tuple[int
         img = np.array(screenshot)
         img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
 
+    return img, monitor
+
+
+def find_input(threshold: float = 0.85) -> Optional[Tuple[int, int, float]]:
+    img, monitor = get_screen_image()
+
+    template_path = "stock_scanner/assets/ask_anything.png"
     template = cv2.imread(template_path, cv2.IMREAD_COLOR)
 
     result = cv2.matchTemplate(img, template, cv2.TM_CCOEFF_NORMED)
@@ -32,29 +39,22 @@ def find_icon(template_path: str, threshold: float = 0.85) -> Optional[Tuple[int
     return None
 
 
-def click_icon_and_scroll(template_path: str, threshold: float = 0.85) -> Optional[Tuple[int, int]]:
-    result = find_icon(template_path, threshold)
+def scroll_to_bottom() -> None:
+    input_point = find_input()
 
-    if not result:
-        print("Nie znaleziono ikony")
+    if not input_point:
+        print("Nie znaleziono pola inputu")
         return None
 
-    x, y, score = result
-    original_point = (x, y)
-    pyautogui.click(x, y)
-    print(f"Kliknięto ikonę: ({x}, {y}) score={score}")
-    time.sleep(1)
-    pyautogui.click(x - 200, y)
-    print("Kliknięto ikonę: w wolne pole")
-
+    x, y, score = input_point
+    empty_field = (x - 200, y)
+    pyautogui.moveTo(empty_field, duration=1)
+    pyautogui.click(empty_field)
     time.sleep(0.5)
     pyautogui.press("end")
-    print("Komenda scroll wykonana")
-
-    return original_point
 
 
-def find_and_click_last_copy_icon(template_path: str, threshold: float = 0.85) -> None:
+def findlast_copy_icon(threshold: float = 0.85) -> Optional[Tuple[int, int]]:
     with mss.MSS() as sct:
         monitor = sct.monitors[0]
         screenshot = sct.grab(monitor)
@@ -62,6 +62,7 @@ def find_and_click_last_copy_icon(template_path: str, threshold: float = 0.85) -
         img = np.array(screenshot)
         img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
 
+    template_path = "stock_scanner/assets/copy_icon.png"
     template = cv2.imread(template_path, cv2.IMREAD_COLOR)
     h, w = template.shape[:2]
 
@@ -81,21 +82,26 @@ def find_and_click_last_copy_icon(template_path: str, threshold: float = 0.85) -
         center_x = x + w // 2
         center_y = y + h // 2
         centers.append({"x": center_x, "y": center_y})
-        pyautogui.moveTo(center_x, center_y, duration=1)
-        cv2.circle(img, (center_x, center_y), 5, (0, 0, 255), -1)
 
     bottom = max(centers, key=lambda p: p["y"])
-    pyautogui.moveTo(bottom["x"], bottom["y"], duration=2)
-    pyautogui.click(bottom["x"], bottom["y"])
-
-    cv2.imshow("DEBUG", img)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    return (bottom["x"], bottom["y"])
 
 
 if __name__ == "__main__":
     print("Start soon...")
+    scroll_to_bottom()
     time.sleep(1)
-    click_icon_and_scroll("stock_scanner/assets/ask_anything.png")
+    copy_icon = findlast_copy_icon()
+    pyautogui.moveTo(copy_icon, duration=0.5)
     time.sleep(1)
-    find_and_click_last_copy_icon("stock_scanner/assets/copy_icon.png")
+    pyautogui.click(copy_icon)
+
+
+# ===================== SOME DEBUG FEARURES===============
+# pyautogui.moveTo(center_x, center_y, duration=1)
+# cv2.circle(img, (center_x, center_y), 5, (0, 0, 255), -1)
+# pyautogui.moveTo(bottom["x"], bottom["y"], duration=2)
+# pyautogui.click(bottom["x"], bottom["y"])
+# cv2.imshow("DEBUG", img)
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
