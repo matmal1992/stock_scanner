@@ -23,7 +23,7 @@ def get_screen_image() -> Tuple[MatLike, dict]:
 def find_input(threshold: float = 0.85) -> Optional[Tuple[int, int, float]]:
     img, monitor = get_screen_image()
 
-    template_path = "stock_scanner/assets/zapytaj.png"
+    template_path = "stock_scanner/assets/input_icon.png"
     template = cv2.imread(template_path, cv2.IMREAD_COLOR)
 
     result = cv2.matchTemplate(img, template, cv2.TM_CCOEFF_NORMED)
@@ -35,7 +35,7 @@ def find_input(threshold: float = 0.85) -> Optional[Tuple[int, int, float]]:
         x = max_loc[0] + w // 2 + monitor["left"]
         y = max_loc[1] + h // 2 + monitor["top"]
 
-        return (x, y, max_val)
+        return (x + 200, y, max_val)
     else:
         print("Nie znaleziono pola inputu")
         return None
@@ -64,7 +64,7 @@ def scroll_to_bottom() -> None:
         return
 
     x, y, score = input_point
-    empty_field = (x - 200, y)
+    empty_field = (x - 300, y)
     pyautogui.moveTo(empty_field, duration=1)
     pyautogui.click(empty_field)
     time.sleep(0.5)
