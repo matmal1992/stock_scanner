@@ -5,6 +5,7 @@ import cv2
 import mss
 import numpy as np
 import pyautogui
+import pyperclip
 from cv2.typing import MatLike
 
 
@@ -22,7 +23,7 @@ def get_screen_image() -> Tuple[MatLike, dict]:
 def find_input(threshold: float = 0.85) -> Optional[Tuple[int, int, float]]:
     img, monitor = get_screen_image()
 
-    template_path = "stock_scanner/assets/ask_anything.png"
+    template_path = "stock_scanner/assets/zapytaj.png"
     template = cv2.imread(template_path, cv2.IMREAD_COLOR)
 
     result = cv2.matchTemplate(img, template, cv2.TM_CCOEFF_NORMED)
@@ -35,16 +36,32 @@ def find_input(threshold: float = 0.85) -> Optional[Tuple[int, int, float]]:
         y = max_loc[1] + h // 2 + monitor["top"]
 
         return (x, y, max_val)
+    else:
+        print("Nie znaleziono pola inputu")
+        return None
 
-    return None
+
+def paste_into_input(text: str = "some_text") -> None:
+    input_point = find_input()
+
+    if input_point is None:
+        print("Nie można wkleić — brak inputa")
+        return
+
+    x, y, score = input_point
+    pyperclip.copy(text)
+    time.sleep(1)
+    pyautogui.click(x, y)
+    time.sleep(1)
+    pyautogui.hotkey("ctrl", "v")
 
 
 def scroll_to_bottom() -> None:
     input_point = find_input()
 
-    if not input_point:
-        print("Nie znaleziono pola inputu")
-        return None
+    if input_point is None:
+        print("Nie można wkleić — brak inputa")
+        return
 
     x, y, score = input_point
     empty_field = (x - 200, y)
@@ -89,6 +106,8 @@ def findlast_copy_icon(threshold: float = 0.85) -> Optional[Tuple[int, int]]:
 
 if __name__ == "__main__":
     print("Start soon...")
+    paste_into_input()
+    time.sleep(0.5)
     scroll_to_bottom()
     time.sleep(1)
     copy_icon = findlast_copy_icon()
