@@ -6,10 +6,9 @@ import mss
 import numpy as np
 import pyautogui
 import pyperclip
-from cv2.typing import MatLike
 
 
-def get_screen_image() -> Tuple[MatLike, dict]:
+def get_screen_image() -> Tuple[np.ndarray, dict]:
     with mss.MSS() as sct:
         monitor = sct.monitors[0]
         screenshot = sct.grab(monitor)
@@ -20,11 +19,14 @@ def get_screen_image() -> Tuple[MatLike, dict]:
     return img, monitor
 
 
-def find_input(threshold: float = 0.85) -> Optional[Tuple[int, int, float]]:
+def find_input(threshold: float = 0.85) -> Optional[Tuple[int, int]]:
     img, monitor = get_screen_image()
 
     template_path = "stock_scanner/assets/input_icon.png"
     template = cv2.imread(template_path, cv2.IMREAD_COLOR)
+
+    if template is None:
+        raise ValueError("Template not found")
 
     result = cv2.matchTemplate(img, template, cv2.TM_CCOEFF_NORMED)
     min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
@@ -35,7 +37,7 @@ def find_input(threshold: float = 0.85) -> Optional[Tuple[int, int, float]]:
         x = max_loc[0] + w // 2 + monitor["left"]
         y = max_loc[1] + h // 2 + monitor["top"]
 
-        return (x + 200, y, max_val)
+        return (x + 200, y)
     else:
         print("Nie znaleziono pola inputu")
         return None
@@ -48,7 +50,7 @@ def paste_into_input(text: str = "some_text") -> None:
         print("Nie można wkleić — brak inputa")
         return
 
-    x, y, score = input_point
+    x, y = input_point
     pyperclip.copy(text)
     time.sleep(1)
     pyautogui.click(x, y)
@@ -61,9 +63,10 @@ def scroll_to_bottom() -> None:
 
     if input_point is None:
         print("Nie można wkleić — brak inputa")
+        # dodać debugowanie w postaci zrzutu z ekranu + zapis do pliku z zaznaczonym obszarem
         return
 
-    x, y, score = input_point
+    x, y = input_point
     empty_field = (x - 300, y)
     pyautogui.moveTo(empty_field, duration=1)
     pyautogui.click(empty_field)
@@ -81,6 +84,9 @@ def findlast_copy_icon(threshold: float = 0.85) -> Optional[Tuple[int, int]]:
 
     template_path = "stock_scanner/assets/copy_icon.png"
     template = cv2.imread(template_path, cv2.IMREAD_COLOR)
+    if template is None:
+        raise ValueError("Template not found")
+
     h, w = template.shape[:2]
 
     result = cv2.matchTemplate(img, template, cv2.TM_CCOEFF_NORMED)
