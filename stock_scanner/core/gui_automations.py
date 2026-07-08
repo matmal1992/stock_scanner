@@ -1,4 +1,5 @@
 import time
+from pathlib import Path
 from typing import Optional, Tuple
 
 import cv2
@@ -6,6 +7,9 @@ import mss
 import numpy as np
 import pyautogui
 import pyperclip
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+ASSETS_DIR = BASE_DIR / "assets"
 
 
 def get_screen_image() -> Tuple[np.ndarray, dict]:
@@ -22,7 +26,7 @@ def get_screen_image() -> Tuple[np.ndarray, dict]:
 def find_input(threshold: float = 0.85) -> Optional[Tuple[int, int]]:
     img, monitor = get_screen_image()
 
-    template_path = "stock_scanner/assets/input_icon.png"
+    template_path = ASSETS_DIR / "input_icon.png"
     template = cv2.imread(template_path, cv2.IMREAD_COLOR)
 
     if template is None:
@@ -43,7 +47,7 @@ def find_input(threshold: float = 0.85) -> Optional[Tuple[int, int]]:
         return None
 
 
-def paste_into_input(text: str = "some_text") -> None:
+def paste_into_input(text: str) -> None:
     input_point = find_input()
 
     if input_point is None:
@@ -74,7 +78,7 @@ def scroll_to_bottom() -> None:
     pyautogui.press("end")
 
 
-def findlast_copy_icon(threshold: float = 0.85) -> Optional[Tuple[int, int]]:
+def find_last_copy_icon(threshold: float = 0.85) -> Optional[Tuple[int, int]]:
     with mss.MSS() as sct:
         monitor = sct.monitors[0]
         screenshot = sct.grab(monitor)
@@ -82,7 +86,7 @@ def findlast_copy_icon(threshold: float = 0.85) -> Optional[Tuple[int, int]]:
         img = np.array(screenshot)
         img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
 
-    template_path = "stock_scanner/assets/copy_icon.png"
+    template_path = ASSETS_DIR / "copy_icon.png"
     template = cv2.imread(template_path, cv2.IMREAD_COLOR)
     if template is None:
         raise ValueError("Template not found")
@@ -112,11 +116,11 @@ def findlast_copy_icon(threshold: float = 0.85) -> Optional[Tuple[int, int]]:
 
 if __name__ == "__main__":
     print("Start soon...")
-    paste_into_input()
+    paste_into_input("some_text")
     time.sleep(0.5)
     scroll_to_bottom()
     time.sleep(1)
-    copy_icon = findlast_copy_icon()
+    copy_icon = find_last_copy_icon()
     pyautogui.moveTo(copy_icon, duration=0.5)
     time.sleep(1)
     pyautogui.click(copy_icon)
