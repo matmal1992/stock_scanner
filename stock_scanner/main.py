@@ -5,7 +5,7 @@ from pathlib import Path
 
 from PySide6.QtWidgets import QApplication
 
-from stock_scanner.download.database import init_db
+from stock_scanner.download.database import Database, EntryRepository
 from stock_scanner.ui.main_window import MainWindow
 
 
@@ -34,10 +34,12 @@ def configure_logging() -> None:
 def main() -> None:
     try:
         configure_logging()
-        init_db()
+        db = Database()
+        db.init_db()
+        entry_repo = EntryRepository(db)
 
         app = QApplication(sys.argv)
-        window = MainWindow()
+        window = MainWindow(entry_repo)
         window.show()
 
         sys.exit(app.exec())

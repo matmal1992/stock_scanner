@@ -1,6 +1,6 @@
 import calendar
 import email.utils
-from datetime import timezone
+from datetime import datetime, timezone
 from typing import Any
 
 import feedparser
@@ -8,7 +8,7 @@ from PySide6.QtCore import QObject, QUrl, Signal
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
 
 from stock_scanner.core.telegram import send_telegram_message
-from stock_scanner.download.database import get_latest_entries, insert_entry
+from stock_scanner.download.database import EntryRepository
 
 
 class RSSWorker(QObject):
@@ -19,8 +19,9 @@ class RSSWorker(QObject):
 
     WATCHLIST = ["KGHM", "CDPROJEKT", "ORLEN", "CREOTECH"]
 
-    def __init__(self, parent: QObject | None = None) -> None:
+    def __init__(self, entry_repo: EntryRepository, parent: QObject | None = None) -> None:
         super().__init__(parent)
+        self.entry_repo = entry_repo
         self.manager = QNetworkAccessManager(self)
         self.reply: QNetworkReply | None = None
 
@@ -82,7 +83,22 @@ class RSSWorker(QObject):
         found_new = False
         for entry in feed.entries[:5]:
             try:
-                if insert_entry(entry, source_type="rss"):
+                entry_id = getattr(entry, "id", None) or getattr(entry, "link", None)
+                if not entry_id:
+                    continue
+
+                published_ts = None
+                if getattr(entry, "published_parsed", None) is not None:
+                    dt = datetime(*entry.published_parsed[:6])
+                    published_ts = int(dt.timestamp())
+
+                if self.entry_repo.save(
+                    entry_id=entry_id,
+                    title=getattr(entry, "title", ""),
+                    link=getattr(entry, "link", ""),
+                    published=published_ts,
+                    source_type="rss",
+                ):
                     found_new = True
 
                     title = getattr(entry, "title", "")
@@ -92,14 +108,12 @@ class RSSWorker(QObject):
                         tickers_str = ", ".join(matched)
                         print(f"[ALERT] {tickers_str} → {title}")
                         send_telegram_message(f"ALERT: {tickers_str} → {title}")
-
-                        # opcjonalnie log do UI
                         self.log.emit(f"ALERT: {tickers_str} → {title}")
 
             except Exception as entry_error:
                 self.log.emit(f"Błąd przy dodawaniu wpisu: {str(entry_error)}")
 
-        entries = get_latest_entries()
+        entries = self.entry_repo.get_latest("rss")
         if entries:
             self.data_ready.emit(entries, found_new)
         else:

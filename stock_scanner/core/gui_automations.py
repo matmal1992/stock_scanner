@@ -8,7 +8,7 @@ import numpy as np
 import pyautogui
 import pyperclip
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 ASSETS_DIR = BASE_DIR / "assets"
 
 
@@ -30,6 +30,7 @@ def find_input(threshold: float = 0.85) -> Optional[Tuple[int, int]]:
     template = cv2.imread(template_path, cv2.IMREAD_COLOR)
 
     if template is None:
+        print(template_path)
         raise ValueError("Template not found")
 
     result = cv2.matchTemplate(img, template, cv2.TM_CCOEFF_NORMED)

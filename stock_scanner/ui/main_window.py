@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from stock_scanner.download.database import EntryRepository
 from stock_scanner.ui.windows.chart_window import ChartWindow
 from stock_scanner.ui.windows.news_tracker_window import NewsTrackerWindow
 from stock_scanner.ui.windows.speculation_window import SpeculationWindow
@@ -18,7 +19,7 @@ from stock_scanner.ui.windows.wall_strategy_window import WallStrategyWindow
 
 
 class MainWindow(QMainWindow):
-    def __init__(self) -> None:
+    def __init__(self, entry_repo: EntryRepository) -> None:
         super().__init__()
 
         self.setWindowTitle("Stock Scanner")
@@ -29,7 +30,7 @@ class MainWindow(QMainWindow):
         self.three_tier_window = ThreeTierWindow()
         self.wall_window = WallStrategyWindow()
         self.speculation_window = SpeculationWindow()
-        self.news_tracker_window = NewsTrackerWindow()
+        self.news_tracker_window = NewsTrackerWindow(entry_repo)
 
         # Connect back buttons
         self.chart_window.backRequested.connect(self.show_main_menu)

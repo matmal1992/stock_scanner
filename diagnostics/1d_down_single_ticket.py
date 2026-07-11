@@ -36,9 +36,7 @@ else:
             df = df_existing
         else:
             print("Dane nieaktualne. Aktualizuję...")
-            new_data = yf.Ticker(ticker).history(
-                start=last_date + timedelta(days=1), interval="1d"
-            )
+            new_data = yf.Ticker(ticker).history(start=last_date + timedelta(days=1), interval="1d")
 
             if not new_data.empty:
                 df = pd.concat([df_existing, new_data])

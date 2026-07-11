@@ -49,6 +49,53 @@
                 "${workspaceFolder}/stock_scanner/core/gui_automations.py"
             ],
             "problemMatcher": []
-        }
+        },
+        {
+            "label": "Format code",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "-m",
+                "uv",
+                "run",
+                "ruff",
+                "format",
+                "."
+            ],
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "Lint & fix",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "-m",
+                "uv",
+                "run",
+                "ruff",
+                "check",
+                ".",
+                "--fix"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "Pre-build check",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "-m",
+                "uv",
+                "run",
+                "bash",
+                "-c",
+                "ruff check . && mypy ."
+            ],
+            "problemMatcher": []
+            }
     ]
 }

@@ -3,7 +3,7 @@ import sqlite3
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Protocol, TypedDict
+from typing import Any, List, Optional, Protocol, TypedDict
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +13,6 @@ else:
     BASE_DIR = Path(__file__).parent.parent.parent
 
 DB_PATH = BASE_DIR / "data" / "database.db"
-DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 
 class FeedEntry(Protocol):
@@ -31,235 +30,282 @@ class NewsRow(TypedDict):
     source_type: str
 
 
-def get_connection() -> sqlite3.Connection:
-    return sqlite3.connect(DB_PATH)
+class Database:
+    def __init__(self) -> None:
+        self.db_path = DB_PATH
+        self.db_path.parent.mkdir(parents=True, exist_ok=True)
 
+    def _connect(self) -> sqlite3.Connection:
+        return sqlite3.connect(self.db_path)
 
-def init_db() -> None:
-    conn = get_connection()
-    cur = conn.cursor()
+    def connect(self) -> sqlite3.Connection:
+        return self._connect()
 
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS entries (
-        id TEXT PRIMARY KEY,
-        source_type TEXT,
+    def init_db(self) -> None:
+        with self._connect() as conn:
+            cur = conn.cursor()
 
-        title TEXT,
-        link TEXT,
-        published INTEGER,
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS entries (
+                id TEXT PRIMARY KEY,
+                source_type TEXT,
+                title TEXT,
+                link TEXT,
+                published INTEGER,
+                query TEXT,
+                inserted_at TEXT,
+                llm_status TEXT DEFAULT 'pending',
+                sentiment TEXT,
+                processed_at TEXT
+            )
+            """)
 
-        query TEXT,
-        inserted_at TEXT,
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS tracked_tickers (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                ticker TEXT NOT NULL UNIQUE,
+                sources TEXT NOT NULL,
+                created_at TEXT
+            )
+            """)
 
-        llm_status TEXT DEFAULT 'pending',
-        sentiment TEXT,
-        processed_at TEXT
-    )
-    """)
-
-    conn.commit()
-    conn.close()
-
-
-def insert_entry(entry: FeedEntry, source_type: str, query: str | None = None) -> bool:
-    conn = get_connection()
-    cur = conn.cursor()
-
-    try:
-        entry_id = getattr(entry, "id", None) or getattr(entry, "link", None)
+    def insert_entry(self, entry: FeedEntry, source_type: str, query: Optional[str] = None) -> bool:
+        entry_id = entry.id or entry.link
         if not entry_id:
             return False
 
-        title = getattr(entry, "title", "")
-        link = getattr(entry, "link", "")
-
         published_ts = None
-        published_parsed = getattr(entry, "published_parsed", None)
-        if published_parsed is not None:
-            dt = datetime(*published_parsed[:6])
+        if entry.published_parsed:
+            dt = datetime(*entry.published_parsed[:6])
             published_ts = int(dt.timestamp())
 
-        cur.execute(
-            """
-            INSERT INTO entries (
-                id, source_type, title, link, published,
-                query, inserted_at
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                entry_id,
-                source_type,
-                title,
-                link,
-                published_ts,
-                query,
-                datetime.utcnow().isoformat(),
-            ),
+        return self.insert_entry_raw(
+            entry_id=entry_id,
+            title=entry.title,
+            link=entry.link,
+            published=published_ts,
+            source_type=source_type,
+            query=query,
         )
 
-        conn.commit()
-        return True
+    def insert_entry_raw(
+        self,
+        *,
+        entry_id: str,
+        title: str,
+        link: str,
+        published: int | None,
+        source_type: str,
+        query: Optional[str] = None,
+    ) -> bool:
+        try:
+            with self._connect() as conn:
+                conn.execute(
+                    """
+                    INSERT INTO entries (
+                        id, source_type, title, link, published,
+                        query, inserted_at
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        entry_id,
+                        source_type,
+                        title,
+                        link,
+                        published,
+                        query,
+                        datetime.utcnow().isoformat(),
+                    ),
+                )
+            return True
+        except sqlite3.IntegrityError:
+            return False
 
-    except sqlite3.IntegrityError:
-        return False
+    def get_latest_entries(self, limit_per_source: int = 5) -> list[tuple]:
+        with self._connect() as conn:
+            cur = conn.cursor()
 
-    finally:
-        conn.close()
-
-
-def get_latest_entries(limit_per_source: int = 5) -> list[tuple[str, str, int | None, str, str]]:
-    conn = get_connection()
-    cur = conn.cursor()
-
-    cur.execute(
-        """
-        SELECT title, link, published, source_type
-        FROM entries
-        WHERE source_type = 'rss'
-        ORDER BY published DESC
-        LIMIT ?
-    """,
-        (limit_per_source,),
-    )
-    rss_rows = cur.fetchall()
-
-    cur.execute(
-        """
-        SELECT title, link, published, source_type
-        FROM entries
-        WHERE source_type = 'google'
-        ORDER BY published DESC
-        LIMIT ?
-    """,
-        (limit_per_source,),
-    )
-    google_rows = cur.fetchall()
-
-    conn.close()
-
-    return rss_rows + google_rows
-
-
-def get_first_entry_link() -> str:
-    conn = get_connection()
-    cur = conn.cursor()
-
-    cur.execute(
-        """
-        SELECT link
-        FROM entries
-        ORDER BY published DESC
-        LIMIT 1
-        """
-    )
-
-    row = cur.fetchone()
-    conn.close()
-
-    if row:
-        return row[0]
-
-    return "Latest entry link: N/A"
-
-
-def get_latest_entries_with_id(amount: int = 5) -> list[NewsRow]:
-    conn = get_connection()
-    cur = conn.cursor()
-
-    cur.execute(
-        """
-        SELECT id, title, link, published, source_type
-        FROM entries
-        WHERE source_type = 'rss'
-        ORDER BY published DESC
-        LIMIT ?
-        """,
-        (amount,),
-    )
-    rss_rows = cur.fetchall()
-
-    cur.execute(
-        """
-        SELECT id, title, link, published, source_type
-        FROM entries
-        WHERE source_type = 'google'
-        ORDER BY published DESC
-        LIMIT ?
-        """,
-        (amount,),
-    )
-    google_rows = cur.fetchall()
-
-    conn.close()
-
-    return [to_dict(r) for r in (rss_rows + google_rows)]
-
-
-def to_dict(row: list[Any]) -> NewsRow:
-    return {
-        "id": row[0],
-        "title": row[1],
-        "link": row[2],
-        "published": row[3],
-        "source_type": row[4],
-    }
-
-
-def get_entry_link_by_id(entry_id: str) -> str | None:
-    conn = get_connection()
-    cur = conn.cursor()
-
-    cur.execute(
-        """
-        SELECT link FROM entries WHERE id = ?
-        """,
-        (entry_id,),
-    )
-
-    row = cur.fetchone()
-    conn.close()
-
-    return row[0] if row else None
-
-
-def insert_entry_raw(
-    *,
-    entry_id: str,
-    title: str,
-    link: str,
-    published: int | None,
-    source_type: str,
-    query: str | None = None,
-) -> bool:
-    conn = get_connection()
-    cur = conn.cursor()
-
-    try:
-        cur.execute(
-            """
-            INSERT INTO entries (
-                id, source_type, title, link, published,
-                query, inserted_at
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            cur.execute(
+                """
+                SELECT title, link, published, source_type
+                FROM entries
+                WHERE source_type = 'rss'
+                ORDER BY published DESC
+                LIMIT ?
             """,
-            (
-                entry_id,
-                source_type,
-                title,
-                link,
-                published,
-                query,
-                datetime.utcnow().isoformat(),
-            ),
-        )
+                (limit_per_source,),
+            )
+            rss = cur.fetchall()
 
-        conn.commit()
-        return True
+            cur.execute(
+                """
+                SELECT title, link, published, source_type
+                FROM entries
+                WHERE source_type = 'google'
+                ORDER BY published DESC
+                LIMIT ?
+            """,
+                (limit_per_source,),
+            )
+            google = cur.fetchall()
 
-    except sqlite3.IntegrityError:
-        return False
+        return rss + google
 
-    finally:
-        conn.close()
+    def get_latest_entries_with_id(self, amount: int = 5) -> List[NewsRow]:
+        with self._connect() as conn:
+            cur = conn.cursor()
+
+            cur.execute(
+                """
+                SELECT id, title, link, published, source_type
+                FROM entries
+                WHERE source_type = 'rss'
+                ORDER BY published DESC
+                LIMIT ?
+            """,
+                (amount,),
+            )
+            rss = cur.fetchall()
+
+            cur.execute(
+                """
+                SELECT id, title, link, published, source_type
+                FROM entries
+                WHERE source_type = 'google'
+                ORDER BY published DESC
+                LIMIT ?
+            """,
+                (amount,),
+            )
+            google = cur.fetchall()
+
+        return [self._to_dict(r) for r in (rss + google)]
+
+    def get_entry_link_by_id(self, entry_id: str) -> Optional[str]:
+        with self._connect() as conn:
+            cur = conn.cursor()
+            cur.execute("SELECT link FROM entries WHERE id = ?", (entry_id,))
+            row = cur.fetchone()
+            return row[0] if row else None
+
+    def get_first_entry_link(self) -> str:
+        with self._connect() as conn:
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT link FROM entries
+                ORDER BY published DESC
+                LIMIT 1
+            """)
+            row = cur.fetchone()
+            return row[0] if row else "Latest entry link: N/A"
+
+    @staticmethod
+    def _to_dict(row: list[Any]) -> NewsRow:
+        return {
+            "id": row[0],
+            "title": row[1],
+            "link": row[2],
+            "published": row[3],
+            "source_type": row[4],
+        }
+
+
+class EntryRepository:
+    def __init__(self, db: Database):
+        self.db = db
+
+    def save(
+        self,
+        *,
+        entry_id: str,
+        title: str,
+        link: str,
+        published: int | None,
+        source_type: str,
+        query: Optional[str] = None,
+    ) -> bool:
+        try:
+            with self.db.connect() as conn:
+                conn.execute(
+                    """
+                    INSERT INTO entries (
+                        id, source_type, title, link, published,
+                        query, inserted_at
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        entry_id,
+                        source_type,
+                        title,
+                        link,
+                        published,
+                        query,
+                        datetime.utcnow().isoformat(),
+                    ),
+                )
+            return True
+        except Exception:
+            return False
+
+    def get_latest(self, source_type: str, limit: int = 5) -> list[tuple]:
+        with self.db.connect() as conn:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT title, link, published, source_type
+                FROM entries
+                WHERE source_type = ?
+                ORDER BY published DESC
+                LIMIT ?
+                """,
+                (source_type, limit),
+            )
+            return cur.fetchall()
+
+    def get_latest_with_id(self, source_type: str, limit: int = 5) -> List[NewsRow]:
+        with self.db.connect() as conn:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT id, title, link, published, source_type
+                FROM entries
+                WHERE source_type = ?
+                ORDER BY published DESC
+                LIMIT ?
+                """,
+                (source_type, limit),
+            )
+            rows = cur.fetchall()
+
+        return [self._to_dict(r) for r in rows]
+
+    def get_link_by_id(self, entry_id: str) -> Optional[str]:
+        with self.db.connect() as conn:
+            cur = conn.cursor()
+            cur.execute("SELECT link FROM entries WHERE id = ?", (entry_id,))
+            row = cur.fetchone()
+            return row[0] if row else None
+
+    def get_latest_link(self) -> Optional[str]:
+        with self.db.connect() as conn:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT link FROM entries
+                ORDER BY published DESC
+                LIMIT 1
+                """
+            )
+            row = cur.fetchone()
+            return row[0] if row else None
+
+    def _to_dict(self, row: list[Any]) -> NewsRow:
+        return {
+            "id": row[0],
+            "title": row[1],
+            "link": row[2],
+            "published": row[3],
+            "source_type": row[4],
+        }

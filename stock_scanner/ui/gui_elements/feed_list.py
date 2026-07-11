@@ -11,21 +11,20 @@ from PySide6.QtWidgets import (
 )
 
 from stock_scanner.core.utils import FeedAdapter, NewsFormatter
-from stock_scanner.download.database import (
-    get_entry_link_by_id,
-    get_latest_entries_with_id,
-    insert_entry_raw,
-)
+from stock_scanner.download.database import EntryRepository
 from stock_scanner.download.news_fetcher import NewsFetcher
+
+# from stock_scanner.ui.windows.news_tracker_window import NewsTrackerWindow
 from stock_scanner.ui.workers.llm_worker import ManualPromptWorker
 
 
 class NewsFeedList(QWidget):
     selection_changed = Signal(str)
 
-    def __init__(self, parent) -> None:
+    def __init__(self, entry_repo: EntryRepository) -> None:
         super().__init__()
-        self.parent_window = parent
+        self.entry_repo = entry_repo
+        # self.parent_window = parent
         self._ids: List[str | None] = []
 
         self.feed_list = QListWidget()
@@ -40,10 +39,10 @@ class NewsFeedList(QWidget):
         self.test_llm_btn.setEnabled(False)
         self.displ_link_btn.setEnabled(False)
 
-        self.fetcher = NewsFetcher()
+        self.fetcher = NewsFetcher(entry_repo)
         self.fetcher.data_ready.connect(self.on_data_ready)
-        self.fetcher.log.connect(self.on_log)
-        self.fetcher.error.connect(self.on_error)
+        # self.fetcher.log.connect(self.on_log)
+        # self.fetcher.error.connect(self.on_error)
 
         test_buttons_box = QHBoxLayout()
         test_buttons_box.addWidget(get_news_btn)
@@ -65,7 +64,7 @@ class NewsFeedList(QWidget):
             self._ids.append(entry_id)
 
     def on_get_news_clicked(self) -> None:
-        self.parent_window.notifications.set_ok("Pobieranie wiadomości...")
+        # self.parent_window.notifications.set_ok("Pobieranie wiadomości...")
         self.fetcher.fetch()
 
         # if not self.timer.isActive():
@@ -84,46 +83,47 @@ class NewsFeedList(QWidget):
 
     def on_display_link_clicked(self) -> None:
         if not self.selected_entry_id:
-            self.parent_window.notifications.set_error("Brak zaznaczonego wpisu")
+            # self.parent_window.notifications.set_error("Brak zaznaczonego wpisu")
             return
 
-        link = get_entry_link_by_id(self.selected_entry_id)
+        # link = get_entry_link_by_id(self.selected_entry_id)
+        link = self.entry_repo.get_link_by_id(self.selected_entry_id)
 
         if not link:
-            self.parent_window.notifications.set_warning("Nie znaleziono linku w bazie")
+            # self.parent_window.notifications.set_warning("Nie znaleziono linku w bazie")
             return
 
-        self.parent_window.notifications.set_ok(f"Link: {link}")
+        # self.parent_window.notifications.set_ok(f"Link: {link}")
 
     def on_run_llm_clicked(self) -> None:
         if not self.selected_entry_id:
-            self.parent_window.notifications.set_error("Run LLM: Brak zaznaczonego wpisu")
+            # self.parent_window.notifications.set_error("Run LLM: Brak zaznaczonego wpisu")
             return
 
-        link = get_entry_link_by_id(self.selected_entry_id)
+        link = self.entry_repo.get_link_by_id(self.selected_entry_id)
         if not link:
-            self.parent_window.notifications.set_error("Run LLM: Nie znaleziono linku w bazie")
+            # self.parent_window.notifications.set_error("Run LLM: Nie znaleziono linku w bazie")
             return
 
-        self.parent_window.notifications.set_ok(f"Run LLM: Link: {link}")
+        # self.parent_window.notifications.set_ok(f"Run LLM: Link: {link}")
 
         self.llm_worker = ManualPromptWorker(link)
-        self.llm_worker.response_received.connect(self.on_llm_result)
+        # self.llm_worker.response_received.connect(self.on_llm_result)
         self.llm_worker.start()
 
-    def on_llm_result(self) -> None:
-        self.parent_window.notifications.set_ok("LLM zakończony")
+    # def on_llm_result(self) -> None:
+    # self.parent_window.notifications.set_ok("LLM zakończony")
 
-    def on_log(self, text: str) -> None:
-        self.parent_window.notifications.set_ok(text)
-        # now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        # self.set_status_item(0, f"{now} Status: {text}")
+    # def on_log(self, text: str) -> None:
+    # self.parent_window.notifications.set_ok(text)
+    # now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    # self.set_status_item(0, f"{now} Status: {text}")
 
-    def on_error(self, e: str) -> None:
-        now = datetime.now()
-        error_time = now.strftime("%Y-%m-%d %H:%M:%S")
-        # self._set_status_item(0, f"{error_time} Błąd: {e}")
-        self.parent_window.notifications.set_error(f"{error_time} Błąd: {e}")
+    # def on_error(self, e: str) -> None:
+    # now = datetime.now()
+    # error_time = now.strftime("%Y-%m-%d %H:%M:%S")
+    # self._set_status_item(0, f"{error_time} Błąd: {e}")
+    # self.parent_window.notifications.set_error(f"{error_time} Błąd: {e}")
 
     def on_data_ready(
         self, items: list[tuple[str, str, int | None, str]], has_new_entries: bool
@@ -132,10 +132,14 @@ class NewsFeedList(QWidget):
 
         # 1. zapis do DB (czytelny i prosty)
         for item in items:
-            insert_entry_raw(**FeedAdapter.to_db(item))
+            data = FeedAdapter.to_db(item)
+            self.entry_repo.save(**data)
+
+        rows = self.entry_repo.get_latest_with_id("rss")
 
         # 2. DB → UI
-        rows = get_latest_entries_with_id()
+        # rows = get_latest_entries_with_id()
+        rows = self.entry_repo.get_latest_with_id("rss")
         formatted = NewsFormatter.format(rows)
 
         # 3. status

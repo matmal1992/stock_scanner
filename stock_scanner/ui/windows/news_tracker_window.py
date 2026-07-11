@@ -2,6 +2,7 @@ import logging
 
 from PySide6.QtCore import QThread
 
+from stock_scanner.download.database import EntryRepository
 from stock_scanner.ui.gui_elements.feed_list import NewsFeedList
 from stock_scanner.ui.gui_elements.Labels import StatusLabel
 from stock_scanner.ui.gui_elements.tracked_tickers_list import TrackedTickersList
@@ -12,14 +13,16 @@ logger = logging.getLogger(__name__)
 
 
 class NewsTrackerWindow(BaseWindow):
-    def __init__(self) -> None:
+    def __init__(self, entry_repo: EntryRepository) -> None:
         super().__init__("News Tracker")
         self.llm = LLMService()
+        self.entry_repo = entry_repo
+
         # self.llm.result.connect(self.on_llm_result)
         self.website_thread: QThread | None = None
         self.notifications = StatusLabel(text="No notifications")
-        self.tracked_tickers = TrackedTickersList(self)
-        self.news_feed = NewsFeedList(self)
+        self.tracked_tickers = TrackedTickersList()
+        self.news_feed = NewsFeedList(entry_repo)
 
         self.setup_window_layout()
 
