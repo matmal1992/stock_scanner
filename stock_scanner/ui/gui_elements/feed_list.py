@@ -13,8 +13,6 @@ from PySide6.QtWidgets import (
 from stock_scanner.core.utils import FeedAdapter, NewsFormatter
 from stock_scanner.download.database import EntryRepository
 from stock_scanner.download.news_fetcher import NewsFetcher
-
-# from stock_scanner.ui.windows.news_tracker_window import NewsTrackerWindow
 from stock_scanner.ui.workers.llm_worker import ManualPromptWorker
 
 

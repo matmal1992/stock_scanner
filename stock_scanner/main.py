@@ -5,7 +5,7 @@ from pathlib import Path
 
 from PySide6.QtWidgets import QApplication
 
-from stock_scanner.download.database import Database, EntryRepository
+from stock_scanner.download.database import Database, EntryRepository, TrackedTickerRepository
 from stock_scanner.ui.main_window import MainWindow
 
 
@@ -37,9 +37,10 @@ def main() -> None:
         db = Database()
         db.init_db()
         entry_repo = EntryRepository(db)
+        tracked_repo = TrackedTickerRepository(db)
 
         app = QApplication(sys.argv)
-        window = MainWindow(entry_repo)
+        window = MainWindow(entry_repo, tracked_repo)
         window.show()
 
         sys.exit(app.exec())

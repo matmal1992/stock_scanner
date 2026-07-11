@@ -69,147 +69,6 @@ class Database:
             )
             """)
 
-    def insert_entry(self, entry: FeedEntry, source_type: str, query: Optional[str] = None) -> bool:
-        entry_id = entry.id or entry.link
-        if not entry_id:
-            return False
-
-        published_ts = None
-        if entry.published_parsed:
-            dt = datetime(*entry.published_parsed[:6])
-            published_ts = int(dt.timestamp())
-
-        return self.insert_entry_raw(
-            entry_id=entry_id,
-            title=entry.title,
-            link=entry.link,
-            published=published_ts,
-            source_type=source_type,
-            query=query,
-        )
-
-    def insert_entry_raw(
-        self,
-        *,
-        entry_id: str,
-        title: str,
-        link: str,
-        published: int | None,
-        source_type: str,
-        query: Optional[str] = None,
-    ) -> bool:
-        try:
-            with self._connect() as conn:
-                conn.execute(
-                    """
-                    INSERT INTO entries (
-                        id, source_type, title, link, published,
-                        query, inserted_at
-                    )
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
-                    """,
-                    (
-                        entry_id,
-                        source_type,
-                        title,
-                        link,
-                        published,
-                        query,
-                        datetime.utcnow().isoformat(),
-                    ),
-                )
-            return True
-        except sqlite3.IntegrityError:
-            return False
-
-    def get_latest_entries(self, limit_per_source: int = 5) -> list[tuple]:
-        with self._connect() as conn:
-            cur = conn.cursor()
-
-            cur.execute(
-                """
-                SELECT title, link, published, source_type
-                FROM entries
-                WHERE source_type = 'rss'
-                ORDER BY published DESC
-                LIMIT ?
-            """,
-                (limit_per_source,),
-            )
-            rss = cur.fetchall()
-
-            cur.execute(
-                """
-                SELECT title, link, published, source_type
-                FROM entries
-                WHERE source_type = 'google'
-                ORDER BY published DESC
-                LIMIT ?
-            """,
-                (limit_per_source,),
-            )
-            google = cur.fetchall()
-
-        return rss + google
-
-    def get_latest_entries_with_id(self, amount: int = 5) -> List[NewsRow]:
-        with self._connect() as conn:
-            cur = conn.cursor()
-
-            cur.execute(
-                """
-                SELECT id, title, link, published, source_type
-                FROM entries
-                WHERE source_type = 'rss'
-                ORDER BY published DESC
-                LIMIT ?
-            """,
-                (amount,),
-            )
-            rss = cur.fetchall()
-
-            cur.execute(
-                """
-                SELECT id, title, link, published, source_type
-                FROM entries
-                WHERE source_type = 'google'
-                ORDER BY published DESC
-                LIMIT ?
-            """,
-                (amount,),
-            )
-            google = cur.fetchall()
-
-        return [self._to_dict(r) for r in (rss + google)]
-
-    def get_entry_link_by_id(self, entry_id: str) -> Optional[str]:
-        with self._connect() as conn:
-            cur = conn.cursor()
-            cur.execute("SELECT link FROM entries WHERE id = ?", (entry_id,))
-            row = cur.fetchone()
-            return row[0] if row else None
-
-    def get_first_entry_link(self) -> str:
-        with self._connect() as conn:
-            cur = conn.cursor()
-            cur.execute("""
-                SELECT link FROM entries
-                ORDER BY published DESC
-                LIMIT 1
-            """)
-            row = cur.fetchone()
-            return row[0] if row else "Latest entry link: N/A"
-
-    @staticmethod
-    def _to_dict(row: list[Any]) -> NewsRow:
-        return {
-            "id": row[0],
-            "title": row[1],
-            "link": row[2],
-            "published": row[3],
-            "source_type": row[4],
-        }
-
 
 class EntryRepository:
     def __init__(self, db: Database):
@@ -308,4 +167,85 @@ class EntryRepository:
             "link": row[2],
             "published": row[3],
             "source_type": row[4],
+        }
+
+
+class TrackedTickerRow(TypedDict):
+    id: int
+    ticker: str
+    sources: str
+    created_at: str
+
+
+class TrackedTickerRepository:
+    def __init__(self, db: Database):
+        self.db = db
+
+    def save(self, *, ticker: str, sources: str) -> bool:
+        try:
+            with self.db.connect() as conn:
+                conn.execute(
+                    """
+                    INSERT INTO tracked_tickers (ticker, sources, created_at)
+                    VALUES (?, ?, ?)
+                    """,
+                    (
+                        ticker,
+                        sources,
+                        datetime.utcnow().isoformat(),
+                    ),
+                )
+            return True
+        except Exception:
+            return False
+
+    def remove(self, ticker: str) -> bool:
+        try:
+            with self.db.connect() as conn:
+                cur = conn.execute(
+                    """
+                    DELETE FROM tracked_tickers
+                    WHERE ticker = ?
+                    """,
+                    (ticker,),
+                )
+            return cur.rowcount > 0
+        except Exception:
+            return False
+
+    def get_all(self) -> List[TrackedTickerRow]:
+        with self.db.connect() as conn:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT id, ticker, sources, created_at
+                FROM tracked_tickers
+                ORDER BY created_at DESC
+                """
+            )
+            rows = cur.fetchall()
+
+        return [self._to_dict(r) for r in rows]
+
+    def get_by_ticker(self, ticker: str) -> Optional[TrackedTickerRow]:
+        with self.db.connect() as conn:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT id, ticker, sources, created_at
+                FROM tracked_tickers
+                WHERE ticker = ?
+                """,
+                (ticker,),
+            )
+            row = cur.fetchone()
+
+        return self._to_dict(row) if row else None
+
+    def _to_dict(self, row: list) -> TrackedTickerRow:
+        return {
+            "id": row[0],
+            "ticker": row[1],
+            "sources": row[2],
+            "created_at": row[3],
         }

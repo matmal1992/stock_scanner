@@ -87,15 +87,15 @@
             "label": "Pre-build check",
             "type": "shell",
             "command": "python",
-            "args": [
-                "-m",
-                "uv",
-                "run",
-                "bash",
-                "-c",
-                "ruff check . && mypy ."
-            ],
+            "args": ["-m", "uv", "run", "ruff", "check", "."],
             "problemMatcher": []
-            }
+        },
+        {
+            "label": "Type check",
+            "type": "shell",
+            "command": "python",
+            "args": ["-m", "uv", "run", "mypy", "."],
+            "problemMatcher": []
+        }
     ]
 }

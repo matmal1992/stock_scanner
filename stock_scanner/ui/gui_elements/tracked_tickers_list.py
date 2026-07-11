@@ -10,15 +10,32 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-# from stock_scanner.ui.windows.news_tracker_window import NewsTrackerWindow
+from stock_scanner.download.database import TrackedTickerRepository
 
 
 class TrackedTickersList(QWidget):
-    def __init__(self) -> None:
+    def __init__(self, repo: TrackedTickerRepository) -> None:
         super().__init__()
-        # self.parent_window = parent
+        self.repo = repo
         self.set_up_widgets()
         self.set_up_layout()
+        self.load_from_db()
+
+    def load_from_db(self) -> None:
+        rows = self.repo.get_all()
+
+        for row in rows:
+            data = {
+                "ticker": row["ticker"],
+                "sources": row["sources"],
+            }
+            self.ticker_list.append(data)
+
+            item_text = f"{row['ticker']} - {row['sources']}"
+            item = QListWidgetItem(item_text)
+            item.setData(1, data)
+
+            self.tracked_list.addItem(item)
 
     def set_up_widgets(self) -> None:
         self.ticker_list: List[Dict[str, str]] = []
@@ -70,10 +87,12 @@ class TrackedTickersList(QWidget):
     def on_add_btn_clicked(self) -> None:
         ticker = self.ticker_input.text().strip().upper()
         sources = self.sources_input.text().strip()
-        is_valid = self.validate_input(ticker, sources)
 
-        if not is_valid:
-            # self.parent_window.notifications.set_error("Add ticker: Nieprawidłowe dane")
+        if not self.validate_input(ticker, sources):
+            return
+
+        success = self.repo.save(ticker=ticker, sources=sources)
+        if not success:
             return
 
         data = {
@@ -85,11 +104,9 @@ class TrackedTickersList(QWidget):
 
         item_text = f"{ticker} - {sources}"
         item = QListWidgetItem(item_text)
-
-        # przechowujemy dane w itemie
         item.setData(1, data)
+
         self.tracked_list.addItem(item)
-        # self.parent_window.notifications.set_ok(f"Dodano ticker: {ticker}")
 
         self.ticker_input.clear()
         self.sources_input.clear()
@@ -97,10 +114,16 @@ class TrackedTickersList(QWidget):
     def on_remove_btn_clicked(self) -> None:
         row = self.tracked_list.currentRow()
         if row < 0:
-            # self.parent_window.notifications.set_warning("Nie wybrano elementu do usunięcia")
             return
 
-        item = self.tracked_list.takeItem(row)
+        item = self.tracked_list.item(row)
         data = item.data(1)
+
+        success = self.repo.remove(data["ticker"])
+        if not success:
+            return
+
+        self.tracked_list.takeItem(row)
+
         self.ticker_list = [t for t in self.ticker_list if t["ticker"] != data["ticker"]]
         # self.parent_window.notifications.set_ok(f"Usunięto ticker: {data['ticker']}")
