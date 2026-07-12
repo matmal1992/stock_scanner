@@ -161,6 +161,20 @@ class EntryRepository:
             row = cur.fetchone()
             return row[0] if row else None
 
+    def get_all_entries(self) -> List[NewsRow]:
+        with self.db.connect() as conn:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT id, title, link, published, source_type
+                FROM entries
+                ORDER BY published DESC
+                """
+            )
+            rows = cur.fetchall()
+
+        return [self._to_dict(r) for r in rows]
+
     def _to_dict(self, row: list[Any]) -> NewsRow:
         return {
             "id": row[0],

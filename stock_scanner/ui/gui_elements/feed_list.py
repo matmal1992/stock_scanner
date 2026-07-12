@@ -30,13 +30,13 @@ class NewsFeedList(QWidget):
 
         get_news_btn = QPushButton("Get feed")
         self.displ_link_btn = QPushButton("Display link")
-        self.test_llm_btn = QPushButton("Run LLM")
+        self.run_llm_btn = QPushButton("Run LLM")
         self.clear_database_btn = QPushButton("Clear database")
         get_news_btn.clicked.connect(self.on_get_news_clicked)
         self.displ_link_btn.clicked.connect(self.on_display_link_clicked)
-        self.test_llm_btn.clicked.connect(self.on_run_llm_clicked)
+        self.run_llm_btn.clicked.connect(self.on_run_llm_clicked)
         self.clear_database_btn.clicked.connect(self.on_clear_database_clicked)
-        self.test_llm_btn.setEnabled(False)
+        self.run_llm_btn.setEnabled(False)
         self.displ_link_btn.setEnabled(False)
 
         self.fetcher = NewsFetcher(entry_repo, tracked_repo)
@@ -47,7 +47,7 @@ class NewsFeedList(QWidget):
         test_buttons_box = QHBoxLayout()
         test_buttons_box.addWidget(get_news_btn)
         test_buttons_box.addWidget(self.displ_link_btn)
-        test_buttons_box.addWidget(self.test_llm_btn)
+        test_buttons_box.addWidget(self.run_llm_btn)
         test_buttons_box.addWidget(self.clear_database_btn)
 
         layout = QVBoxLayout()
@@ -80,7 +80,7 @@ class NewsFeedList(QWidget):
     def on_selection_changed(self) -> None:
         self.selected_entry_id = self.get_selected_id()
         self.displ_link_btn.setEnabled(self.selected_entry_id is not None)
-        self.test_llm_btn.setEnabled(self.selected_entry_id is not None)
+        self.run_llm_btn.setEnabled(self.selected_entry_id is not None)
 
     def on_display_link_clicked(self) -> None:
         if not self.selected_entry_id:
@@ -115,7 +115,7 @@ class NewsFeedList(QWidget):
         self.entry_repo.clear_all()
         self.set_items([("Brak danych", None)])
         self.displ_link_btn.setEnabled(False)
-        self.test_llm_btn.setEnabled(False)
+        self.run_llm_btn.setEnabled(False)
         self.notify.emit("Wyczyszczono bazę danych", "ok")
 
     def on_llm_result(self) -> None:
@@ -139,9 +139,9 @@ class NewsFeedList(QWidget):
             data = FeedAdapter.to_db(item)
             self.entry_repo.save(**data)
 
-        rows_rss = self.entry_repo.get_latest_with_id("rss")
-        rows_google = self.entry_repo.get_latest_with_id("google")
-        formatted_rss = NewsFormatter.format(rows_rss)
+        # rows_rss = self.entry_repo.get_latest_with_id("rss")
+        rows_google = self.entry_repo.get_all_entries()
+        # formatted_rss = NewsFormatter.format(rows_rss)
         formatted_google = NewsFormatter.format(rows_google)
 
         if has_new_entries:
@@ -149,4 +149,5 @@ class NewsFeedList(QWidget):
         else:
             status_text = f"{now}: Brak nowych wpisów"
 
-        self.set_items([(status_text, "neutral")] + formatted_rss + formatted_google)
+        # self.set_items([(status_text, "neutral")] + formatted_rss + formatted_google)
+        self.set_items([(status_text, "neutral")] + formatted_google)
