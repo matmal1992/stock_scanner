@@ -20,17 +20,15 @@ class NewsFetcher(QObject):
         self.google_worker: Optional[GoogleNewsWorker] = None
 
     def fetch(self) -> None:
-        # tickers = tracked_repo.full_names
         if self.rss_worker or self.google_worker:
             return
 
         self.rss_worker = RSSWorker(self.entry_repo)
         self._connect_worker(self.rss_worker, "rss_worker")
 
-        self.google_worker = GoogleNewsWorker(self.entry_repo)
+        self.google_worker = GoogleNewsWorker(self.entry_repo, self.tracked_repo)
         self._connect_worker(self.google_worker, "google_worker")
 
-        # pass tickers by run function
         self.rss_worker.run()
         self.google_worker.run()
 

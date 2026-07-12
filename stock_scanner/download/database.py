@@ -212,7 +212,7 @@ class TrackedTickerRepository:
                 cur = conn.execute(
                     """
                     DELETE FROM tracked_tickers
-                    WHERE ticker = ?
+                    WHERE ticker_symbol = ?
                     """,
                     (ticker,),
                 )
@@ -241,7 +241,7 @@ class TrackedTickerRepository:
                 """
                 SELECT id, ticker_symbol, ticker_name, sources, created_at
                 FROM tracked_tickers
-                WHERE ticker = ?
+                WHERE ticker_symbol = ?
                 """,
                 (ticker,),
             )
@@ -257,3 +257,20 @@ class TrackedTickerRepository:
             "sources": row[3],
             "created_at": row[4],
         }
+
+    def get_tickers_with_sources(self) -> List[dict]:
+        with self.db.connect() as conn:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT ticker_name, sources
+                FROM tracked_tickers
+                """
+            )
+            rows = cur.fetchall()
+
+        result = []
+        for name, sources in rows:
+            result.append({"name": name, "sources": [s.strip() for s in sources.split(",")]})
+
+        return result
