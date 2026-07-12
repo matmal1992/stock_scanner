@@ -2,7 +2,7 @@ from typing import Optional
 
 from PySide6.QtCore import QObject, Signal
 
-from stock_scanner.download.database import EntryRepository
+from stock_scanner.download.database import EntryRepository, TrackedTickerRepository
 from stock_scanner.ui.workers.google_news_worker import GoogleNewsWorker
 from stock_scanner.ui.workers.rss_feed_worker import RSSWorker
 
@@ -12,13 +12,15 @@ class NewsFetcher(QObject):
     log = Signal(str)
     error = Signal(str)
 
-    def __init__(self, entry_repo: EntryRepository) -> None:
+    def __init__(self, entry_repo: EntryRepository, tracked_repo: TrackedTickerRepository) -> None:
         super().__init__()
         self.entry_repo = entry_repo
+        self.tracked_repo = tracked_repo
         self.rss_worker: Optional[RSSWorker] = None
         self.google_worker: Optional[GoogleNewsWorker] = None
 
     def fetch(self) -> None:
+        # tickers = tracked_repo.full_names
         if self.rss_worker or self.google_worker:
             return
 
@@ -28,6 +30,7 @@ class NewsFetcher(QObject):
         self.google_worker = GoogleNewsWorker(self.entry_repo)
         self._connect_worker(self.google_worker, "google_worker")
 
+        # pass tickers by run function
         self.rss_worker.run()
         self.google_worker.run()
 

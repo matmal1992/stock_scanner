@@ -22,7 +22,7 @@ class NewsTrackerWindow(QWidget):
         self.website_thread: QThread | None = None
         self.notifications = StatusLabel(text="No notifications")
         self.tracked_tickers = TrackedTickersList(tracked_repo)
-        self.news_feed = NewsFeedList(entry_repo)
+        self.news_feed = NewsFeedList(entry_repo, tracked_repo)
         self.news_feed.notify.connect(self.on_notify)
         self.tracked_tickers.notify.connect(self.on_notify)
 

@@ -63,7 +63,8 @@ class Database:
             cur.execute("""
             CREATE TABLE IF NOT EXISTS tracked_tickers (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                ticker TEXT NOT NULL UNIQUE,
+                ticker_symbol TEXT NOT NULL UNIQUE,
+                ticker_name TEXT NOT NULL UNIQUE,
                 sources TEXT NOT NULL,
                 created_at TEXT
             )
@@ -169,10 +170,15 @@ class EntryRepository:
             "source_type": row[4],
         }
 
+    def clear_all(self) -> None:
+        with self.db.connect() as conn:
+            conn.execute("DELETE FROM entries")
+
 
 class TrackedTickerRow(TypedDict):
     id: int
-    ticker: str
+    ticker_symbol: str
+    ticker_name: str
     sources: str
     created_at: str
 
@@ -181,16 +187,17 @@ class TrackedTickerRepository:
     def __init__(self, db: Database):
         self.db = db
 
-    def save(self, *, ticker: str, sources: str) -> bool:
+    def save(self, *, ticker_symbol: str, ticker_name: str, sources: str) -> bool:
         try:
             with self.db.connect() as conn:
                 conn.execute(
                     """
-                    INSERT INTO tracked_tickers (ticker, sources, created_at)
-                    VALUES (?, ?, ?)
+                    INSERT INTO tracked_tickers (ticker_symbol, ticker_name, sources, created_at)
+                    VALUES (?, ?, ?, ?)
                     """,
                     (
-                        ticker,
+                        ticker_symbol,
+                        ticker_name,
                         sources,
                         datetime.utcnow().isoformat(),
                     ),
@@ -218,7 +225,7 @@ class TrackedTickerRepository:
             cur = conn.cursor()
             cur.execute(
                 """
-                SELECT id, ticker, sources, created_at
+                SELECT id, ticker_symbol, ticker_name, sources, created_at
                 FROM tracked_tickers
                 ORDER BY created_at DESC
                 """
@@ -232,7 +239,7 @@ class TrackedTickerRepository:
             cur = conn.cursor()
             cur.execute(
                 """
-                SELECT id, ticker, sources, created_at
+                SELECT id, ticker_symbol, ticker_name, sources, created_at
                 FROM tracked_tickers
                 WHERE ticker = ?
                 """,
@@ -245,7 +252,8 @@ class TrackedTickerRepository:
     def _to_dict(self, row: list) -> TrackedTickerRow:
         return {
             "id": row[0],
-            "ticker": row[1],
-            "sources": row[2],
-            "created_at": row[3],
+            "ticker_symbol": row[1],
+            "ticker_name": row[2],
+            "sources": row[3],
+            "created_at": row[4],
         }
