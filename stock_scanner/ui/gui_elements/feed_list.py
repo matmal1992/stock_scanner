@@ -18,11 +18,11 @@ from stock_scanner.ui.workers.llm_worker import ManualPromptWorker
 
 class NewsFeedList(QWidget):
     selection_changed = Signal(str)
+    notify = Signal(str, str)
 
     def __init__(self, entry_repo: EntryRepository) -> None:
         super().__init__()
         self.entry_repo = entry_repo
-        # self.parent_window = parent
         self._ids: List[str | None] = []
 
         self.feed_list = QListWidget()
@@ -39,8 +39,8 @@ class NewsFeedList(QWidget):
 
         self.fetcher = NewsFetcher(entry_repo)
         self.fetcher.data_ready.connect(self.on_data_ready)
-        # self.fetcher.log.connect(self.on_log)
-        # self.fetcher.error.connect(self.on_error)
+        self.fetcher.log.connect(self.on_log)
+        self.fetcher.error.connect(self.on_error)
 
         test_buttons_box = QHBoxLayout()
         test_buttons_box.addWidget(get_news_btn)
@@ -62,7 +62,7 @@ class NewsFeedList(QWidget):
             self._ids.append(entry_id)
 
     def on_get_news_clicked(self) -> None:
-        # self.parent_window.notifications.set_ok("Pobieranie wiadomości...")
+        self.notify.emit("Pobieranie wiadomości...", "neutral")
         self.fetcher.fetch()
 
         # if not self.timer.isActive():
@@ -81,70 +81,64 @@ class NewsFeedList(QWidget):
 
     def on_display_link_clicked(self) -> None:
         if not self.selected_entry_id:
-            # self.parent_window.notifications.set_error("Brak zaznaczonego wpisu")
+            self.notify.emit("Brak zaznaczonego wpisu", "error")
             return
 
-        # link = get_entry_link_by_id(self.selected_entry_id)
         link = self.entry_repo.get_link_by_id(self.selected_entry_id)
 
         if not link:
-            # self.parent_window.notifications.set_warning("Nie znaleziono linku w bazie")
+            self.notify.emit("Nie znaleziono linku w bazie", "error")
             return
 
-        # self.parent_window.notifications.set_ok(f"Link: {link}")
+        self.notify.emit(f"Link: {link}", "neutral")
 
     def on_run_llm_clicked(self) -> None:
         if not self.selected_entry_id:
-            # self.parent_window.notifications.set_error("Run LLM: Brak zaznaczonego wpisu")
+            self.notify.emit("Run LLM: Brak zaznaczonego wpisu", "error")
             return
 
         link = self.entry_repo.get_link_by_id(self.selected_entry_id)
         if not link:
-            # self.parent_window.notifications.set_error("Run LLM: Nie znaleziono linku w bazie")
+            self.notify.emit("Run LLM: Nie znaleziono linku w bazie", "error")
             return
 
-        # self.parent_window.notifications.set_ok(f"Run LLM: Link: {link}")
+        self.notify.emit("Running LLM...", "neutral")
 
         self.llm_worker = ManualPromptWorker(link)
-        # self.llm_worker.response_received.connect(self.on_llm_result)
+        self.llm_worker.response_received.connect(self.on_llm_result)
         self.llm_worker.start()
 
-    # def on_llm_result(self) -> None:
-    # self.parent_window.notifications.set_ok("LLM zakończony")
+    def on_llm_result(self) -> None:
+        self.notify.emit("LLM zakończony", "ok")
 
-    # def on_log(self, text: str) -> None:
-    # self.parent_window.notifications.set_ok(text)
-    # now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    # self.set_status_item(0, f"{now} Status: {text}")
+    def on_log(self, text: str) -> None:
+        self.notify.emit(f"{text}", "neutral")
+        # now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        # self.set_status_item(0, f"{now} Status: {text}")
 
-    # def on_error(self, e: str) -> None:
-    # now = datetime.now()
-    # error_time = now.strftime("%Y-%m-%d %H:%M:%S")
-    # self._set_status_item(0, f"{error_time} Błąd: {e}")
-    # self.parent_window.notifications.set_error(f"{error_time} Błąd: {e}")
+    def on_error(self, e: str) -> None:
+        now = datetime.now()
+        error_time = now.strftime("%Y-%m-%d %H:%M:%S")
+        # self._set_status_item(0, f"{error_time} Błąd: {e}")
+        self.notify.emit(f"{error_time} Błąd: {e}", "error")
 
     def on_data_ready(
         self, items: list[tuple[str, str, int | None, str]], has_new_entries: bool
     ) -> None:
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        # 1. zapis do DB (czytelny i prosty)
         for item in items:
             data = FeedAdapter.to_db(item)
             self.entry_repo.save(**data)
 
-        rows = self.entry_repo.get_latest_with_id("rss")
+        rows_rss = self.entry_repo.get_latest_with_id("rss")
+        rows_google = self.entry_repo.get_latest_with_id("google")
+        formatted_rss = NewsFormatter.format(rows_rss)
+        formatted_google = NewsFormatter.format(rows_google)
 
-        # 2. DB → UI
-        # rows = get_latest_entries_with_id()
-        rows = self.entry_repo.get_latest_with_id("rss")
-        formatted = NewsFormatter.format(rows)
-
-        # 3. status
         if has_new_entries:
             status_text = f"Nowe wpisy: {now}"
         else:
             status_text = f"{now}: Brak nowych wpisów"
 
-        # 4. UI update
-        self.set_items([(status_text, "")] + formatted)
+        self.set_items([(status_text, "neutral")] + formatted_rss + formatted_google)

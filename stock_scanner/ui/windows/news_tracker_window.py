@@ -23,6 +23,8 @@ class NewsTrackerWindow(BaseWindow):
         self.notifications = StatusLabel(text="No notifications")
         self.tracked_tickers = TrackedTickersList(tracked_repo)
         self.news_feed = NewsFeedList(entry_repo)
+        self.news_feed.notify.connect(self.on_notify)
+        self.tracked_tickers.notify.connect(self.on_notify)
 
         self.setup_window_layout()
 
@@ -43,6 +45,14 @@ class NewsTrackerWindow(BaseWindow):
         self.content_layout.addWidget(self.news_feed)
         self.content_layout.addStretch(10)
         self.content_layout.addWidget(self.notifications)
+
+    def on_notify(self, text: str, level: str) -> None:
+        if level == "ok":
+            self.notifications.set_ok(text)
+        elif level == "error":
+            self.notifications.set_error(text)
+        else:
+            self.notifications.setText(text)
 
     # def _cleanup_llm_thread(self) -> None:
     # if self.llm_worker is not None:

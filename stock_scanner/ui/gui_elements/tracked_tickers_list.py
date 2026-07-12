@@ -1,5 +1,6 @@
 from typing import Dict, List
 
+from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
     QHBoxLayout,
     QLineEdit,
@@ -14,6 +15,8 @@ from stock_scanner.download.database import TrackedTickerRepository
 
 
 class TrackedTickersList(QWidget):
+    notify = Signal(str, str)
+
     def __init__(self, repo: TrackedTickerRepository) -> None:
         super().__init__()
         self.repo = repo
@@ -70,17 +73,17 @@ class TrackedTickersList(QWidget):
         ticker = ticker.strip().upper()
         sources = sources.strip()
 
-        # if not ticker:
-        #     self.parent_window.notifications.set_error("Ticker nie może być pusty!")
-        #     return False
+        if not ticker:
+            self.notify.emit("Ticker nie może być pusty!", "error")
+            return False
 
-        # if not sources:
-        #     self.parent_window.notifications.set_error("Źródła nie mogą być puste!")
-        #     return False
+        if not sources:
+            self.notify.emit("Źródła nie mogą być puste!", "error")
+            return False
 
-        # if any(t["ticker"] == ticker for t in self.ticker_list):
-        #     self.parent_window.notifications.set_error("Ticker już jest na liście!")
-        #     return False
+        if any(t["ticker"] == ticker for t in self.ticker_list):
+            self.notify.emit("Ticker już jest na liście!", "error")
+            return False
 
         return True
 
@@ -126,4 +129,4 @@ class TrackedTickersList(QWidget):
         self.tracked_list.takeItem(row)
 
         self.ticker_list = [t for t in self.ticker_list if t["ticker"] != data["ticker"]]
-        # self.parent_window.notifications.set_ok(f"Usunięto ticker: {data['ticker']}")
+        self.notify.emit(f"Usunięto ticker: {data['ticker']}", "neutral")
