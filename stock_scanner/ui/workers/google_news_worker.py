@@ -1,5 +1,8 @@
+import calendar
+import email.utils
 import logging
-from datetime import datetime
+from datetime import timezone
+from typing import Any
 
 import feedparser
 from PySide6.QtCore import QObject, Signal
@@ -47,10 +50,11 @@ class GoogleNewsWorker(QObject):
                         or getattr(entry, "link", None)
                         or f"google-{index}"
                     )
-                    published_ts = None
-                    if getattr(entry, "published_parsed", None) is not None:
-                        dt = datetime(*entry.published_parsed[:6])
-                        published_ts = int(dt.timestamp())
+                    # published_ts = None
+                    # if getattr(entry, "published_parsed", None) is not None:
+                    #     dt = datetime(*entry.published_parsed[:6])
+                    #     published_ts = int(dt.timestamp())
+                    published_ts = self._parse_published_ts(entry)
 
                     if self.entry_repo.save(
                         entry_id=entry_id,
@@ -73,3 +77,19 @@ class GoogleNewsWorker(QObject):
         except Exception as e:
             self.error.emit(f"Google worker error: {e}")
             self.finished.emit()
+
+    def _parse_published_ts(self, entry: Any) -> int | None:
+        if getattr(entry, "published_parsed", None) is not None:
+            return int(calendar.timegm(entry.published_parsed))
+
+        published_str = getattr(entry, "published", "")
+        if not published_str:
+            return None
+
+        try:
+            dt = email.utils.parsedate_to_datetime(published_str)
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            return int(dt.timestamp())
+        except Exception:
+            return None

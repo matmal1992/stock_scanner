@@ -28,12 +28,27 @@ class ChartWidget(QWidget):
 
             action.changed.connect(update_enabled)
             button.setStyleSheet(
-                "QPushButton { background-color: #1e1e1e; color: white; border: 1px solid #555; padding: 5px; }"
-                "QPushButton:hover { background-color: #333333; }"
-                "QPushButton:pressed { background-color: #444444; }"
-                "QPushButton:disabled { color: #888; }"
+                """
+                QPushButton {
+                    background-color: #1e1e1e;
+                    color: white;
+                    border: 1px solid #555;
+                    padding: 5px;
+                }
+                QPushButton:hover {
+                    background-color: #333333;
+                }
+                QPushButton:pressed {
+                    background-color: #444444;
+                }
+                QPushButton:disabled {
+                    color: #888;
+                }
+                """
             )
+
             toolbar_layout.addWidget(button)
+
         layout.addLayout(toolbar_layout)
         layout.addWidget(self.canvas)
         self.setLayout(layout)

@@ -1,6 +1,6 @@
 import calendar
 import email.utils
-from datetime import datetime, timezone
+from datetime import timezone
 from typing import Any
 
 import feedparser
@@ -87,10 +87,7 @@ class RSSWorker(QObject):
                 if not entry_id:
                     continue
 
-                published_ts = None
-                if getattr(entry, "published_parsed", None) is not None:
-                    dt = datetime(*entry.published_parsed[:6])
-                    published_ts = int(dt.timestamp())
+                published_ts = self._parse_published_ts(entry)
 
                 if self.entry_repo.save(
                     entry_id=entry_id,

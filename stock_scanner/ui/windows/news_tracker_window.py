@@ -1,20 +1,20 @@
 import logging
 
 from PySide6.QtCore import QThread
+from PySide6.QtWidgets import QVBoxLayout, QWidget
 
 from stock_scanner.download.database import EntryRepository, TrackedTickerRepository
 from stock_scanner.ui.gui_elements.feed_list import NewsFeedList
 from stock_scanner.ui.gui_elements.Labels import StatusLabel
 from stock_scanner.ui.gui_elements.tracked_tickers_list import TrackedTickersList
-from stock_scanner.ui.windows.base_window import BaseWindow
 from stock_scanner.ui.workers.llm_worker import LLMService
 
 logger = logging.getLogger(__name__)
 
 
-class NewsTrackerWindow(BaseWindow):
+class NewsTrackerWindow(QWidget):
     def __init__(self, entry_repo: EntryRepository, tracked_repo: TrackedTickerRepository) -> None:
-        super().__init__("News Tracker")
+        super().__init__()
         self.llm = LLMService()
         self.entry_repo = entry_repo
 
@@ -40,6 +40,7 @@ class NewsTrackerWindow(BaseWindow):
     def setup_window_layout(self) -> None:
         self.status_label = StatusLabel(text="Status: standby")
 
+        self.content_layout = QVBoxLayout(self)
         self.content_layout.addWidget(self.tracked_tickers)
         self.content_layout.addStretch(30)
         self.content_layout.addWidget(self.news_feed)

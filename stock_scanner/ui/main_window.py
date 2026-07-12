@@ -25,27 +25,16 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Stock Scanner")
         self.resize(1200, 800)
 
-        # Initialize all windows (state preservation)
         self.chart_window = ChartWindow()
         self.three_tier_window = ThreeTierWindow()
         self.wall_window = WallStrategyWindow()
         self.speculation_window = SpeculationWindow()
         self.news_tracker_window = NewsTrackerWindow(entry_repo, tracked_repo)
-
-        # Connect back buttons
-        self.chart_window.backRequested.connect(self.show_main_menu)
-        self.three_tier_window.backRequested.connect(self.show_main_menu)
-        self.wall_window.backRequested.connect(self.show_main_menu)
-        self.speculation_window.backRequested.connect(self.show_main_menu)
-        self.news_tracker_window.backRequested.connect(self.show_main_menu)
-
         self.current_window: Optional[QWidget] = None
 
-        # === CENTRAL ===
         central = QWidget()
         self.setCentralWidget(central)
 
-        # === SIDEBAR ===
         title = QLabel("Strategies")
         title.setStyleSheet("font-size: 16px; font-weight: bold;")
 
@@ -103,13 +92,11 @@ class MainWindow(QMainWindow):
         self.sidebar_widget.setLayout(sidebar)
         self.sidebar_widget.setStyleSheet("background-color: #252526;")
 
-        # === WINDOW CONTAINER ===
         self.window_container = QWidget()
         container_layout = QVBoxLayout(self.window_container)
         container_layout.setContentsMargins(0, 0, 0, 0)
         self.window_container.setLayout(container_layout)
 
-        # === MAIN LAYOUT ===
         main_layout = QHBoxLayout(central)
         main_layout.addWidget(self.sidebar_widget, 1)
         main_layout.addWidget(self.window_container, 4)
@@ -149,7 +136,6 @@ class MainWindow(QMainWindow):
             }
         """)
 
-        # Show main menu on start
         self.show_main_menu()
 
     def switch_window(self, window: QWidget, button: QPushButton) -> None:
@@ -165,7 +151,6 @@ class MainWindow(QMainWindow):
                 layout.removeWidget(self.current_window)
                 self.current_window.hide()
 
-        # Add new window
         self.current_window = window
         layout = self.window_container.layout()
         if layout:

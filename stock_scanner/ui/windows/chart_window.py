@@ -3,13 +3,12 @@ from pathlib import Path
 from typing import Optional
 
 import pandas as pd
-from PySide6.QtWidgets import QFileDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
+from PySide6.QtWidgets import QFileDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
 from stock_scanner.ui.chart_widget import ChartWidget
-from stock_scanner.ui.windows.base_window import BaseWindow
 
 
-class ChartWindow(BaseWindow):
+class ChartWindow(QWidget):
     """Chart display window for loading and viewing parquet files."""
 
     def __init__(self) -> None:
@@ -17,14 +16,10 @@ class ChartWindow(BaseWindow):
         self.symbol: Optional[str] = None
         self.chart_widget: Optional[ChartWidget] = None
 
-        super().__init__("Chart Viewer")
+        super().__init__()
 
     def setup_ui(self) -> None:
         layout = QVBoxLayout()
-
-        back_btn = QPushButton("← Back")
-        back_btn.clicked.connect(self.backRequested.emit)
-
         load_btn = QPushButton("Load Chart")
         load_btn.clicked.connect(self.load_chart)
 
@@ -33,7 +28,6 @@ class ChartWindow(BaseWindow):
         self.tv_btn.clicked.connect(self.open_tradingview)
 
         toolbar = QHBoxLayout()
-        toolbar.addWidget(back_btn)
         toolbar.addWidget(load_btn)
         toolbar.addWidget(self.tv_btn)
         toolbar.addStretch()
