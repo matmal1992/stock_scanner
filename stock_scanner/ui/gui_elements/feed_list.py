@@ -107,7 +107,7 @@ class NewsFeedList(QWidget):
 
         self.notify.emit("Running LLM...", "neutral")
 
-        self.llm_worker = ManualPromptWorker(link)
+        self.llm_worker = ManualPromptWorker(link, self.selected_entry_id)
         self.llm_worker.response_received.connect(self.on_llm_result)
         self.llm_worker.start()
 
@@ -118,8 +118,12 @@ class NewsFeedList(QWidget):
         self.run_llm_btn.setEnabled(False)
         self.notify.emit("Wyczyszczono bazę danych", "ok")
 
-    def on_llm_result(self) -> None:
-        self.notify.emit("LLM zakończony", "ok")
+    def on_llm_result(self, entry_id: str, response: str) -> None:
+        success = self.entry_repo.update_sentiment(entry_id, response)
+        if success:
+            self.notify.emit("LLM zakończony i zapisano wynik", "ok")
+        else:
+            self.notify.emit("LLM zakończony, ale nie zapisano wyniku", "error")
 
     def on_log(self, text: str) -> None:
         self.notify.emit(f"{text}", "neutral")

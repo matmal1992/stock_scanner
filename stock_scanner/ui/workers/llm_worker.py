@@ -29,12 +29,14 @@ my_prompt = (
 
 
 class ManualPromptWorker(QThread):
-    response_received = Signal(str)
+    response_received = Signal(str, str)
     link_to_read: str
+    entry_id: str
 
-    def __init__(self, link: str) -> None:
+    def __init__(self, link: str, entry_id: str) -> None:
         super().__init__()
         self.link_to_read = link
+        self.entry_id = entry_id
 
     def build_prompt(self) -> str:
         return f"{my_prompt} Link do analizy: {self.link_to_read}"
@@ -53,15 +55,16 @@ class ManualPromptWorker(QThread):
         time.sleep(1)
         pyautogui.click(copy_icon)
 
+        # if no response - paste no executed
         response = pyperclip.paste()
-        self.response_received.emit(response)
+        self.response_received.emit(self.entry_id, response)
         print("RESPONSE:\n", response)
 
 
 class LLMService(QObject):
-    result = Signal(str)
+    result = Signal(str, str)
 
-    def run(self, link: str) -> None:
-        self.worker = ManualPromptWorker(link)
+    def run(self, link: str, entry_id: str) -> None:
+        self.worker = ManualPromptWorker(link, entry_id)
         self.worker.response_received.connect(self.result)
         self.worker.start()

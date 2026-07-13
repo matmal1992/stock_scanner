@@ -175,6 +175,27 @@ class EntryRepository:
 
         return [self._to_dict(r) for r in rows]
 
+    def update_sentiment(self, entry_id: str, sentiment: str) -> bool:
+        try:
+            with self.db.connect() as conn:
+                cur = conn.execute(
+                    """
+                    UPDATE entries
+                    SET sentiment = ?, processed_at = ?
+                    WHERE id = ?
+                    """,
+                    (
+                        sentiment,
+                        datetime.utcnow().isoformat(),
+                        entry_id,
+                    ),
+                )
+
+            return cur.rowcount > 0
+
+        except Exception:
+            return False
+
     def _to_dict(self, row: list[Any]) -> NewsRow:
         return {
             "id": row[0],

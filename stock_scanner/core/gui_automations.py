@@ -31,7 +31,9 @@ def find_input(threshold: float = 0.85) -> Optional[Tuple[int, int]]:
 
     if template is None:
         print(template_path)
-        raise ValueError("Template not found")
+        print("\nTemplate not found")
+        # raise ValueError("Template not found")
+        return None
 
     result = cv2.matchTemplate(img, template, cv2.TM_CCOEFF_NORMED)
     min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
@@ -90,7 +92,10 @@ def find_last_copy_icon(threshold: float = 0.85) -> Optional[Tuple[int, int]]:
     template_path = ASSETS_DIR / "copy_icon.png"
     template = cv2.imread(template_path, cv2.IMREAD_COLOR)
     if template is None:
-        raise ValueError("Template not found")
+        print(template_path)
+        print("\nTemplate not found")
+        # raise ValueError("Template not found")
+        return None
 
     h, w = template.shape[:2]
 
@@ -125,6 +130,9 @@ if __name__ == "__main__":
     pyautogui.moveTo(copy_icon, duration=0.5)
     time.sleep(1)
     pyautogui.click(copy_icon)
+    print("LLM ended")
+
+# todo: zwracaj odpowiednie sygnały/komunikaty w zależności co się wysypało
 
 
 # ===================== SOME DEBUG FEARURES===============
