@@ -41,6 +41,7 @@ def main() -> None:
 
         app = QApplication(sys.argv)
         window = MainWindow(entry_repo, tracked_repo)
+        window.setMaximumSize(900, 500)
         window.show()
 
         sys.exit(app.exec())

@@ -3,6 +3,7 @@ from typing import List, Sequence, Tuple
 
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
+    QApplication,
     QHBoxLayout,
     QListWidget,
     QPushButton,
@@ -94,6 +95,7 @@ class NewsFeedList(QWidget):
             return
 
         self.notify.emit(f"Link: {link}", "neutral")
+        QApplication.clipboard().setText(link)
 
     def on_run_llm_clicked(self) -> None:
         if not self.selected_entry_id:

@@ -1,3 +1,4 @@
+import sys
 import time
 from pathlib import Path
 from typing import Optional, Tuple
@@ -8,7 +9,15 @@ import numpy as np
 import pyautogui
 import pyperclip
 
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
+# BASE_DIR = Path(__file__).resolve().parent.parent.parent
+# ASSETS_DIR = BASE_DIR / "assets"
+
+
+if getattr(sys, "frozen", False):
+    BASE_DIR = Path(sys.executable).resolve().parent
+else:
+    BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
 ASSETS_DIR = BASE_DIR / "assets"
 
 
