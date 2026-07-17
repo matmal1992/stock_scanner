@@ -29,6 +29,8 @@ dependencies = [
     "deptry",
     "mss",
     "opencv-python",
+    "googlenewsdecoder"
+
 ]
 
 [project.optional-dependencies]

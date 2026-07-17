@@ -9,9 +9,7 @@ import numpy as np
 import pyautogui
 import pyperclip
 
-# BASE_DIR = Path(__file__).resolve().parent.parent.parent
-# ASSETS_DIR = BASE_DIR / "assets"
-
+from stock_scanner.core.google_link_decoder import decode_google_news_url
 
 if getattr(sys, "frozen", False):
     BASE_DIR = Path(sys.executable).resolve().parent
@@ -129,7 +127,7 @@ def find_last_copy_icon(threshold: float = 0.85) -> Optional[Tuple[int, int]]:
     return (bottom["x"], bottom["y"])
 
 
-if __name__ == "__main__":
+def test_autogui() -> None:
     print("Start soon...")
     paste_into_input("some_text")
     time.sleep(0.5)
@@ -140,15 +138,20 @@ if __name__ == "__main__":
     time.sleep(1)
     pyautogui.click(copy_icon)
     print("LLM ended")
+    # todo: zwracaj odpowiednie sygnały/komunikaty w zależności co się wysypało
 
-# todo: zwracaj odpowiednie sygnały/komunikaty w zależności co się wysypało
+    # ===================== SOME DEBUG FEARURES===============
+    # pyautogui.moveTo(center_x, center_y, duration=1)
+    # cv2.circle(img, (center_x, center_y), 5, (0, 0, 255), -1)
+    # pyautogui.moveTo(bottom["x"], bottom["y"], duration=2)
+    # pyautogui.click(bottom["x"], bottom["y"])
+    # cv2.imshow("DEBUG", img)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
 
 
-# ===================== SOME DEBUG FEARURES===============
-# pyautogui.moveTo(center_x, center_y, duration=1)
-# cv2.circle(img, (center_x, center_y), 5, (0, 0, 255), -1)
-# pyautogui.moveTo(bottom["x"], bottom["y"], duration=2)
-# pyautogui.click(bottom["x"], bottom["y"])
-# cv2.imshow("DEBUG", img)
-# cv2.waitKey(0)
-# cv2.destroyAllWindows()
+rss_url = "https://news.google.com/rss/articles/CBMiswFBVV95cUxOWWNiMEFyUmtYTWlDYjJPWFhRMTNPa3BWekc0Wl9qWHFjTVZRQTNZMDRWeUFMR2FJUWdzRS11X3N0VXRMLXNVTi14VUtUTjVSMjQtcVJrSFdOMWY1MV9YWUFtX1ByY0pRbDBxVGxPbHhjdnBwdlhRZG1yQ2R4UUtjLWRDWVZpZFFueU1sUXJNSzFpOUhlYXNUTG8yMnZqYmJydUxMYjJPWFZlZk5nbmJSZi1Qdw?oc=5"
+
+if __name__ == "__main__":
+    decoded_url = decode_google_news_url(rss_url)
+    print(decoded_url)

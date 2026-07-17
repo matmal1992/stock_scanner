@@ -4,9 +4,11 @@
          {
             "label": "Set up environment",
             "type": "shell",
-            "command": [ 
+            "command": [
                 "python -m pip install uv;",
-                "python -m uv sync --all-extras; python -m uv run pre-commit install"
+                "python -m uv sync --all-extras;",
+                "python -m uv run playwright install chromium;",
+                "python -m uv run pre-commit install"
             ],
             "problemMatcher": [],
             "presentation": {
@@ -46,7 +48,8 @@
                 "uv",
                 "run",
                 "python",
-                "${workspaceFolder}/stock_scanner/core/gui_automations.py"
+                "-m",
+                "stock_scanner.core.gui_automations"
             ],
             "problemMatcher": []
         },
