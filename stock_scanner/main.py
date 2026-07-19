@@ -34,12 +34,11 @@ def configure_logging() -> None:
 def main() -> None:
     try:
         configure_logging()
+        app = QApplication(sys.argv)
         db = Database()
         db.init_db()
         entry_repo = EntryRepository(db)
         tracked_repo = TrackedTickerRepository(db)
-
-        app = QApplication(sys.argv)
         window = MainWindow(entry_repo, tracked_repo)
         window.setMaximumSize(900, 500)
         window.show()

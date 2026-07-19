@@ -9,8 +9,6 @@ import numpy as np
 import pyautogui
 import pyperclip
 
-from stock_scanner.ui.workers.rss_feed_worker import print_latest_rss_entries
-
 if getattr(sys, "frozen", False):
     BASE_DIR = Path(sys.executable).resolve().parent
 else:
@@ -150,10 +148,5 @@ def test_autogui() -> None:
     # cv2.destroyAllWindows()
 
 
-rss_url = "https://news.google.com/rss/articles/CBMiswFBVV95cUxOWWNiMEFyUmtYTWlDYjJPWFhRMTNPa3BWekc0Wl9qWHFjTVZRQTNZMDRWeUFMR2FJUWdzRS11X3N0VXRMLXNVTi14VUtUTjVSMjQtcVJrSFdOMWY1MV9YWUFtX1ByY0pRbDBxVGxPbHhjdnBwdlhRZG1yQ2R4UUtjLWRDWVZpZFFueU1sUXJNSzFpOUhlYXNUTG8yMnZqYmJydUxMYjJPWFZlZk5nbmJSZi1Qdw?oc=5"
-rss_website = "https://www.bankier.pl/rss/gielda.xml"
-# rss_website = "https://biznes.pap.pl/rss"
-# rss_website = "https://pap-mediaroom.pl/kategoria/biznes-i-finanse/rss.xml"
-
 if __name__ == "__main__":
-    print_latest_rss_entries(rss_website)
+    print("playwright i bezpośredni scraping bankiera itp. espi i inne")

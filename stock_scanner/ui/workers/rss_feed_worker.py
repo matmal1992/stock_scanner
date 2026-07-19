@@ -18,7 +18,8 @@ class RSSWorker(QObject):
     log = Signal(str)
     data_ready = Signal(list, bool)
 
-    WATCHLIST = ["KGHM", "CDPROJEKT", "ORLEN", "CREOTECH"]
+    # WATCHLIST = ["KGHM", "CDPROJEKT", "ORLEN", "CREOTECH"]
+    WATCHLIST = ["KGHM"]
 
     def __init__(self, entry_repo: EntryRepository, parent: QObject | None = None) -> None:
         super().__init__(parent)
@@ -26,8 +27,7 @@ class RSSWorker(QObject):
         self.manager = QNetworkAccessManager(self)
         self.reply: QNetworkReply
 
-    def run(self) -> None:
-        url = QUrl("https://www.bankier.pl/rss/gielda.xml")
+    def run(self, url: QUrl) -> None:
         self.log.emit("Start pobierania RSS from " + url.toString())
 
         request = QNetworkRequest(url)
@@ -35,6 +35,25 @@ class RSSWorker(QObject):
         self.reply = self.manager.get(request)
         assert self.reply is not None
         self.reply.finished.connect(self._on_finished)
+
+    def _on_finished(self) -> None:
+        reply = self.reply
+        if not self._validate_reply(self.reply):
+            self.finished.emit()
+            return
+
+        data = self._read_reply(reply)
+        entries = self._parse_feed(data)
+
+        found_new = self._process_entries(entries)
+
+        entries = self.entry_repo.get_latest("rss")
+        if entries:
+            self.data_ready.emit(entries, found_new)
+        else:
+            self.log.emit("Nie znaleziono wpisów w bazie danych do wyświetlenia")
+
+        self.finished.emit()
 
     def _parse_published_ts(self, entry: Any) -> int | None:
         if getattr(entry, "published_parsed", None) is not None:
@@ -56,25 +75,6 @@ class RSSWorker(QObject):
         title_upper = title.upper()
         return [ticker for ticker in self.WATCHLIST if ticker in title_upper]
 
-    def _on_finished(self) -> None:
-        reply = self.reply
-        if not self._validate_reply(self.reply):
-            self.finished.emit()
-            return
-
-        data = self._read_reply(reply)
-        entries = self._parse_feed(data)
-
-        found_new = self._process_entries(entries)
-
-        entries = self.entry_repo.get_latest("rss")
-        if entries:
-            self.data_ready.emit(entries, found_new)
-        else:
-            self.log.emit("Nie znaleziono wpisów w bazie danych do wyświetlenia")
-
-        self.finished.emit()
-
     def _validate_reply(self, reply: QNetworkReply | None) -> bool:
         if reply is None:
             self.error.emit("Błąd wewnętrzny RSS: brak odpowiedzi")
@@ -92,18 +92,20 @@ class RSSWorker(QObject):
         reply.deleteLater()
         return data
 
-    def _parse_feed(self, data: bytes) -> FeedParserDict:
+    def _parse_feed(self, data: bytes) -> list[FeedParserDict]:
         feed = feedparser.parse(data)
 
         if getattr(feed, "bozo", False) and getattr(feed, "bozo_exception", None):
             self.log.emit(f"feedparser warning: {feed.bozo_exception}")
 
-        if not getattr(feed, "entries", []):
-            self.error.emit("Brak wpisów w RSS feed")
+        entries = feed.entries
 
-        return feed
+        if not entries:
+            self.error.emit("Brak wpisów w RSS")
 
-    def _process_entries(self, entries: FeedParserDict) -> bool:
+        return entries
+
+    def _process_entries(self, entries: list[FeedParserDict]) -> bool:
         found_new = False
 
         for entry in entries[:5]:
@@ -150,7 +152,7 @@ class RSSWorker(QObject):
         self.log.emit(message)
 
 
-def print_latest_rss_entries(url: str, limit: int = 3) -> None:
+def print_latest_rss_entries(url: str, limit: int = 20) -> None:
     feed = feedparser.parse(url)
 
     if not feed.entries:
