@@ -30,7 +30,7 @@ class NewsFetcher(QObject):
         self._connect_worker(self.google_worker, "google_worker")
 
         self.rss_worker.run()
-        self.google_worker.run()
+        # self.google_worker.run()
 
     def _connect_worker(self, worker: RSSWorker | GoogleNewsWorker, attr_name: str) -> None:
         worker.log.connect(self.log)

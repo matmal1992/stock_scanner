@@ -15,9 +15,18 @@ __pycache__/
 config.json
 
 #environment
+.venv/
+venv/
+env/
+ENV/
 *.lock
 *.coverage
 *.egg-info
+.uv-cache/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+coverage.xml
 
 #build
 build/*

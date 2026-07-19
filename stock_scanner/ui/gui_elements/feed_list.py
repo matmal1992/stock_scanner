@@ -145,15 +145,15 @@ class NewsFeedList(QWidget):
             data = FeedAdapter.to_db(item)
             self.entry_repo.save(**data)
 
-        # rows_rss = self.entry_repo.get_latest_with_id("rss")
-        rows_google = self.entry_repo.get_all_entries()
-        # formatted_rss = NewsFormatter.format(rows_rss)
-        formatted_google = NewsFormatter.format(rows_google)
+        rows_rss = self.entry_repo.get_latest_with_id("rss")
+        # rows_google = self.entry_repo.get_all_entries()
+        formatted_rss = NewsFormatter.format(rows_rss)
+        # formatted_google = NewsFormatter.format(rows_google)
 
         if has_new_entries:
             status_text = f"Nowe wpisy: {now}"
         else:
             status_text = f"{now}: Brak nowych wpisów"
 
-        # self.set_items([(status_text, "neutral")] + formatted_rss + formatted_google)
-        self.set_items([(status_text, "neutral")] + formatted_google)
+        self.set_items([(status_text, "neutral")] + formatted_rss)
+        # self.set_items([(status_text, "neutral")] + formatted_google)

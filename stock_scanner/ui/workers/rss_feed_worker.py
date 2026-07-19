@@ -4,6 +4,7 @@ from datetime import timezone
 from typing import Any
 
 import feedparser
+from feedparser import FeedParserDict
 from PySide6.QtCore import QObject, QUrl, Signal
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
 
@@ -23,7 +24,7 @@ class RSSWorker(QObject):
         super().__init__(parent)
         self.entry_repo = entry_repo
         self.manager = QNetworkAccessManager(self)
-        self.reply: QNetworkReply | None = None
+        self.reply: QNetworkReply
 
     def run(self) -> None:
         url = QUrl("https://www.bankier.pl/rss/gielda.xml")
@@ -57,58 +58,14 @@ class RSSWorker(QObject):
 
     def _on_finished(self) -> None:
         reply = self.reply
-        if reply is None:
-            self.error.emit("Błąd wewnętrzny RSS: brak odpowiedzi")
+        if not self._validate_reply(self.reply):
             self.finished.emit()
             return
 
-        if reply.error() != QNetworkReply.NetworkError.NoError:
-            self.error.emit(f"Błąd sieciowy RSS: {reply.errorString()}")
-            reply.deleteLater()
-            self.finished.emit()
-            return
+        data = self._read_reply(reply)
+        entries = self._parse_feed(data)
 
-        data = reply.readAll().data()
-        reply.deleteLater()
-
-        feed = feedparser.parse(data)
-        if feed.bozo and getattr(feed, "bozo_exception", None) is not None:
-            self.log.emit(f"feedparser warning: {feed.bozo_exception}")
-
-        if not feed.entries:
-            self.error.emit("Brak wpisów w RSS feed — sprawdź połączenie lub strukturę RSS")
-            self.finished.emit()
-            return
-
-        found_new = False
-        for entry in feed.entries[:5]:
-            try:
-                entry_id = getattr(entry, "id", None) or getattr(entry, "link", None)
-                if not entry_id:
-                    continue
-
-                published_ts = self._parse_published_ts(entry)
-
-                if self.entry_repo.save(
-                    entry_id=entry_id,
-                    title=getattr(entry, "title", ""),
-                    link=getattr(entry, "link", ""),
-                    published=published_ts,
-                    source_type="rss",
-                ):
-                    found_new = True
-
-                    title = getattr(entry, "title", "")
-                    matched = self._check_for_tickers(title)
-
-                    if matched:
-                        tickers_str = ", ".join(matched)
-                        print(f"[ALERT] {tickers_str} → {title}")
-                        send_telegram_message(f"ALERT: {tickers_str} → {title}")
-                        self.log.emit(f"ALERT: {tickers_str} → {title}")
-
-            except Exception as entry_error:
-                self.log.emit(f"Błąd przy dodawaniu wpisu: {str(entry_error)}")
+        found_new = self._process_entries(entries)
 
         entries = self.entry_repo.get_latest("rss")
         if entries:
@@ -117,3 +74,95 @@ class RSSWorker(QObject):
             self.log.emit("Nie znaleziono wpisów w bazie danych do wyświetlenia")
 
         self.finished.emit()
+
+    def _validate_reply(self, reply: QNetworkReply | None) -> bool:
+        if reply is None:
+            self.error.emit("Błąd wewnętrzny RSS: brak odpowiedzi")
+            return False
+
+        if reply.error() != QNetworkReply.NetworkError.NoError:
+            self.error.emit(f"Błąd sieciowy RSS: {reply.errorString()}")
+            reply.deleteLater()
+            return False
+
+        return True
+
+    def _read_reply(self, reply: QNetworkReply) -> bytes:
+        data = reply.readAll().data()
+        reply.deleteLater()
+        return data
+
+    def _parse_feed(self, data: bytes) -> FeedParserDict:
+        feed = feedparser.parse(data)
+
+        if getattr(feed, "bozo", False) and getattr(feed, "bozo_exception", None):
+            self.log.emit(f"feedparser warning: {feed.bozo_exception}")
+
+        if not getattr(feed, "entries", []):
+            self.error.emit("Brak wpisów w RSS feed")
+
+        return feed
+
+    def _process_entries(self, entries: FeedParserDict) -> bool:
+        found_new = False
+
+        for entry in entries[:5]:
+            try:
+                if self._save_entry(entry):
+                    found_new = True
+                    self._check_alert(entry)
+
+            except Exception as exc:
+                self.log.emit(f"Błąd przy dodawaniu wpisu: {exc}")
+
+        return found_new
+
+    def _save_entry(self, entry: FeedParserDict) -> bool:
+        entry_id = getattr(entry, "id", None) or getattr(entry, "link", None)
+
+        if not entry_id:
+            return False
+
+        return self.entry_repo.save(
+            entry_id=entry_id,
+            title=getattr(entry, "title", ""),
+            link=getattr(entry, "link", ""),
+            published=self._parse_published_ts(entry),
+            source_type="rss",
+        )
+
+    def _check_alert(self, entry: FeedParserDict) -> None:
+        title = getattr(entry, "title", "")
+
+        matched = self._check_for_tickers(title)
+
+        if not matched:
+            return
+
+        tickers = ", ".join(matched)
+
+        message = f"ALERT: {tickers} → {title}"
+
+        print(message)
+
+        send_telegram_message(message)
+
+        self.log.emit(message)
+
+
+def print_latest_rss_entries(url: str, limit: int = 3) -> None:
+    feed = feedparser.parse(url)
+
+    if not feed.entries:
+        print("Brak wpisów w RSS")
+        return
+
+    for i, entry in enumerate(feed.entries[:limit], start=1):
+        title = getattr(entry, "title", "")
+        link = getattr(entry, "link", "")
+        published = getattr(entry, "published", "")
+
+        print(f"{i}. {title}")
+        print(f"   {link}")
+        print(f"   {published}")
+        print("-" * 50)

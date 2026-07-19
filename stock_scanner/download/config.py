@@ -13,7 +13,7 @@ def get_project_root() -> Path:
 
 BASE_DIR = get_project_root()
 report_path = BASE_DIR / "report.html"
-alert_config_path = BASE_DIR / "stock_scanner" / "core" / "config.json"
+alert_config_path = BASE_DIR / "core" / "config.json"
 
 
 def load_config() -> dict:
