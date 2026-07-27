@@ -1,6 +1,6 @@
 import cloudscraper
 from bs4 import BeautifulSoup
-from newspaper import Article
+from playwright.sync_api import Page, sync_playwright
 
 
 def get_html(url: str) -> str:
@@ -58,13 +58,6 @@ def extract_text_bs4(html: str) -> str:
     return "\n".join(lines)
 
 
-def extract_text_newspaper(url: str) -> str:
-    article = Article(url)
-    article.download()
-    article.parse()
-    return article.text
-
-
 def clean_text_for_llm(text: str) -> str:
     lines = text.splitlines()
 
@@ -87,3 +80,65 @@ def clean_text_for_llm(text: str) -> str:
         cleaned.append(line)
 
     return "\n\n".join(cleaned)
+
+
+def accept_cookies(page: Page) -> bool:
+    selectors = [
+        "button:has-text('Zaakceptuj i zamknij')",
+        "text=Zaakceptuj i zamknij",
+        "[aria-label*='Zaakceptuj']",
+        "button >> text=Zaakceptuj i zamknij",
+    ]
+
+    page.wait_for_timeout(5000)
+
+    for selector in selectors:
+        try:
+            button = page.locator(selector).first
+
+            if button.is_visible(timeout=2000):
+                print("Klikam zgodę cookies:", selector)
+                button.click()
+                page.wait_for_timeout(2000)
+                return True
+
+        except Exception:
+            pass
+
+    print("Nie znaleziono bannera cookies")
+    return False
+
+
+def scrape_with_playwright() -> None:
+    URL = "https://www.bankier.pl/gielda/wiadomosci/komunikaty-spolek"
+
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+
+        page = browser.new_page()
+
+        page.goto(URL, timeout=60000, wait_until="networkidle")
+
+        accept_cookies(page)
+
+        page.wait_for_selector("a.m-quotes-announcements-item__anchor")
+
+        items = page.locator("li.m-quotes-announcements-list__item")
+
+        count = min(items.count(), 5)
+
+        for i in range(count):
+            item = items.nth(i)
+
+            date = item.locator("span.m-quotes-announcements-item__date").inner_text()
+
+            title = item.locator("a.m-quotes-announcements-item__anchor").inner_text()
+
+            link = item.locator("a.m-quotes-announcements-item__anchor").get_attribute("href")
+
+            print("=" * 60)
+            print("DATA:", date)
+            print("TYTUŁ:", title)
+            print("LINK:", link)
+
+        browser.close()

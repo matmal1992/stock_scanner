@@ -9,6 +9,8 @@ import numpy as np
 import pyautogui
 import pyperclip
 
+from stock_scanner.download.scrapers import scrape_with_playwright
+
 if getattr(sys, "frozen", False):
     BASE_DIR = Path(sys.executable).resolve().parent
 else:
@@ -149,4 +151,5 @@ def test_autogui() -> None:
 
 
 if __name__ == "__main__":
-    print("playwright i bezpośredni scraping bankiera itp. espi i inne")
+    print("start main")
+    scrape_with_playwright()
