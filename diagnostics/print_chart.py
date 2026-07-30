@@ -22,9 +22,15 @@ class PriceChart:
         if "Close" not in df.columns:
             raise ValueError("Brak kolumny 'Close'")
 
-        if df.index.tz is not None:
-            df.index = df.index.tz_localize(None)
+        if isinstance(df.index, pd.DatetimeIndex):
+            dt_index = df.index
+        else:
+            dt_index = pd.to_datetime(df.index)
 
+        if dt_index.tz is not None:
+            dt_index = dt_index.tz_localize(None)
+
+        df.index = dt_index
         self.df = df
 
     def plot(self) -> None:
@@ -63,10 +69,11 @@ class PriceChart:
             return
 
         step = 20
+        index = pd.DatetimeIndex(self.df.index)
 
         plt.xticks(
             ticks=range(0, len(self.df), step),
-            labels=self.df.index.strftime("%Y-%m-%d")[::step],
+            labels=list(index.strftime("%Y-%m-%d"))[::step],
             rotation=45,
         )
 

@@ -163,6 +163,7 @@ def scrape_and_save(repo: EntryRepository) -> None:
 if __name__ == "__main__":
     db = Database()
     db.init_db()
+
     repo = EntryRepository(db)
     entries = scrape_with_playwright()
     while True:

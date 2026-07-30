@@ -1,14 +1,14 @@
 {
     "version": "2.0.0",
     "tasks": [
-         {
-            "label": "Set up environment",
+        {
+            "label": "Setup Environment",
             "type": "shell",
-            "command": [
-                "python -m pip install uv;",
-                "python -m uv sync --all-extras;",
-                "python -m uv run playwright install chromium;",
-                "python -m uv run pre-commit install"
+            "command": "powershell",
+            "args": [
+                "-NoProfile",
+                "-Command",
+                "$timer = [System.Diagnostics.Stopwatch]::StartNew(); python -m pip install uv; python -m uv sync --all-extras; python -m uv run playwright install chromium; python -m uv run pre-commit install; $timer.Stop(); Write-Host \"Setup finished in $($timer.Elapsed)\""
             ],
             "problemMatcher": [],
             "presentation": {
@@ -19,7 +19,13 @@
         {
             "label": "Run tests",
             "type": "shell",
-            "command": "python -m uv run pytest --cov=.",
+            "command": "python",
+            "args": ["-m", "uv", "run", "pytest", "--cov=."]
+            ,
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
             "problemMatcher": []
         },
         {
@@ -27,8 +33,9 @@
             "type": "shell",
             "command": "powershell",
             "args": [
+                "-NoProfile",
                 "-Command",
-                "Remove-Item -Recurse -Force build/*; python -m uv run pyinstaller --onefile --name stock_scanner --distpath build src/main.py; Copy-Item -Recurse -Force src/assets build/assets"
+                "$timer = [System.Diagnostics.Stopwatch]::StartNew(); if (Test-Path build) { Remove-Item -Recurse -Force build/* -ErrorAction SilentlyContinue }; python -m uv run pyinstaller --clean --onedir --name stock_scanner --distpath build/dist --workpath build/work --specpath build/spec src/main.py; Copy-Item -Recurse -Force src/assets build/dist/assets; $timer.Stop(); Write-Host \"Build finished in $($timer.Elapsed)\""
             ],
             "options": {
                 "cwd": "${workspaceFolder}"
@@ -37,20 +44,19 @@
                 "reveal": "always",
                 "panel": "shared"
             },
+            "dependsOn": ["Pre-build check"],
+            "dependsOrder": "sequence",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
             "problemMatcher": []
         },
         {
-            "label": "Run gui_automations",
+            "label": "Run GUI Automations",
             "type": "shell",
             "command": "python",
-            "args": [
-                "-m",
-                "uv",
-                "run",
-                "python",
-                "-m",
-                "src.core.gui_automations"
-            ],
+            "args": ["-m", "uv", "run", "python", "-m", "src.core.gui_automations"],
             "problemMatcher": []
         },
         {
@@ -74,11 +80,12 @@
                 "Type check",
                 "Import check"
             ],
-            "dependsOrder": "sequence"
+            "dependsOrder": "sequence",
+            "problemMatcher": []
         },
         {
             "label": "Type check",
-            "type": "shell", 
+            "type": "shell",
             "command": "python",
             "args": ["-m", "uv", "run", "mypy", "."],
             "problemMatcher": []

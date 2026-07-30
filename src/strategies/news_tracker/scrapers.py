@@ -109,6 +109,7 @@ def accept_cookies(page: Page) -> bool:
             pass
 
     print("Nie znaleziono bannera cookies")
+
     return False
 
 

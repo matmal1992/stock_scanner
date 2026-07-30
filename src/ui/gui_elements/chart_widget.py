@@ -58,8 +58,15 @@ class ChartWidget(QWidget):
     def plot(self, df: pd.DataFrame, title: str = "Chart") -> None:
         self.ax.clear()
 
-        if getattr(df.index, "tz", None) is not None:
-            df.index = df.index.tz_localize(None)
+        if isinstance(df.index, pd.DatetimeIndex):
+            dt_index = df.index
+        else:
+            dt_index = pd.to_datetime(df.index)
+
+        if dt_index.tz is not None:
+            dt_index = dt_index.tz_localize(None)
+
+        df.index = dt_index
 
         # Check if OHLC data is available
         required_cols = {"Open", "High", "Low", "Close"}

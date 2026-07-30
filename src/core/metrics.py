@@ -6,8 +6,8 @@ import pandas as pd
 
 
 def r2(series: pd.Series) -> float:
-    y = series.values
-    x = np.arange(len(y))
+    y = series.to_numpy(dtype=float)
+    x = np.arange(len(y), dtype=float)
 
     slope, intercept = np.polyfit(x, y, 1)
     y_pred = slope * x + intercept
@@ -15,7 +15,7 @@ def r2(series: pd.Series) -> float:
     ss_res = np.sum((y - y_pred) ** 2)
     ss_tot = np.sum((y - np.mean(y)) ** 2)
 
-    return 1 - ss_res / ss_tot if ss_tot != 0 else 0
+    return 1 - ss_res / ss_tot if ss_tot != 0 else 0.0
 
 
 def atr(df: pd.DataFrame, period: int = 14) -> float:
