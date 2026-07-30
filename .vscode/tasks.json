@@ -28,7 +28,7 @@
             "command": "powershell",
             "args": [
                 "-Command",
-                "Remove-Item -Recurse -Force build/*; python -m uv run pyinstaller --onefile --name stock_scanner --distpath build stock_scanner/main.py; Copy-Item -Recurse -Force stock_scanner/assets build/assets"
+                "Remove-Item -Recurse -Force build/*; python -m uv run pyinstaller --onefile --name stock_scanner --distpath build src/main.py; Copy-Item -Recurse -Force src/assets build/assets"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"
@@ -49,21 +49,17 @@
                 "run",
                 "python",
                 "-m",
-                "stock_scanner.core.gui_automations"
+                "src.core.gui_automations"
             ],
             "problemMatcher": []
         },
         {
-            "label": "Format code",
+            "label": "Lint & Format",
             "type": "shell",
-            "command": "python",
+            "command": "powershell",
             "args": [
-                "-m",
-                "uv",
-                "run",
-                "ruff",
-                "format",
-                "."
+                "-Command",
+                "python -m uv run ruff check . --fix; python -m uv run ruff format ."
             ],
             "problemMatcher": [],
             "presentation": {
@@ -72,32 +68,26 @@
             }
         },
         {
-            "label": "Lint & fix",
-            "type": "shell",
-            "command": "python",
-            "args": [
-                "-m",
-                "uv",
-                "run",
-                "ruff",
-                "check",
-                ".",
-                "--fix"
-            ],
-            "problemMatcher": []
-        },
-        {
             "label": "Pre-build check",
-            "type": "shell",
-            "command": "python",
-            "args": ["-m", "uv", "run", "ruff", "check", "."],
-            "problemMatcher": []
+            "dependsOn": [
+                "Lint & Format",
+                "Type check",
+                "Import check"
+            ],
+            "dependsOrder": "sequence"
         },
         {
             "label": "Type check",
-            "type": "shell",
+            "type": "shell", 
             "command": "python",
             "args": ["-m", "uv", "run", "mypy", "."],
+            "problemMatcher": []
+        },
+        {
+            "label": "Import check",
+            "type": "shell",
+            "command": "python",
+            "args": ["-m", "uv", "run", "python", "-c", "import src.main"],
             "problemMatcher": []
         }
     ]

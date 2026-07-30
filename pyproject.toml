@@ -28,8 +28,8 @@ dependencies = [
     "deptry",
     "mss",
     "opencv-python",
-    "googlenewsdecoder",
-    "playwright"
+    "playwright",
+    "mypy"
 ]
 
 [project.optional-dependencies]

@@ -41,7 +41,7 @@ jobs:
         run: uv pip install -e .[dev]
 
       - name: Build EXE
-        run: uv run pyinstaller --onefile --name stock_scanner stock_scanner/main.py
+        run: uv run pyinstaller --onefile --name stock_scanner src/main.py
 
       - name: Upload EXE artifact
         uses: actions/upload-artifact@v4
