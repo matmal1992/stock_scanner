@@ -34,22 +34,26 @@ def configure_logging() -> None:
 
 
 def main() -> None:
+    configure_logging()
+    app = QApplication(sys.argv)
+    db = Database()
+    db.init_db()
+    entry_repo = EntryRepository(db)
+    tracked_repo = TrackedTickerRepository(db)
+    window = MainWindow(entry_repo, tracked_repo)
+    window.setMaximumSize(900, 500)
+    window.show()
+
+    exit_code = 0
     try:
-        configure_logging()
-        app = QApplication(sys.argv)
-        db = Database()
-        db.init_db()
-        entry_repo = EntryRepository(db)
-        tracked_repo = TrackedTickerRepository(db)
-        window = MainWindow(entry_repo, tracked_repo)
-        window.setMaximumSize(900, 500)
-        window.show()
-
-        sys.exit(app.exec())
-
+        exit_code = app.exec()
     except Exception:
         traceback.print_exc()
+        exit_code = 1
+    finally:
         input("Press Enter to exit...")
+
+    sys.exit(exit_code)
 
 
 if __name__ == "__main__":
