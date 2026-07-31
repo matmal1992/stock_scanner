@@ -15,16 +15,18 @@ class NewsFetcher(QObject):
         self.entry_repo = entry_repo
         self.tracked_repo = tracked_repo
         self.bankier_espi_worker = ESPIService(entry_repo)
+        self.bankier_espi_worker.result.connect(self._on_result)
+        self.bankier_espi_worker.error.connect(self._on_error)
+        self.bankier_espi_worker.log.connect(self._on_log)
 
     def fetch(self) -> None:
-        # self._connect_worker(self.bankier_espi_worker, "espi_worker")
         self.bankier_espi_worker.run()
 
-        # self.bankier_stock_worker.run(QUrl("https://www.bankier.pl/rss/gielda.xml"))
-        # self.bankier_espi_worker.run(QUrl("https://www.bankier.pl/rss/espi.xml"))
+    def _on_result(self, items: list, has_new_entries: bool) -> None:
+        self.data_ready.emit(items, has_new_entries)
 
-    # def _connect_worker(self, worker: ESPIService, attr_name: str) -> None:
-    #     worker.log.connect(self.log)
-    #     worker.error.connect(self.error)
-    #     worker.data_ready.connect(self.data_ready)
-    #     worker.finished.connect(lambda: setattr(self, attr_name, None))
+    def _on_error(self, message: str) -> None:
+        self.error.emit(message)
+
+    def _on_log(self, message: str) -> None:
+        self.log.emit(message)

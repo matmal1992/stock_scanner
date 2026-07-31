@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Sequence
+from typing import Sequence
 
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
@@ -24,7 +24,7 @@ class NewsFeedList(QWidget):
     def __init__(self, entry_repo: EntryRepository, tracked_repo: TrackedTickerRepository) -> None:
         super().__init__()
         self.entry_repo = entry_repo
-        self._ids: List[int | None] = []
+        self._ids: list[int | None] = []
 
         self.feed_list = QListWidget()
         self.feed_list.itemSelectionChanged.connect(self.on_selection_changed)
@@ -137,15 +137,15 @@ class NewsFeedList(QWidget):
         for item in items:
             self.entry_repo.save(item)
 
-        rows_rss = self.entry_repo.get_latest_with_id("rss")
-        formatted_rss = [(text, entry_id) for text, entry_id in NewsFormatter.format(rows_rss)]
+        rows = self.entry_repo.get_all_entries()
+        formatted_rows = [(text, entry_id) for text, entry_id in NewsFormatter.format(rows)]
         if has_new_entries:
             status_text = f"Nowe wpisy: {now}"
         else:
             status_text = f"{now}: Brak nowych wpisów"
 
         status_row: tuple[str, int | None] = (status_text, None)
-        self.set_items([status_row, *formatted_rss])
+        self.set_items([status_row, *formatted_rows])
 
     def on_get_espi_clicked(self) -> None:
         self.notify.emit("Pobieranie ESPI...", "neutral")
