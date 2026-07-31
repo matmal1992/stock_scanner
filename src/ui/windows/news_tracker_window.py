@@ -4,10 +4,10 @@ from PySide6.QtCore import QThread
 from PySide6.QtWidgets import QVBoxLayout, QWidget
 
 from src.strategies.news_tracker.entry_repo import EntryRepository
+from src.strategies.news_tracker.feed_list import NewsFeedList
 from src.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
-from src.ui.gui_elements.feed_list import NewsFeedList
+from src.strategies.news_tracker.tracked_tickers_list import TrackedTickersList
 from src.ui.gui_elements.Labels import StatusLabel
-from src.ui.gui_elements.tracked_tickers_list import TrackedTickersList
 from src.ui.workers.llm_worker import LLMService
 
 logger = logging.getLogger(__name__)

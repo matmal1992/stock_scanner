@@ -9,10 +9,6 @@ import numpy as np
 import pyautogui
 import pyperclip
 
-from src.download.database import Database
-from src.strategies.news_tracker.entry_repo import EntryRepository
-from src.strategies.news_tracker.scrapers import scrape_with_playwright
-
 if getattr(sys, "frozen", False):
     BASE_DIR = Path(sys.executable).resolve().parent
 else:
@@ -152,23 +148,5 @@ def test_autogui() -> None:
     # cv2.destroyAllWindows()
 
 
-def scrape_and_save(repo: EntryRepository) -> None:
-    entries = scrape_with_playwright()  # zwraca list[ScrapedEntry]
-
-    saved = 0
-    for _entry in entries:
-        saved += 1
-
-
 if __name__ == "__main__":
-    db = Database()
-    db.init_db()
-
-    repo = EntryRepository(db)
-    entries = scrape_with_playwright()
-    while True:
-        try:
-            scrape_and_save(repo)
-            time.sleep(60)
-        except KeyboardInterrupt:
-            print("Zatrzymano scraper")
+    print("Zatrzymano scraper")
