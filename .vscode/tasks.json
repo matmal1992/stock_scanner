@@ -7,8 +7,9 @@
             "command": "powershell",
             "args": [
                 "-NoProfile",
-                "-Command",
-                "$timer = [System.Diagnostics.Stopwatch]::StartNew(); python -m pip install uv; python -m uv sync --all-extras; python -m uv run playwright install chromium; python -m uv run pre-commit install; $timer.Stop(); Write-Host \"Setup finished in $($timer.Elapsed)\""
+                "-ExecutionPolicy", "Bypass",
+                "-File",
+                "${workspaceFolder}/scripts/setup.ps1"
             ],
             "problemMatcher": [],
             "presentation": {
@@ -34,8 +35,9 @@
             "command": "powershell",
             "args": [
                 "-NoProfile",
-                "-Command",
-                "$timer = [System.Diagnostics.Stopwatch]::StartNew(); if (Test-Path build) { Remove-Item -Recurse -Force build/* -ErrorAction SilentlyContinue }; python -m uv run pyinstaller --clean --onedir --name stock_scanner --distpath build/dist --workpath build/work --specpath build/spec src/main.py; Copy-Item -Recurse -Force src/assets build/dist/assets; $timer.Stop(); Write-Host \"Build finished in $($timer.Elapsed)\""
+                "-ExecutionPolicy", "Bypass",
+                "-File",
+                "${workspaceFolder}/scripts/build.ps1"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"

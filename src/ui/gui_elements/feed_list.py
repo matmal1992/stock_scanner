@@ -14,6 +14,7 @@ from PySide6.QtWidgets import (
 from src.strategies.news_tracker.entry_repo import EntryRepository, NewsEntry, NewsFormatter
 from src.strategies.news_tracker.news_fetcher import NewsFetcher
 from src.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
+from src.ui.workers.espi_worker import ESPIService
 from src.ui.workers.llm_worker import ManualPromptWorker
 
 
@@ -33,7 +34,7 @@ class NewsFeedList(QWidget):
         self.displ_link_btn = QPushButton("Display link")
         self.run_llm_btn = QPushButton("Run LLM")
         self.clear_database_btn = QPushButton("Clear database")
-        get_news_btn.clicked.connect(self.on_get_news_clicked)
+        get_news_btn.clicked.connect(self.on_get_espi_clicked)
         self.displ_link_btn.clicked.connect(self.on_display_link_clicked)
         self.run_llm_btn.clicked.connect(self.on_run_llm_clicked)
         self.clear_database_btn.clicked.connect(self.on_clear_database_clicked)
@@ -64,13 +65,6 @@ class NewsFeedList(QWidget):
         for text, entry_id in items:
             self.feed_list.addItem(text)
             self._ids.append(entry_id)
-
-    def on_get_news_clicked(self) -> None:
-        self.notify.emit("Pobieranie wiadomości...", "neutral")
-        self.fetcher.fetch()
-
-        # if not self.timer.isActive():
-        #     self.timer.start()
 
     def get_selected_id(self) -> int | None:
         index = self.feed_list.currentRow()
@@ -153,3 +147,15 @@ class NewsFeedList(QWidget):
 
         status_row: tuple[str, int | None] = (status_text, None)
         self.set_items([status_row, *formatted_rss])
+
+    def on_get_espi_clicked(self) -> None:
+        self.notify.emit("Pobieranie ESPI...", "neutral")
+        # self.fetcher.fetch()
+
+        self.espi_service = ESPIService(self.entry_repo)
+
+        self.espi_service.result.connect(self.on_data_ready)
+        self.espi_service.error.connect(self.on_error)
+        self.espi_service.log.connect(self.on_log)
+
+        self.espi_service.run()

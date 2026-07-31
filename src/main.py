@@ -1,4 +1,5 @@
 import logging
+import os
 import sys
 import traceback
 from pathlib import Path
@@ -34,6 +35,12 @@ def configure_logging() -> None:
 
 
 def main() -> None:
+    if getattr(sys, "frozen", False):
+        base_path = getattr(sys, "_MEIPASS", "")
+        os.environ["PLAYWRIGHT_BROWSERS_PATH"] = os.path.join(base_path, "browsers")
+    else:
+        os.environ["PLAYWRIGHT_BROWSERS_PATH"] = "browsers"
+
     configure_logging()
     app = QApplication(sys.argv)
     db = Database()
