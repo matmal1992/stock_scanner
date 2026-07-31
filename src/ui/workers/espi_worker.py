@@ -42,10 +42,15 @@ class ESPIWorker(QThread):
 
             self._accept_cookies(page)
 
+            if not self._is_valid_page(page):
+                print("Invalid page")
+                return results
+
             page.wait_for_selector("a.m-quotes-announcements-item__anchor")
             items = page.locator("li.m-quotes-announcements-list__item")
 
             count = min(items.count(), 5)
+            print(f"Liczba elementów: {count}")
 
             for i in range(count):
                 item = items.nth(i)
@@ -76,7 +81,20 @@ class ESPIWorker(QThread):
 
             browser.close()
 
+        print(f"Results: {results}")
         return results
+
+    def _is_blocked(self, page: Page) -> bool:
+        content = page.content().lower()
+
+        blocked_keywords = [
+            "access denied",
+            "captcha",
+            "verify you are human",
+            "zablokowany",
+        ]
+
+        return any(word in content for word in blocked_keywords)
 
     def _save_entries(self, entries: list[NewsEntry]) -> bool:
         found_new = False
@@ -91,7 +109,50 @@ class ESPIWorker(QThread):
 
         return found_new
 
+    def _is_valid_page(self, page: Page) -> bool:
+        try:
+            locator = page.locator("li.m-quotes-announcements-list__item")
+            count = locator.count()
+
+            if count > 0:
+                return True
+            else:
+                if self._is_blocked(page):
+                    page.screenshot(path="debug_blocked.png")
+                    print("Blokada captha")
+                    return False
+
+                print("To NIE jest właściwa strona!")
+                page.screenshot(path="debug_invalid_page.png")
+                return False
+
+        except Exception as e:
+            print(f"Błąd sprawdzania strony: {e}")
+            return False
+
+    def _is_cookie_banner(self, page: Page) -> bool:
+        selectors = [
+            "button:has-text('Zaakceptuj i zamknij')",
+            "text=Zaakceptuj i zamknij",
+        ]
+
+        for selector in selectors:
+            try:
+                count = page.locator(selector).count()
+
+                if count > 0:
+                    return True
+
+            except Exception:
+                pass
+
+        print("Brak bannera cookies")
+        return False
+
     def _accept_cookies(self, page: Page) -> None:
+        if not self._is_cookie_banner(page):
+            return
+
         selectors = [
             "button:has-text('Zaakceptuj i zamknij')",
             "text=Zaakceptuj i zamknij",
@@ -107,9 +168,12 @@ class ESPIWorker(QThread):
                     page.wait_for_timeout(1000)
                     self.log.emit("Zaakceptowano cookies")
                     return
-            except Exception:
+
+            except Exception as e:
+                self.log.emit(f"Błąd dla selektora {selector}: {e}")
                 pass
 
+        print("Brak bannera cookies")
         self.log.emit("Brak bannera cookies")
 
 

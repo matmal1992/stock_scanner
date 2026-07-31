@@ -1,17 +1,7 @@
-import logging
 import sqlite3
-import sys
-from pathlib import Path
 from typing import Protocol
 
-logger = logging.getLogger(__name__)
-
-if getattr(sys, "frozen", False):
-    BASE_DIR = Path(sys.executable).parent.parent
-else:
-    BASE_DIR = Path(__file__).parent.parent.parent
-
-DB_PATH = BASE_DIR / "data" / "database.db"
+from src.core.paths import get_data_dir
 
 
 class FeedEntry(Protocol):
@@ -23,8 +13,9 @@ class FeedEntry(Protocol):
 
 class Database:
     def __init__(self) -> None:
-        self.db_path = DB_PATH
+        self.db_path = get_data_dir() / "database.db"
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        print(f"PATH: {self.db_path}")
 
     def connect(self) -> sqlite3.Connection:
         return sqlite3.connect(self.db_path)

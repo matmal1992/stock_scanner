@@ -14,7 +14,6 @@ from PySide6.QtWidgets import (
 from src.strategies.news_tracker.entry_repo import EntryRepository, NewsEntry, NewsFormatter
 from src.strategies.news_tracker.news_fetcher import NewsFetcher
 from src.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
-from src.ui.workers.espi_worker import ESPIService
 from src.ui.workers.llm_worker import ManualPromptWorker
 
 
@@ -150,12 +149,12 @@ class NewsFeedList(QWidget):
 
     def on_get_espi_clicked(self) -> None:
         self.notify.emit("Pobieranie ESPI...", "neutral")
-        # self.fetcher.fetch()
+        self.fetcher.fetch()
 
-        self.espi_service = ESPIService(self.entry_repo)
+        # self.espi_service = ESPIService(self.entry_repo)
 
-        self.espi_service.result.connect(self.on_data_ready)
-        self.espi_service.error.connect(self.on_error)
-        self.espi_service.log.connect(self.on_log)
+        # self.espi_service.result.connect(self.on_data_ready)
+        # self.espi_service.error.connect(self.on_error)
+        # self.espi_service.log.connect(self.on_log)
 
-        self.espi_service.run()
+        # self.espi_service.run()
