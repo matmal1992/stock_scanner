@@ -56,14 +56,6 @@ def format_timestamp(ts: int | None) -> str:
     return dt.strftime("%d %b %H:%M:%S")
 
 
-def date_str_to_int(date_str: str) -> int | None:
-    try:
-        dt = datetime.strptime(date_str, "%Y-%m-%d %H:%M")
-        return int(dt.timestamp())
-    except Exception:
-        return None
-
-
 class EmittingStream(io.TextIOBase):
     def __init__(self, signal: Any) -> None:
         super().__init__()

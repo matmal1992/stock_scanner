@@ -3,7 +3,6 @@ from typing import Optional
 from playwright.sync_api import Page, sync_playwright
 from PySide6.QtCore import QObject, QThread, Signal
 
-from src.core.utils import date_str_to_int
 from src.strategies.news_tracker.entry_repo import EntryRepository, NewsEntry
 
 
@@ -70,7 +69,7 @@ class ESPIWorker(QThread):
                         {
                             "title": title,
                             "link": link,
-                            "published": date_str_to_int(date_str),
+                            "published": date_str,
                             "source_type": "ESPI",
                         }
                     )
@@ -81,7 +80,6 @@ class ESPIWorker(QThread):
 
             browser.close()
 
-        print(f"Results: {results}")
         return results
 
     def _is_blocked(self, page: Page) -> bool:

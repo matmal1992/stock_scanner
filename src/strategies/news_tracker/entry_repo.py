@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 class NewsEntry(TypedDict):
     title: str
     link: str
-    published: int | None
+    published: str | None
     source_type: str
 
 
@@ -18,7 +18,7 @@ class NewsRow(TypedDict):
     id: int
     title: str
     link: str
-    published: int | None
+    published: str | None
     source_type: str
 
 
@@ -28,21 +28,8 @@ class NewsFormatter:
         result: list[tuple[str, int]] = []
 
         for row in rows:
-            entry_id = row["id"]
-            title = row["title"]
-            published = row["published"]
-            source_type = row["source_type"]
-
-            prefix = f"[{source_type.upper()}]"
-
-            if published is not None:
-                dt = datetime.fromtimestamp(float(published))
-                time_str = dt.strftime("%d %b %H:%M")
-                text = f"{time_str} {prefix} {title}"
-            else:
-                text = f"{prefix} {title}"
-
-            result.append((text, entry_id))
+            text = f"{row['published']} {row['source_type']} {row['title']}"
+            result.append((text, row["id"]))
 
         return result
 
@@ -76,22 +63,7 @@ class EntryRepository:
             logger.exception("Save failed")
             return False
 
-    def get_latest(self, source_type: str, limit: int = 5) -> list[tuple]:
-        with self.db.connect() as conn:
-            cur = conn.cursor()
-            cur.execute(
-                """
-                SELECT title, link, published, source_type
-                FROM entries
-                WHERE source_type = ?
-                ORDER BY published DESC
-                LIMIT ?
-                """,
-                (source_type, limit),
-            )
-            return cur.fetchall()
-
-    def get_latest_with_id(self, source_type: str, limit: int = 5) -> list[NewsRow]:
+    def get_latest_with_id(self, source_type: str) -> list[NewsRow]:
         with self.db.connect() as conn:
             cur = conn.cursor()
             cur.execute(
@@ -102,7 +74,7 @@ class EntryRepository:
                 ORDER BY published DESC
                 LIMIT ?
                 """,
-                (source_type, limit),
+                (source_type, 5),
             )
             rows = cur.fetchall()
 

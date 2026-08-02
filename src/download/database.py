@@ -15,7 +15,6 @@ class Database:
     def __init__(self) -> None:
         self.db_path = get_data_dir() / "database.db"
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
-        print(f"PATH: {self.db_path}")
 
     def connect(self) -> sqlite3.Connection:
         return sqlite3.connect(self.db_path)
@@ -30,7 +29,7 @@ class Database:
                 source_type TEXT,
                 title TEXT,
                 link TEXT UNIQUE,
-                published INTEGER,
+                published TEXT,
                 query TEXT,
                 inserted_at TEXT,
                 llm_status TEXT DEFAULT 'pending',

@@ -20,7 +20,7 @@ def main() -> None:
     entry_repo = EntryRepository(db)
     tracked_repo = TrackedTickerRepository(db)
     window = MainWindow(entry_repo, tracked_repo)
-    window.setMaximumSize(900, 500)
+    window.setMaximumSize(1300, 800)
     window.show()
 
     exit_code = 0
