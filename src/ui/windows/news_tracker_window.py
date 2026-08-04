@@ -43,9 +43,7 @@ class NewsTrackerWindow(QWidget):
 
         self.content_layout = QVBoxLayout(self)
         self.content_layout.addWidget(self.tracked_tickers)
-        self.content_layout.addStretch(30)
-        self.content_layout.addWidget(self.news_feed)
-        self.content_layout.addStretch(10)
+        self.content_layout.addWidget(self.news_feed, stretch=1)
         self.content_layout.addWidget(self.notifications)
 
     def on_notify(self, text: str, level: str) -> None:

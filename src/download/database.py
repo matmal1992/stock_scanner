@@ -30,11 +30,8 @@ class Database:
                 title TEXT,
                 link TEXT UNIQUE,
                 published TEXT,
-                query TEXT,
-                inserted_at TEXT,
                 llm_status TEXT DEFAULT 'pending',
-                sentiment TEXT,
-                processed_at TEXT
+                sentiment TEXT
             )
             """)
 

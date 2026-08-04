@@ -4,8 +4,10 @@ from typing import Sequence
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
     QHBoxLayout,
-    QListWidget,
+    QHeaderView,
     QPushButton,
+    QTableWidget,
+    QTableWidgetItem,
     QVBoxLayout,
     QWidget,
 )
@@ -25,9 +27,36 @@ class NewsFeedList(QWidget):
         self.entry_repo = entry_repo
         self._ids: list[int | None] = []
 
-        self.feed_list = QListWidget()
+        self.feed_list = QTableWidget()
         self.feed_list.setSortingEnabled(False)
+        self.feed_list.setSelectionBehavior(self.feed_list.SelectionBehavior.SelectRows)
+        self.feed_list.verticalHeader().setVisible(False)
         self.feed_list.itemSelectionChanged.connect(self.on_selection_changed)
+        self.feed_list.setColumnCount(5)
+        self.feed_list.setHorizontalHeaderLabels(["Published", "Type", "Title", "LLM Status", "Sentiment"])
+        self.feed_list.setStyleSheet("""
+            QHeaderView {
+                border: none;
+            }
+            QHeaderView::section {
+                border: 1px solid #8f8f8f;
+                background-color: #1e1e1e;
+            }
+            QTableWidget {
+                gridline-color: #8f8f8f;
+            }
+            """)
+        header = self.feed_list.horizontalHeader()
+
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Fixed)
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Fixed)
+        header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(3, QHeaderView.ResizeMode.Fixed)
+        header.setSectionResizeMode(4, QHeaderView.ResizeMode.Fixed)
+        self.feed_list.setColumnWidth(0, 140)
+        self.feed_list.setColumnWidth(1, 80)
+        self.feed_list.setColumnWidth(3, 100)
+        self.feed_list.setColumnWidth(4, 100)
 
         get_news_btn = QPushButton("Get feed")
         self.load_data_btn = QPushButton("Load data")
@@ -56,18 +85,25 @@ class NewsFeedList(QWidget):
 
         self.setLayout(layout)
 
-    def set_items(self, items: Sequence[tuple[str, int | None]]) -> None:
-        self.feed_list.clear()
+    def set_items(self, items: Sequence[tuple[dict, int | None]]) -> None:
+        self.feed_list.setRowCount(0)
         self._ids = []
 
-        for text, entry_id in items:
-            self.feed_list.addItem(text)
+        for row_idx, (data, entry_id) in enumerate(items):
+            self.feed_list.insertRow(row_idx)
+
+            self.feed_list.setItem(row_idx, 0, QTableWidgetItem(data["published"]))
+            self.feed_list.setItem(row_idx, 1, QTableWidgetItem(data["type"]))
+            self.feed_list.setItem(row_idx, 2, QTableWidgetItem(data["title"][:100]))
+            self.feed_list.setItem(row_idx, 3, QTableWidgetItem(data["llm_status"]))
+            self.feed_list.setItem(row_idx, 4, QTableWidgetItem(data["sentiment"]))
+
             self._ids.append(entry_id)
 
     def get_selected_id(self) -> int | None:
-        index = self.feed_list.currentRow()
-        if 0 <= index < len(self._ids):
-            return self._ids[index]
+        row = self.feed_list.currentRow()
+        if 0 <= row < len(self._ids):
+            return self._ids[row]
         return None
 
     def on_selection_changed(self) -> None:
@@ -76,7 +112,7 @@ class NewsFeedList(QWidget):
 
     def on_load_data_clicked(self) -> None:
         rows = self.entry_repo.get_all_entries()
-        formatted_rows = [(text, entry_id) for text, entry_id in NewsFormatter.format(rows)]
+        formatted_rows = NewsFormatter.format(rows)
         self.set_items(formatted_rows)
 
     def on_run_llm_clicked(self) -> None:
@@ -97,7 +133,9 @@ class NewsFeedList(QWidget):
 
     def on_clear_database_clicked(self) -> None:
         self.entry_repo.clear_all()
-        self.set_items([("Brak danych", None)])
+        self.set_items(
+            [({"published": "", "type": "", "title": "Brak danych", "llm_status": "", "sentiment": ""}, None)]
+        )
         self.run_llm_btn.setEnabled(False)
         self.notify.emit("Wyczyszczono bazę danych", "ok")
 
@@ -110,30 +148,22 @@ class NewsFeedList(QWidget):
 
     def on_log(self, text: str) -> None:
         self.notify.emit(f"{text}", "neutral")
-        # now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        # self.set_status_item(0, f"{now} Status: {text}")
 
     def on_error(self, e: str) -> None:
         now = datetime.now()
         error_time = now.strftime("%Y-%m-%d %H:%M:%S")
-        # self._set_status_item(0, f"{error_time} Błąd: {e}")
         self.notify.emit(f"{error_time} Błąd: {e}", "error")
 
     def on_data_ready(self, items: list[NewsEntry], has_new_entries: bool) -> None:
-        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
         for item in items:
             self.entry_repo.save(item)
 
         rows = self.entry_repo.get_all_entries()
         formatted_rows = [(text, entry_id) for text, entry_id in NewsFormatter.format(rows)]
         if has_new_entries:
-            status_text = f"Nowe wpisy: {now}"
-        else:
-            status_text = f"{now}: Brak nowych wpisów"
+            print("New entries")
 
-        status_row: tuple[str, int | None] = (status_text, None)
-        self.set_items([status_row, *formatted_rows])
+        self.set_items([*formatted_rows])
 
     def on_get_espi_clicked(self) -> None:
         self.notify.emit("Pobieranie ESPI...", "neutral")

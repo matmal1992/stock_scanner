@@ -15,12 +15,14 @@ def main() -> None:
     configure_environment()
 
     app = QApplication(sys.argv)
+    # app.setStyle("Fusion")
     db = Database()
     db.init_db()
     entry_repo = EntryRepository(db)
     tracked_repo = TrackedTickerRepository(db)
     window = MainWindow(entry_repo, tracked_repo)
-    window.setMaximumSize(1300, 800)
+    # window.setMaximumSize(1300, 800)
+    window.showMaximized()
     window.show()
 
     exit_code = 0

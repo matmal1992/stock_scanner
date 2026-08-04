@@ -12,6 +12,8 @@ class NewsEntry(TypedDict):
     link: str
     published: str | None
     source_type: str
+    llm_status: str
+    sentiment: str
 
 
 class NewsRow(TypedDict):
@@ -20,16 +22,25 @@ class NewsRow(TypedDict):
     link: str
     published: str | None
     source_type: str
+    llm_status: str
+    sentiment: str
 
 
 class NewsFormatter:
     @staticmethod
-    def format(rows: Sequence[NewsRow]) -> list[tuple[str, int]]:
-        result: list[tuple[str, int]] = []
+    def format(rows: Sequence[NewsRow]) -> list[tuple[dict, int]]:
+        result: list[tuple[dict, int]] = []
 
         for row in rows:
-            text = f"{row['published']} {row['source_type']} {row['title']}"
-            result.append((text, row["id"]))
+            formatted = {
+                "published": str(row["published"]),
+                "type": str(row["source_type"]),
+                "title": row["title"][:100],
+                "llm_status": str(row["llm_status"]),
+                "sentiment": str(row["sentiment"]),
+            }
+
+            result.append((formatted, row["id"]))
 
         return result
 
@@ -44,8 +55,7 @@ class EntryRepository:
                 conn.execute(
                     """
                     INSERT OR IGNORE INTO entries (
-                        source_type, title, link, published,
-                        query, inserted_at
+                        source_type, title, link, published, llm_status, sentiment
                     )
                     VALUES (?, ?, ?, ?, ?, ?)
                     """,
@@ -54,8 +64,8 @@ class EntryRepository:
                         entry["title"],
                         entry["link"],
                         entry["published"],
-                        None,
-                        datetime.utcnow().isoformat(),
+                        entry["llm_status"],
+                        entry["sentiment"],
                     ),
                 )
             return True
@@ -68,7 +78,7 @@ class EntryRepository:
             cur = conn.cursor()
             cur.execute(
                 """
-                SELECT id, title, link, published, source_type
+                SELECT id, title, link, published, source_type, llm_status, sentiment
                 FROM entries
                 WHERE source_type = ?
                 ORDER BY published DESC
@@ -105,7 +115,7 @@ class EntryRepository:
             cur = conn.cursor()
             cur.execute(
                 """
-                SELECT id, title, link, published, source_type
+                SELECT id, title, link, published, source_type, llm_status, sentiment
                 FROM entries
                 ORDER BY published DESC
                 """
@@ -142,6 +152,8 @@ class EntryRepository:
             "link": row[2],
             "published": row[3],
             "source_type": row[4],
+            "llm_status": row[5],
+            "sentiment": row[6],
         }
 
     def clear_all(self) -> None:
