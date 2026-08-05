@@ -26,12 +26,12 @@ class NewsFeedList(QWidget):
         super().__init__()
         self.entry_repo = entry_repo
         self._ids: list[int | None] = []
+        self.selected_entry_id: int | None = None
 
         self.feed_list = QTableWidget()
         self.feed_list.setSortingEnabled(False)
         self.feed_list.setSelectionBehavior(self.feed_list.SelectionBehavior.SelectRows)
         self.feed_list.verticalHeader().setVisible(False)
-        self.feed_list.itemSelectionChanged.connect(self.on_selection_changed)
         self.feed_list.setColumnCount(5)
         self.feed_list.setHorizontalHeaderLabels(["Published", "Type", "Title", "LLM Status", "Sentiment"])
         self.feed_list.setStyleSheet("""
@@ -53,10 +53,10 @@ class NewsFeedList(QWidget):
         header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
         header.setSectionResizeMode(3, QHeaderView.ResizeMode.Fixed)
         header.setSectionResizeMode(4, QHeaderView.ResizeMode.Fixed)
-        self.feed_list.setColumnWidth(0, 140)
+        self.feed_list.setColumnWidth(0, 120)
         self.feed_list.setColumnWidth(1, 80)
-        self.feed_list.setColumnWidth(3, 100)
-        self.feed_list.setColumnWidth(4, 100)
+        self.feed_list.setColumnWidth(3, 90)
+        self.feed_list.setColumnWidth(4, 90)
 
         get_news_btn = QPushButton("Get feed")
         self.load_data_btn = QPushButton("Load data")
@@ -66,7 +66,6 @@ class NewsFeedList(QWidget):
         self.load_data_btn.clicked.connect(self.on_load_data_clicked)
         self.run_llm_btn.clicked.connect(self.on_run_llm_clicked)
         self.clear_database_btn.clicked.connect(self.on_clear_database_clicked)
-        self.run_llm_btn.setEnabled(False)
 
         self.fetcher = NewsFetcher(entry_repo, tracked_repo)
         self.fetcher.data_ready.connect(self.on_data_ready)
@@ -106,16 +105,13 @@ class NewsFeedList(QWidget):
             return self._ids[row]
         return None
 
-    def on_selection_changed(self) -> None:
-        self.selected_entry_id = self.get_selected_id()
-        self.run_llm_btn.setEnabled(self.selected_entry_id is not None)
-
     def on_load_data_clicked(self) -> None:
         rows = self.entry_repo.get_all_entries()
         formatted_rows = NewsFormatter.format(rows)
         self.set_items(formatted_rows)
 
     def on_run_llm_clicked(self) -> None:
+        self.select_last_pending_entry()
         if not self.selected_entry_id:
             self.notify.emit("Run LLM: Brak zaznaczonego wpisu", "error")
             return
@@ -127,6 +123,8 @@ class NewsFeedList(QWidget):
 
         self.notify.emit("Running LLM...", "neutral")
 
+        return
+
         self.llm_worker = ManualPromptWorker(link, self.selected_entry_id)
         self.llm_worker.response_received.connect(self.on_llm_result)
         self.llm_worker.start()
@@ -136,7 +134,6 @@ class NewsFeedList(QWidget):
         self.set_items(
             [({"published": "", "type": "", "title": "Brak danych", "llm_status": "", "sentiment": ""}, None)]
         )
-        self.run_llm_btn.setEnabled(False)
         self.notify.emit("Wyczyszczono bazę danych", "ok")
 
     def on_llm_result(self, entry_id: int, response: str) -> None:
@@ -168,3 +165,15 @@ class NewsFeedList(QWidget):
     def on_get_espi_clicked(self) -> None:
         self.notify.emit("Pobieranie ESPI...", "neutral")
         self.fetcher.fetch()
+
+    def select_last_pending_entry(self) -> None:
+        row_count = self.feed_list.rowCount()
+
+        for row in range(row_count - 1, -1, -1):  # iteracja od końca
+            item = self.feed_list.item(row, 3)  # kolumna "LLM Status"
+            if item and item.text().lower() == "pending":
+                self.feed_list.setCurrentCell(row, 0)
+                self.selected_entry_id = self.get_selected_id()
+                return
+
+        self.selected_entry_id = None

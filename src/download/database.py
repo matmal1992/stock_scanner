@@ -8,7 +8,6 @@ class FeedEntry(Protocol):
     id: str | None
     link: str
     title: str
-    published_parsed: tuple[int, int, int, int, int, int] | None
 
 
 class Database:
