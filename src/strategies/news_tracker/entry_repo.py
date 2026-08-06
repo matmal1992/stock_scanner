@@ -123,17 +123,17 @@ class EntryRepository:
 
         return [self._to_dict(r) for r in rows]
 
-    def update_sentiment(self, entry_id: int, sentiment: str) -> bool:
+    def update_llm(self, entry_id: int, response: str) -> bool:
         try:
             with self.db.connect() as conn:
                 cur = conn.execute(
                     """
                     UPDATE entries
-                    SET sentiment = ?
+                    SET llm = ?
                     WHERE id = ?
                     """,
                     (
-                        sentiment,
+                        self._extract_forecast(response),
                         entry_id,
                     ),
                 )
@@ -143,6 +143,9 @@ class EntryRepository:
         except Exception as e:
             print("DB ERROR:", e)
             return False
+
+    def _extract_forecast(self, text: str) -> str:
+        return text.split("Prognoza: ", 1)[1].strip() if "Prognoza: " in text else ""
 
     def _to_dict(self, row: list[Any]) -> NewsRow:
         return {

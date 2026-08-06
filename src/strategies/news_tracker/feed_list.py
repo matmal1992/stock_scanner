@@ -135,7 +135,7 @@ class NewsFeedList(QWidget):
         self.notify.emit("Wyczyszczono bazę danych", "ok")
 
     def on_llm_result(self, entry_id: int, response: str) -> None:
-        success = self.entry_repo.update_sentiment(entry_id, response)
+        success = self.entry_repo.update_llm(entry_id, response)
         if success:
             self.notify.emit("LLM zakończony i zapisano wynik", "ok")
             self.on_load_data_clicked()
