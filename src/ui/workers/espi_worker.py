@@ -71,7 +71,7 @@ class ESPIWorker(QThread):
                             "link": link,
                             "published": date_str,
                             "source_type": "ESPI",
-                            "llm_status": "pending",
+                            "llm": "pending",
                             "sentiment": "-",
                         }
                     )

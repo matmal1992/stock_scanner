@@ -1,6 +1,4 @@
-import sys
 import time
-from pathlib import Path
 from typing import Optional, Tuple
 
 import cv2
@@ -9,12 +7,8 @@ import numpy as np
 import pyautogui
 import pyperclip
 
-if getattr(sys, "frozen", False):
-    BASE_DIR = Path(sys.executable).resolve().parent
-else:
-    BASE_DIR = Path(__file__).resolve().parent.parent.parent
-
-ASSETS_DIR = BASE_DIR / "assets"
+from src.core.debug_screen import show_detected
+from src.core.paths import get_assets_dir
 
 
 def get_screen_image() -> Tuple[np.ndarray, dict]:
@@ -31,11 +25,11 @@ def get_screen_image() -> Tuple[np.ndarray, dict]:
 def find_input(threshold: float = 0.85) -> Optional[Tuple[int, int]]:
     img, monitor = get_screen_image()
 
-    template_path = ASSETS_DIR / "input_icon.png"
+    template_path = get_assets_dir() / "input_icon.png"
+    print(f"Input icon path: {template_path}")
     template = cv2.imread(template_path, cv2.IMREAD_COLOR)
 
     if template is None:
-        print(template_path)
         print("\nTemplate not found")
         # raise ValueError("Template not found")
         return None
@@ -94,10 +88,10 @@ def find_last_copy_icon(threshold: float = 0.85) -> Optional[Tuple[int, int]]:
         img = np.array(screenshot)
         img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
 
-    template_path = ASSETS_DIR / "copy_icon.png"
+    template_path = get_assets_dir() / "copy_icon.png"
+    print(f"Copy icon path: {template_path}")
     template = cv2.imread(template_path, cv2.IMREAD_COLOR)
     if template is None:
-        print(template_path)
         print("\nTemplate not found")
         # raise ValueError("Template not found")
         return None
@@ -108,7 +102,7 @@ def find_last_copy_icon(threshold: float = 0.85) -> Optional[Tuple[int, int]]:
 
     locations = np.where(result >= threshold)
 
-    print(f"Znaleziono {len(locations[0])} dopasowań")
+    print(f"Znaleziono {len(locations[0])} dopasowań copy icon")
 
     centers = []
 
@@ -119,10 +113,13 @@ def find_last_copy_icon(threshold: float = 0.85) -> Optional[Tuple[int, int]]:
 
         center_x = x + w // 2
         center_y = y + h // 2
-        centers.append({"x": center_x, "y": center_y})
+        centers.append((center_x, center_y))
 
-    bottom = max(centers, key=lambda p: p["y"])
-    return (bottom["x"], bottom["y"])
+    # if debug:
+    show_detected(img, centers)
+
+    bottom = max(centers, key=lambda p: p[1])
+    return bottom
 
 
 def test_autogui() -> None:
@@ -138,15 +135,6 @@ def test_autogui() -> None:
     print("LLM ended")
     # todo: zwracaj odpowiednie sygnały/komunikaty w zależności co się wysypało
 
-    # ===================== SOME DEBUG FEARURES===============
-    # pyautogui.moveTo(center_x, center_y, duration=1)
-    # cv2.circle(img, (center_x, center_y), 5, (0, 0, 255), -1)
-    # pyautogui.moveTo(bottom["x"], bottom["y"], duration=2)
-    # pyautogui.click(bottom["x"], bottom["y"])
-    # cv2.imshow("DEBUG", img)
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows()
-
 
 if __name__ == "__main__":
-    print("Zatrzymano scraper")
+    print("Screen size (pyautogui):", pyautogui.size())

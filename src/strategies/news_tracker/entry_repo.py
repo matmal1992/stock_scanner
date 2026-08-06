@@ -1,5 +1,4 @@
 import logging
-from datetime import datetime
 from typing import Any, Optional, Sequence, TypedDict
 
 from src.download.database import Database
@@ -12,7 +11,7 @@ class NewsEntry(TypedDict):
     link: str
     published: str | None
     source_type: str
-    llm_status: str
+    llm: str
     sentiment: str
 
 
@@ -22,7 +21,7 @@ class NewsRow(TypedDict):
     link: str
     published: str | None
     source_type: str
-    llm_status: str
+    llm: str
     sentiment: str
 
 
@@ -36,7 +35,7 @@ class NewsFormatter:
                 "published": str(row["published"]),
                 "type": str(row["source_type"]),
                 "title": row["title"][:100],
-                "llm_status": str(row["llm_status"]),
+                "llm": str(row["llm"]),
                 "sentiment": str(row["sentiment"]),
             }
 
@@ -55,7 +54,7 @@ class EntryRepository:
                 conn.execute(
                     """
                     INSERT OR IGNORE INTO entries (
-                        source_type, title, link, published, llm_status, sentiment
+                        source_type, title, link, published, llm, sentiment
                     )
                     VALUES (?, ?, ?, ?, ?, ?)
                     """,
@@ -64,7 +63,7 @@ class EntryRepository:
                         entry["title"],
                         entry["link"],
                         entry["published"],
-                        entry["llm_status"],
+                        entry["llm"],
                         entry["sentiment"],
                     ),
                 )
@@ -78,7 +77,7 @@ class EntryRepository:
             cur = conn.cursor()
             cur.execute(
                 """
-                SELECT id, title, link, published, source_type, llm_status, sentiment
+                SELECT id, title, link, published, source_type, llm, sentiment
                 FROM entries
                 WHERE source_type = ?
                 ORDER BY published DESC
@@ -115,7 +114,7 @@ class EntryRepository:
             cur = conn.cursor()
             cur.execute(
                 """
-                SELECT id, title, link, published, source_type, llm_status, sentiment
+                SELECT id, title, link, published, source_type, llm, sentiment
                 FROM entries
                 ORDER BY published DESC
                 """
@@ -130,19 +129,19 @@ class EntryRepository:
                 cur = conn.execute(
                     """
                     UPDATE entries
-                    SET sentiment = ?, processed_at = ?
+                    SET sentiment = ?
                     WHERE id = ?
                     """,
                     (
                         sentiment,
-                        datetime.utcnow().isoformat(),
                         entry_id,
                     ),
                 )
 
             return cur.rowcount > 0
 
-        except Exception:
+        except Exception as e:
+            print("DB ERROR:", e)
             return False
 
     def _to_dict(self, row: list[Any]) -> NewsRow:
@@ -152,7 +151,7 @@ class EntryRepository:
             "link": row[2],
             "published": row[3],
             "source_type": row[4],
-            "llm_status": row[5],
+            "llm": row[5],
             "sentiment": row[6],
         }
 

@@ -4,6 +4,7 @@ import pyautogui
 import pyperclip
 from PySide6.QtCore import QObject, QThread, Signal
 
+from src.core.debug_screen import show_mouse, take_screenshot
 from src.core.gui_automations import (
     find_last_copy_icon,
     paste_into_input,
@@ -23,7 +24,8 @@ my_prompt = (
     "prognozy i inne czynniki, które uznasz za istotne dla danej "
     "spółki/instrumentu. A więc, oczekuję odpowiedzi złożonej z maksymalnie "
     " czterech słów. Na przykład Creotech Instruments (może być też symbol "
-    "giełdowy CRI), Silny wzrost. Ta analiza ma charakter wyłącznie edukacyjny/"
+    "giełdowy CRI), Silny wzrost. Oczekuję samego tekstu, bez źródeł i odnośników."
+    "Ta analiza ma charakter wyłącznie edukacyjny/"
     "informacyjny i nie stanowi porady inwestycyjnej."
 )
 
@@ -51,7 +53,11 @@ class ManualPromptWorker(QThread):
         time.sleep(15)
         scroll_to_bottom()
         copy_icon = find_last_copy_icon()
+
+        img = take_screenshot("before_click.png")
+
         pyautogui.moveTo(copy_icon, duration=0.5)
+        show_mouse(img)
         time.sleep(1)
         pyautogui.click(copy_icon)
 

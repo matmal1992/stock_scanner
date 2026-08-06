@@ -1,3 +1,4 @@
+# import ctypes
 import logging
 import os
 import sys
@@ -5,7 +6,7 @@ from pathlib import Path
 
 
 def get_root_dir() -> Path:
-    return Path(__file__).resolve().parents[3]
+    return Path(__file__).resolve().parents[2]
 
 
 def is_frozen() -> bool:
@@ -18,6 +19,15 @@ def get_data_dir() -> Path:
         return Path(sys.executable).resolve().parents[3] / "data"
     else:
         return get_root_dir() / "data"
+
+
+def get_assets_dir() -> Path:
+    if is_frozen():
+        print(f"\nRoot dir: {get_root_dir()}")
+        # return get_root_dir() / "build" / "dist" / "assets"
+        return get_root_dir() / "assets"
+    else:
+        return get_root_dir() / "assets"
 
 
 def application_dir() -> Path:
@@ -39,6 +49,8 @@ def bundle_dir() -> Path:
 
 def configure_environment() -> None:
     browsers_path = bundle_dir() / "browsers"
+
+    # ctypes.windll.user32.SetProcessDPIAware()
 
     os.environ["PLAYWRIGHT_BROWSERS_PATH"] = str(browsers_path)
     logging.info(f"Playwright configured. Path: {browsers_path}")

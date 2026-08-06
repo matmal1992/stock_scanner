@@ -33,7 +33,7 @@ class NewsFeedList(QWidget):
         self.feed_list.setSelectionBehavior(self.feed_list.SelectionBehavior.SelectRows)
         self.feed_list.verticalHeader().setVisible(False)
         self.feed_list.setColumnCount(5)
-        self.feed_list.setHorizontalHeaderLabels(["Published", "Type", "Title", "LLM Status", "Sentiment"])
+        self.feed_list.setHorizontalHeaderLabels(["Published", "Type", "Title", "LLM", "Sentiment"])
         self.feed_list.setStyleSheet("""
             QHeaderView {
                 border: none;
@@ -94,7 +94,7 @@ class NewsFeedList(QWidget):
             self.feed_list.setItem(row_idx, 0, QTableWidgetItem(data["published"]))
             self.feed_list.setItem(row_idx, 1, QTableWidgetItem(data["type"]))
             self.feed_list.setItem(row_idx, 2, QTableWidgetItem(data["title"][:100]))
-            self.feed_list.setItem(row_idx, 3, QTableWidgetItem(data["llm_status"]))
+            self.feed_list.setItem(row_idx, 3, QTableWidgetItem(data["llm"]))
             self.feed_list.setItem(row_idx, 4, QTableWidgetItem(data["sentiment"]))
 
             self._ids.append(entry_id)
@@ -123,8 +123,6 @@ class NewsFeedList(QWidget):
 
         self.notify.emit("Running LLM...", "neutral")
 
-        return
-
         self.llm_worker = ManualPromptWorker(link, self.selected_entry_id)
         self.llm_worker.response_received.connect(self.on_llm_result)
         self.llm_worker.start()
@@ -132,7 +130,7 @@ class NewsFeedList(QWidget):
     def on_clear_database_clicked(self) -> None:
         self.entry_repo.clear_all()
         self.set_items(
-            [({"published": "", "type": "", "title": "Brak danych", "llm_status": "", "sentiment": ""}, None)]
+            [({"published": "", "type": "", "title": "Brak danych", "llm": "", "sentiment": ""}, None)]
         )
         self.notify.emit("Wyczyszczono bazę danych", "ok")
 
@@ -140,6 +138,7 @@ class NewsFeedList(QWidget):
         success = self.entry_repo.update_sentiment(entry_id, response)
         if success:
             self.notify.emit("LLM zakończony i zapisano wynik", "ok")
+            self.on_load_data_clicked()
         else:
             self.notify.emit("LLM zakończony, ale nie zapisano wyniku", "error")
 

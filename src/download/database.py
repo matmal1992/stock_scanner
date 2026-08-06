@@ -29,8 +29,8 @@ class Database:
                 title TEXT,
                 link TEXT UNIQUE,
                 published TEXT,
-                llm_status TEXT DEFAULT 'pending',
-                sentiment TEXT
+                llm TEXT DEFAULT 'pending',
+                sentiment TEXT DEFAULT '-'
             )
             """)
 
