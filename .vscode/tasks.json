@@ -1,12 +1,15 @@
 {
     "version": "2.0.0",
     "tasks": [
-         {
-            "label": "Set up environment",
+        {
+            "label": "Setup Environment",
             "type": "shell",
-            "command": [ 
-                "python -m pip install uv;",
-                "python -m uv sync --all-extras; python -m uv run pre-commit install"
+            "command": "powershell",
+            "args": [
+                "-NoProfile",
+                "-ExecutionPolicy", "Bypass",
+                "-File",
+                "${workspaceFolder}/scripts/setup.ps1"
             ],
             "problemMatcher": [],
             "presentation": {
@@ -17,7 +20,13 @@
         {
             "label": "Run tests",
             "type": "shell",
-            "command": "python -m uv run pytest --cov=.",
+            "command": "python",
+            "args": ["-m", "uv", "run", "pytest", "--cov=."]
+            ,
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
             "problemMatcher": []
         },
         {
@@ -25,8 +34,10 @@
             "type": "shell",
             "command": "powershell",
             "args": [
-                "-Command",
-                "Remove-Item -Recurse -Force build/*; python -m uv run pyinstaller --onefile --name stock_scanner --distpath build stock_scanner/main.py"
+                "-NoProfile",
+                "-ExecutionPolicy", "Bypass",
+                "-File",
+                "${workspaceFolder}/scripts/build.ps1"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"
@@ -35,6 +46,57 @@
                 "reveal": "always",
                 "panel": "shared"
             },
+            "dependsOn": ["Pre-build check"],
+            "dependsOrder": "sequence",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Run GUI Automations",
+            "type": "shell",
+            "command": "python",
+            "args": ["-m", "uv", "run", "python", "-m", "src.core.gui_automations"],
+            "problemMatcher": []
+        },
+        {
+            "label": "Lint & Format",
+            "type": "shell",
+            "command": "powershell",
+            "args": [
+                "-Command",
+                "python -m uv run ruff check . --fix; python -m uv run ruff format ."
+            ],
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "Pre-build check",
+            "dependsOn": [
+                "Lint & Format",
+                "Type check",
+                "Import check"
+            ],
+            "dependsOrder": "sequence",
+            "problemMatcher": []
+        },
+        {
+            "label": "Type check",
+            "type": "shell",
+            "command": "python",
+            "args": ["-m", "uv", "run", "mypy", "."],
+            "problemMatcher": []
+        },
+        {
+            "label": "Import check",
+            "type": "shell",
+            "command": "python",
+            "args": ["-m", "uv", "run", "python", "-c", "import src.main"],
             "problemMatcher": []
         }
     ]

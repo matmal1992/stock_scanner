@@ -11,11 +11,23 @@ __pycache__/
 *.txt
 !first_tier_list.txt
 *.html
+*.db
+config.json
 
 #environment
+.venv/
+venv/
+env/
+ENV/
 *.lock
 *.coverage
 *.egg-info
+.uv-cache/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+coverage.xml
+browsers/*
 
 #build
 build/*

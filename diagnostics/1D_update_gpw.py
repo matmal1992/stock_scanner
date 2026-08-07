@@ -41,9 +41,7 @@ def update_ticker(ticker: str, file_path: str) -> pd.DataFrame:
 
     print("Dane nieaktualne. Aktualizuję...")
 
-    new_data = yf.Ticker(ticker).history(
-        start=last_date + timedelta(days=1), interval=INTERVAL
-    )
+    new_data = yf.Ticker(ticker).history(start=last_date + timedelta(days=1), interval=INTERVAL)
 
     if not new_data.empty:
         df = pd.concat([df_existing, new_data])
