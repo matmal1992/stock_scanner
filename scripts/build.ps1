@@ -27,7 +27,6 @@ if (-Not (Test-Path "browsers")) {
 Write-Host "Running PyInstaller..." -ForegroundColor Cyan
 
 python -m uv run pyinstaller `
-    --clean `
     --onedir `
     --name stock_scanner `
     --add-data "$browserPath;browsers" `

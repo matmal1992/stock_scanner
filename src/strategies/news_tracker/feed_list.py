@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Sequence
 
-from PySide6.QtCore import Signal
+from PySide6.QtCore import QThread, Signal
 from PySide6.QtWidgets import (
     QHBoxLayout,
     QHeaderView,
@@ -68,9 +68,8 @@ class NewsFeedList(QWidget):
         self.clear_database_btn.clicked.connect(self.on_clear_database_clicked)
 
         self.fetcher = NewsFetcher(entry_repo, tracked_repo)
-        self.fetcher.data_ready.connect(self.on_data_ready)
-        self.fetcher.log.connect(self.on_log)
-        self.fetcher.error.connect(self.on_error)
+        self.llm_thread: QThread | None = None
+        self.llm_worker: ManualPromptWorker | None = None
 
         test_buttons_box = QHBoxLayout()
         test_buttons_box.addWidget(get_news_btn)
@@ -123,9 +122,26 @@ class NewsFeedList(QWidget):
 
         self.notify.emit("Running LLM...", "neutral")
 
+        if self.llm_thread is not None and self.llm_thread.isRunning():
+            self.notify.emit("Run LLM: Wciąż trwa poprzednie zadanie", "error")
+            return
+
+        self.llm_thread = QThread(self)
         self.llm_worker = ManualPromptWorker(link, self.selected_entry_id)
+        self.llm_worker.moveToThread(self.llm_thread)
+
+        self.llm_thread.started.connect(self.llm_worker.run)
         self.llm_worker.response_received.connect(self.on_llm_result)
-        self.llm_worker.start()
+        self.llm_worker.error.connect(self.on_error)
+
+        self.llm_worker.response_received.connect(self.llm_thread.quit)
+        self.llm_worker.error.connect(self.llm_thread.quit)
+        self.llm_worker.response_received.connect(self.llm_worker.deleteLater)
+        self.llm_worker.error.connect(self.llm_worker.deleteLater)
+        self.llm_thread.finished.connect(self.llm_thread.deleteLater)
+        self.llm_thread.finished.connect(self._cleanup_llm_thread)
+
+        self.llm_thread.start()
 
     def on_clear_database_clicked(self) -> None:
         self.entry_repo.clear_all()
@@ -150,6 +166,10 @@ class NewsFeedList(QWidget):
         error_time = now.strftime("%Y-%m-%d %H:%M:%S")
         self.notify.emit(f"{error_time} Błąd: {e}", "error")
 
+    def _cleanup_llm_thread(self) -> None:
+        self.llm_thread = None
+        self.llm_worker = None
+
     def on_data_ready(self, items: list[NewsEntry], has_new_entries: bool) -> None:
         for item in items:
             self.entry_repo.save(item)
@@ -163,7 +183,19 @@ class NewsFeedList(QWidget):
 
     def on_get_espi_clicked(self) -> None:
         self.notify.emit("Pobieranie ESPI...", "neutral")
-        self.fetcher.fetch()
+        self.fetch_thread = QThread()
+        self.fetcher.moveToThread(self.fetch_thread)
+
+        self.fetch_thread.started.connect(self.fetcher.fetch)
+
+        self.fetcher.data_ready.connect(self.on_data_ready)
+        self.fetcher.log.connect(self.on_log)
+        self.fetcher.error.connect(self.on_error)
+
+        self.fetcher.data_ready.connect(self.fetch_thread.quit)
+        self.fetcher.data_ready.connect(self.fetcher.deleteLater)
+        self.fetch_thread.finished.connect(self.fetch_thread.deleteLater)
+        self.fetch_thread.start()
 
     def select_last_pending_entry(self) -> None:
         row_count = self.feed_list.rowCount()

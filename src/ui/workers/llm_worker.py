@@ -31,8 +31,9 @@ my_prompt = (
 )
 
 
-class ManualPromptWorker(QThread):
+class ManualPromptWorker(QObject):
     response_received = Signal(int, str)
+    error = Signal(str)
     link_to_read: str
     entry_id: int
 
@@ -45,33 +46,46 @@ class ManualPromptWorker(QThread):
         return f"{my_prompt} Link do analizy: {self.link_to_read}"
 
     def run(self) -> None:
-        prompt = self.build_prompt()
-        scroll_to_bottom()
-        time.sleep(0.5)
-        paste_into_input(prompt)
-        time.sleep(0.5)
-        pyautogui.press("enter")
-        time.sleep(15)
-        scroll_to_bottom()
-        copy_icon = find_last_copy_icon()
+        try:
+            prompt = self.build_prompt()
+            scroll_to_bottom()
+            time.sleep(0.5)
+            paste_into_input(prompt)
+            time.sleep(0.5)
+            pyautogui.press("enter")
+            time.sleep(15)
+            scroll_to_bottom()
+            copy_icon = find_last_copy_icon()
 
-        img = take_screenshot("before_click.png")
+            img = take_screenshot("before_click.png")
 
-        pyautogui.moveTo(copy_icon, duration=0.5)
-        show_mouse(img)
-        time.sleep(1)
-        pyautogui.click(copy_icon)
+            pyautogui.moveTo(copy_icon, duration=0.5)
+            show_mouse(img)
+            time.sleep(1)
+            pyautogui.click(copy_icon)
 
-        # if no response - paste no executed
-        response = pyperclip.paste()
-        self.response_received.emit(self.entry_id, response)
-        print("RESPONSE:\n", response)
+            response = pyperclip.paste()
+            self.response_received.emit(self.entry_id, response)
+            print("RESPONSE:\n", response)
+
+        except Exception as exc:
+            message = f"LLM worker error: {exc}"
+            print(message)
+            self.error.emit(message)
 
 
 class LLMService(QObject):
     result = Signal(int, str)
 
     def run(self, link: str, entry_id: int) -> None:
+        thread = QThread()
         self.worker = ManualPromptWorker(link, entry_id)
+        self.worker.moveToThread(thread)
         self.worker.response_received.connect(self.result)
-        self.worker.start()
+        self.worker.response_received.connect(thread.quit)
+        self.worker.response_received.connect(self.worker.deleteLater)
+        self.worker.error.connect(thread.quit)
+        self.worker.error.connect(self.worker.deleteLater)
+        thread.started.connect(self.worker.run)
+        thread.finished.connect(thread.deleteLater)
+        thread.start()

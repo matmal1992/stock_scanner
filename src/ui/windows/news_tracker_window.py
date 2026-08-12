@@ -1,6 +1,5 @@
 import logging
 
-from PySide6.QtCore import QThread
 from PySide6.QtWidgets import QVBoxLayout, QWidget
 
 from src.strategies.news_tracker.entry_repo import EntryRepository
@@ -20,7 +19,6 @@ class NewsTrackerWindow(QWidget):
         self.entry_repo = entry_repo
 
         # self.llm.result.connect(self.on_llm_result)
-        self.website_thread: QThread | None = None
         self.notifications = StatusLabel(text="No notifications")
         self.tracked_tickers = TrackedTickersList(tracked_repo)
         self.news_feed = NewsFeedList(entry_repo, tracked_repo)
