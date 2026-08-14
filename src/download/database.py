@@ -16,10 +16,12 @@ class Database:
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
 
     def connect(self) -> sqlite3.Connection:
-        return sqlite3.connect(self.db_path)
+        return sqlite3.connect(self.db_path, timeout=10)
 
     def init_db(self) -> None:
         with self.connect() as conn:
+            conn.execute("PRAGMA journal_mode=WAL")
+
             cur = conn.cursor()
 
             cur.execute("""

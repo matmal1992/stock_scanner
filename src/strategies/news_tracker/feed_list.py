@@ -13,8 +13,8 @@ from PySide6.QtWidgets import (
 )
 
 from src.strategies.news_tracker.entry_repo import EntryRepository, NewsEntry, NewsFormatter
-from src.strategies.news_tracker.news_fetcher import NewsFetcher
 from src.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
+from src.ui.workers.espi_worker import ESPIService
 from src.ui.workers.llm_worker import LLMService, ManualPromptWorker
 
 
@@ -25,6 +25,12 @@ class NewsFeedList(QWidget):
     def __init__(self, entry_repo: EntryRepository, tracked_repo: TrackedTickerRepository) -> None:
         super().__init__()
         self.entry_repo = entry_repo
+
+        self.espi = ESPIService(entry_repo)
+        self.espi.result.connect(self.on_espi_result)
+        self.espi.log.connect(self.on_espi_log)
+        self.espi.error.connect(self.on_espi_error)
+        self.espi.finished.connect(self.on_espi_finished)
 
         self.llm = LLMService(entry_repo)
         self.llm.log.connect(self.on_llm_log)
@@ -73,7 +79,6 @@ class NewsFeedList(QWidget):
         self.run_llm_btn.clicked.connect(self.on_run_llm_clicked)
         self.clear_database_btn.clicked.connect(self.on_clear_database_clicked)
 
-        self.fetcher = NewsFetcher(entry_repo, tracked_repo)
         self.llm_thread: QThread | None = None
         self.llm_worker: ManualPromptWorker | None = None
 
@@ -104,12 +109,6 @@ class NewsFeedList(QWidget):
 
             self._ids.append(entry_id)
 
-    def get_selected_id(self) -> int | None:
-        row = self.feed_list.currentRow()
-        if 0 <= row < len(self._ids):
-            return self._ids[row]
-        return None
-
     def on_load_data_clicked(self) -> None:
         rows = self.entry_repo.get_all_entries()
         formatted_rows = NewsFormatter.format(rows)
@@ -138,55 +137,48 @@ class NewsFeedList(QWidget):
             self.notify.emit("Nie udało się uruchomić LLM", "error")
 
     def on_clear_database_clicked(self) -> None:
+        if self.espi.is_running():
+            self.notify.emit("Nie można wyczyścić bazy podczas pobierania ESPI", "error")
+            return
+
+        if self.llm.is_running():
+            self.notify.emit("Nie można wyczyścić bazy podczas pracy LLM", "error")
+            return
+
         self.entry_repo.clear_all()
         self.set_items(
             [({"published": "", "type": "", "title": "Brak danych", "llm": "", "sentiment": ""}, None)]
         )
         self.notify.emit("Wyczyszczono bazę danych", "ok")
 
-    def on_llm_result(self, entry_id: int, response: str) -> None:
-        success = self.entry_repo.update_llm(entry_id, response)
-        if success:
-            self.notify.emit("LLM zakończony i zapisano wynik", "ok")
-            self.on_load_data_clicked()
-        else:
-            self.notify.emit("LLM zakończony, ale nie zapisano wyniku", "error")
-
-    def on_log(self, text: str) -> None:
-        self.notify.emit(f"{text}", "neutral")
-
-    def on_error(self, e: str) -> None:
-        now = datetime.now()
-        error_time = now.strftime("%Y-%m-%d %H:%M:%S")
-        self.notify.emit(f"{error_time} Błąd: {e}", "error")
-
-    def _cleanup_llm_thread(self) -> None:
-        self.llm_thread = None
-        self.llm_worker = None
-
-    def on_data_ready(self, items: list[NewsEntry], has_new_entries: bool) -> None:
-        for item in items:
-            self.entry_repo.save(item)
-
+    def on_espi_result(self, items: list[NewsEntry], has_new_entries: bool) -> None:
         rows = self.entry_repo.get_all_entries()
-        formatted_rows = [(text, entry_id) for text, entry_id in NewsFormatter.format(rows)]
-        if has_new_entries:
-            print("New entries")
+        formatted_rows = NewsFormatter.format(rows)
+        self.set_items(formatted_rows)
 
-        self.set_items([*formatted_rows])
+        if has_new_entries:
+            self.notify.emit("Pobrano nowe komunikaty ESPI", "ok")
+        else:
+            self.notify.emit("Brak nowych komunikatów ESPI", "neutral")
 
     def on_get_espi_clicked(self) -> None:
+        if self.espi.is_running():
+            self.notify.emit("Pobieranie ESPI już trwa", "error")
+            return
+
         self.notify.emit("Pobieranie ESPI...", "neutral")
-        self.fetch_thread = QThread()
-        self.fetcher.moveToThread(self.fetch_thread)
+        started = self.espi.start()
 
-        self.fetch_thread.started.connect(self.fetcher.fetch)
+        if not started:
+            self.notify.emit("Nie udało się uruchomić ESPI", "error")
 
-        self.fetcher.data_ready.connect(self.on_data_ready)
-        self.fetcher.log.connect(self.on_log)
-        self.fetcher.error.connect(self.on_error)
+    def on_espi_log(self, text: str) -> None:
+        self.notify.emit(text, "neutral")
 
-        self.fetcher.data_ready.connect(self.fetch_thread.quit)
-        self.fetcher.data_ready.connect(self.fetcher.deleteLater)
-        self.fetch_thread.finished.connect(self.fetch_thread.deleteLater)
-        self.fetch_thread.start()
+    def on_espi_error(self, text: str) -> None:
+        now = datetime.now()
+        error_time = now.strftime("%Y-%m-%d %H:%M:%S")
+        self.notify.emit(f"{error_time} Błąd ESPI: {text}", "error")
+
+    def on_espi_finished(self) -> None:
+        self.notify.emit("Pobieranie ESPI zakończone", "ok")
