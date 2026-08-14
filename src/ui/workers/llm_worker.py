@@ -4,12 +4,13 @@ import pyautogui
 import pyperclip
 from PySide6.QtCore import QObject, QThread, Signal
 
-from src.core.debug_screen import show_mouse, take_screenshot
+# from src.core.debug_screen import show_mouse, take_screenshot
 from src.core.gui_automations import (
     find_last_copy_icon,
     paste_into_input,
     scroll_to_bottom,
 )
+from src.strategies.news_tracker.entry_repo import EntryRepository
 
 my_prompt = (
     "Przeanalizuj zawartość podanego linku i oceń jego potencjał "
@@ -32,22 +33,9 @@ my_prompt = (
 
 
 class ManualPromptWorker(QObject):
-    response_received = Signal(int, str)
-    error = Signal(str)
-    link_to_read: str
-    entry_id: int
-
-    def __init__(self, link: str, entry_id: int) -> None:
-        super().__init__()
-        self.link_to_read = link
-        self.entry_id = entry_id
-
-    def build_prompt(self) -> str:
-        return f"{my_prompt} Link do analizy: {self.link_to_read}"
-
-    def run(self) -> None:
+    def run(self, link: str) -> str:
         try:
-            prompt = self.build_prompt()
+            prompt = f"{my_prompt} Link do analizy: {link}"
             scroll_to_bottom()
             time.sleep(0.5)
             paste_into_input(prompt)
@@ -57,35 +45,127 @@ class ManualPromptWorker(QObject):
             scroll_to_bottom()
             copy_icon = find_last_copy_icon()
 
-            img = take_screenshot("before_click.png")
+            # img = take_screenshot("before_click.png")
 
             pyautogui.moveTo(copy_icon, duration=0.5)
-            show_mouse(img)
+            # show_mouse(img)
             time.sleep(1)
             pyautogui.click(copy_icon)
 
             response = pyperclip.paste()
-            self.response_received.emit(self.entry_id, response)
-            print("RESPONSE:\n", response)
+            # self.response_received.emit(self.entry_id, response)
+            # print("RESPONSE:\n", response)
+
+            return response
 
         except Exception as exc:
             message = f"LLM worker error: {exc}"
             print(message)
-            self.error.emit(message)
+            # self.error.emit(message)
+            return ""
 
 
 class LLMService(QObject):
-    result = Signal(int, str)
+    log = Signal(str)
+    error = Signal(str)
+    finished = Signal()
 
-    def run(self, link: str, entry_id: int) -> None:
-        thread = QThread()
-        self.worker = ManualPromptWorker(link, entry_id)
-        self.worker.moveToThread(thread)
-        self.worker.response_received.connect(self.result)
-        self.worker.response_received.connect(thread.quit)
-        self.worker.response_received.connect(self.worker.deleteLater)
-        self.worker.error.connect(thread.quit)
-        self.worker.error.connect(self.worker.deleteLater)
-        thread.started.connect(self.worker.run)
-        thread.finished.connect(thread.deleteLater)
-        thread.start()
+    def __init__(self, entry_repo: EntryRepository) -> None:
+        super().__init__()
+
+        self.entry_repo = entry_repo
+
+        self._thread: QThread | None = None
+        self.worker: LLMQueueWorker | None = None
+
+    def start(self) -> bool:
+        if self._thread is not None and self._thread.isRunning():
+            self.log.emit("LLM już działa")
+            return False
+
+        self._thread = QThread()
+
+        self.worker = LLMQueueWorker(self.entry_repo)
+        self.worker.moveToThread(self._thread)
+        self.worker.log.connect(self.log)
+        self.worker.error.connect(self.error)
+        self.worker.finished.connect(self._thread.quit)
+        self.worker.finished.connect(self.worker.deleteLater)
+
+        self._thread.started.connect(self.worker.run)
+        self._thread.finished.connect(self._thread.deleteLater)
+        self._thread.finished.connect(self._on_thread_finished)
+
+        self._thread.start()
+
+        return True
+
+    def stop(self) -> None:
+        if self.worker is not None:
+            self.worker.stop()
+
+    def is_running(self) -> bool:
+        return self._thread is not None and self._thread.isRunning()
+
+    def _on_thread_finished(self) -> None:
+        self._thread = None
+        self.worker = None
+
+        self.finished.emit()
+
+
+class LLMQueueWorker(QObject):
+    finished = Signal()
+    error = Signal(str)
+    log = Signal(str)
+
+    def __init__(self, entry_repo: EntryRepository) -> None:
+        super().__init__()
+
+        self.entry_repo = entry_repo
+        self.running = True
+
+        self.prompt_worker = ManualPromptWorker()
+
+    def stop(self) -> None:
+        self.running = False
+
+    def run(self) -> None:
+        self.log.emit("LLM queue started")
+
+        try:
+            while self.running:
+                pending = self.entry_repo.get_last_pending()
+
+                if pending is None:
+                    self.log.emit("Brak wpisów pending")
+                    break
+
+                entry_id = pending["id"]
+                link = pending["link"]
+
+                self.log.emit(f"LLM: przetwarzanie wpisu {entry_id}")
+
+                try:
+                    response = self.prompt_worker.run(link)
+
+                    success = self.entry_repo.update_llm(
+                        entry_id,
+                        response,
+                    )
+
+                    if not success:
+                        self.log.emit(f"LLM: nie udało się zapisać wyniku dla {entry_id}")
+                        break
+
+                    self.log.emit(f"LLM: zakończono wpis {entry_id}")
+
+                except Exception as exc:
+                    self.error.emit(f"LLM worker error dla {entry_id}: {exc}")
+                    break
+
+                time.sleep(0.2)
+
+        finally:
+            self.log.emit("LLM queue finished")
+            self.finished.emit()

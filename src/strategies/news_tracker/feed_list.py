@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (
 from src.strategies.news_tracker.entry_repo import EntryRepository, NewsEntry, NewsFormatter
 from src.strategies.news_tracker.news_fetcher import NewsFetcher
 from src.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
-from src.ui.workers.llm_worker import ManualPromptWorker
+from src.ui.workers.llm_worker import LLMService, ManualPromptWorker
 
 
 class NewsFeedList(QWidget):
@@ -25,6 +25,12 @@ class NewsFeedList(QWidget):
     def __init__(self, entry_repo: EntryRepository, tracked_repo: TrackedTickerRepository) -> None:
         super().__init__()
         self.entry_repo = entry_repo
+
+        self.llm = LLMService(entry_repo)
+        self.llm.log.connect(self.on_llm_log)
+        self.llm.error.connect(self.on_llm_error)
+        self.llm.finished.connect(self.on_llm_finished)
+
         self._ids: list[int | None] = []
         self.selected_entry_id: int | None = None
 
@@ -109,39 +115,27 @@ class NewsFeedList(QWidget):
         formatted_rows = NewsFormatter.format(rows)
         self.set_items(formatted_rows)
 
+    def on_llm_log(self, text: str) -> None:
+        self.notify.emit(text, "neutral")
+
+    def on_llm_error(self, text: str) -> None:
+        self.notify.emit(text, "error")
+
+    def on_llm_finished(self) -> None:
+        self.notify.emit("Kolejka LLM zakończona", "ok")
+
+        self.on_load_data_clicked()
+
     def on_run_llm_clicked(self) -> None:
-        self.select_last_pending_entry()
-        if not self.selected_entry_id:
-            self.notify.emit("Run LLM: Brak zaznaczonego wpisu", "error")
+        if self.llm.is_running():
+            self.notify.emit("LLM już działa", "error")
             return
 
-        link = self.entry_repo.get_link_by_id(self.selected_entry_id)
-        if not link:
-            self.notify.emit("Run LLM: Nie znaleziono linku w bazie", "error")
-            return
+        self.notify.emit("Uruchamiam kolejkę LLM...", "neutral")
+        started = self.llm.start()
 
-        self.notify.emit("Running LLM...", "neutral")
-
-        if self.llm_thread is not None and self.llm_thread.isRunning():
-            self.notify.emit("Run LLM: Wciąż trwa poprzednie zadanie", "error")
-            return
-
-        self.llm_thread = QThread(self)
-        self.llm_worker = ManualPromptWorker(link, self.selected_entry_id)
-        self.llm_worker.moveToThread(self.llm_thread)
-
-        self.llm_thread.started.connect(self.llm_worker.run)
-        self.llm_worker.response_received.connect(self.on_llm_result)
-        self.llm_worker.error.connect(self.on_error)
-
-        self.llm_worker.response_received.connect(self.llm_thread.quit)
-        self.llm_worker.error.connect(self.llm_thread.quit)
-        self.llm_worker.response_received.connect(self.llm_worker.deleteLater)
-        self.llm_worker.error.connect(self.llm_worker.deleteLater)
-        self.llm_thread.finished.connect(self.llm_thread.deleteLater)
-        self.llm_thread.finished.connect(self._cleanup_llm_thread)
-
-        self.llm_thread.start()
+        if not started:
+            self.notify.emit("Nie udało się uruchomić LLM", "error")
 
     def on_clear_database_clicked(self) -> None:
         self.entry_repo.clear_all()
@@ -196,15 +190,3 @@ class NewsFeedList(QWidget):
         self.fetcher.data_ready.connect(self.fetcher.deleteLater)
         self.fetch_thread.finished.connect(self.fetch_thread.deleteLater)
         self.fetch_thread.start()
-
-    def select_last_pending_entry(self) -> None:
-        row_count = self.feed_list.rowCount()
-
-        for row in range(row_count - 1, -1, -1):  # iteracja od końca
-            item = self.feed_list.item(row, 3)  # kolumna "LLM Status"
-            if item and item.text().lower() == "pending":
-                self.feed_list.setCurrentCell(row, 0)
-                self.selected_entry_id = self.get_selected_id()
-                return
-
-        self.selected_entry_id = None

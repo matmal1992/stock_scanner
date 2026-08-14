@@ -7,7 +7,6 @@ from src.strategies.news_tracker.feed_list import NewsFeedList
 from src.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
 from src.strategies.news_tracker.tracked_tickers_list import TrackedTickersList
 from src.ui.gui_elements.Labels import StatusLabel
-from src.ui.workers.llm_worker import LLMService
 
 logger = logging.getLogger(__name__)
 
@@ -15,10 +14,8 @@ logger = logging.getLogger(__name__)
 class NewsTrackerWindow(QWidget):
     def __init__(self, entry_repo: EntryRepository, tracked_repo: TrackedTickerRepository) -> None:
         super().__init__()
-        self.llm = LLMService()
         self.entry_repo = entry_repo
 
-        # self.llm.result.connect(self.on_llm_result)
         self.notifications = StatusLabel(text="No notifications")
         self.tracked_tickers = TrackedTickersList(tracked_repo)
         self.news_feed = NewsFeedList(entry_repo, tracked_repo)
@@ -26,11 +23,6 @@ class NewsTrackerWindow(QWidget):
         self.tracked_tickers.notify.connect(self.on_notify)
 
         self.setup_window_layout()
-
-    # self.llm_thread: QThread | None = None
-    #     self.timer = QTimer()
-    #     self.timer.setInterval(10000)
-    #     self.timer.timeout.connect(self.on_timer)
 
     # def on_timer(self) -> None:
     #     if self.rss_worker is None:
@@ -51,11 +43,3 @@ class NewsTrackerWindow(QWidget):
             self.notifications.set_error(text)
         else:
             self.notifications.setText(text)
-
-    # def _cleanup_llm_thread(self) -> None:
-    # if self.llm_worker is not None:
-    #     self.llm_worker.deleteLater()
-    #     self.llm_worker = None
-    # if self.llm_thread is not None:
-    #     self.llm_thread.deleteLater()
-    #     self.llm_thread = None

@@ -161,3 +161,25 @@ class EntryRepository:
     def clear_all(self) -> None:
         with self.db.connect() as conn:
             conn.execute("DELETE FROM entries")
+
+    def get_last_pending(self) -> NewsRow | None:
+        with self.db.connect() as conn:
+            cursor = conn.cursor()
+
+            cursor.execute(
+                """
+                SELECT id, title, link, published, source_type, llm, sentiment
+                FROM entries
+                WHERE llm = ?
+                ORDER BY id DESC
+                LIMIT 1
+                """,
+                ("pending",),
+            )
+
+            row = cursor.fetchone()
+
+        if row is None:
+            return None
+
+        return self._to_dict(row)
