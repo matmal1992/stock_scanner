@@ -1,13 +1,13 @@
 from typing import Optional
 
 from playwright.sync_api import Page, sync_playwright
-from PySide6.QtCore import QObject, QThread, Signal
+from PySide6.QtCore import QObject, QThread, QTimer, Signal
 
 from src.strategies.news_tracker.entry_repo import EntryRepository, NewsEntry
 
 
 class ESPIWorker(QObject):
-    result = Signal(list, bool)
+    result = Signal(bool)
     error = Signal(str)
     log = Signal(str)
 
@@ -23,8 +23,7 @@ class ESPIWorker(QObject):
         try:
             entries = self._scrape()
             has_new = self._save_entries(entries)
-            latest = self.entry_repo.get_latest_with_id("ESPI")
-            self.result.emit(latest, has_new)
+            self.result.emit(has_new)
 
         except Exception as exc:
             self.error.emit(f"ESPI error: {exc}")
@@ -166,10 +165,12 @@ class ESPIWorker(QObject):
 
 
 class ESPIService(QObject):
-    result = Signal(list, bool)
+    result = Signal(bool)
     error = Signal(str)
     log = Signal(str)
     finished = Signal()
+
+    INTERVAL_MS = 60_000
 
     def __init__(self, entry_repo: EntryRepository) -> None:
         super().__init__()
@@ -177,35 +178,72 @@ class ESPIService(QObject):
         self._thread: Optional[QThread] = None
         self.worker: Optional[ESPIWorker] = None
 
+        self._timer = QTimer(self)
+        self._timer.setInterval(self.INTERVAL_MS)
+        self._timer.timeout.connect(self._on_timer)
+
     def start(self) -> bool:
-        if self._thread is not None and self._thread.isRunning():
-            self.log.emit("ESPI już działa")
+        if self._timer.isActive():
+            self.log.emit("Automatyczne pobieranie ESPI już działa")
             return False
+
+        self.log.emit("Uruchamiam automatyczne pobieranie ESPI")
+        self._run_once()
+        self._timer.start()
+
+        return True
+
+    def stop(self) -> None:
+        self._timer.stop()
+
+        if self._thread is not None and self._thread.isRunning():
+            self.log.emit("ESPI: oczekiwanie na zakończenie bieżącego scrapowania")
+        else:
+            self.log.emit("Automatyczne pobieranie ESPI zatrzymane")
+
+    def is_running(self) -> bool:
+        return self._timer.isActive() or (self._thread is not None and self._thread.isRunning())
+
+    def _on_timer(self) -> None:
+        self.log.emit("ESPI: czas na kolejne pobieranie")
+
+        self._run_once()
+
+    def _run_once(self) -> None:
+        if self._thread is not None and self._thread.isRunning():
+            self.log.emit("ESPI: poprzednie scrapowanie jeszcze trwa")
+            return
 
         self._thread = QThread()
         self.worker = ESPIWorker(self.entry_repo)
 
         self.worker.moveToThread(self._thread)
-
-        self.worker.result.connect(self.result)
-        self.worker.error.connect(self.error)
+        self.worker.result.connect(self._on_worker_result)
+        self.worker.error.connect(self._on_worker_error)
         self.worker.log.connect(self.log)
-        self.worker.result.connect(self._thread.quit)
-        self.worker.error.connect(self._thread.quit)
-        self.worker.result.connect(self.worker.deleteLater)
-        self.worker.error.connect(self.worker.deleteLater)
+        self.worker.result.connect(self._finish_worker)
+        self.worker.error.connect(self._finish_worker)
 
         self._thread.started.connect(self.worker.run)
         self._thread.finished.connect(self._thread.deleteLater)
         self._thread.finished.connect(self._on_thread_finished)
 
         self._thread.start()
-        return True
 
-    def is_running(self) -> bool:
-        return self._thread is not None and self._thread.isRunning()
+    def _on_worker_result(self, has_new: bool) -> None:
+        self.result.emit(has_new)
+
+    def _on_worker_error(self, message: str) -> None:
+        self.error.emit(message)
+
+    def _finish_worker(self) -> None:
+        if self._thread is not None:
+            self._thread.quit()
 
     def _on_thread_finished(self) -> None:
+        if self.worker is not None:
+            self.worker.deleteLater()
+
         self._thread = None
         self.worker = None
 

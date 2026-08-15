@@ -61,7 +61,6 @@ class ManualPromptWorker(QObject):
         except Exception as exc:
             message = f"LLM worker error: {exc}"
             print(message)
-            # self.error.emit(message)
             return ""
 
 
@@ -69,6 +68,7 @@ class LLMService(QObject):
     log = Signal(str)
     error = Signal(str)
     finished = Signal()
+    result = Signal(int)
 
     def __init__(self, entry_repo: EntryRepository) -> None:
         super().__init__()
@@ -91,6 +91,7 @@ class LLMService(QObject):
         self.worker.error.connect(self.error)
         self.worker.finished.connect(self._thread.quit)
         self.worker.finished.connect(self.worker.deleteLater)
+        self.worker.result.connect(self.result)
 
         self._thread.started.connect(self.worker.run)
         self._thread.finished.connect(self._thread.deleteLater)
@@ -118,13 +119,13 @@ class LLMQueueWorker(QObject):
     finished = Signal()
     error = Signal(str)
     log = Signal(str)
+    result = Signal(int)
 
     def __init__(self, entry_repo: EntryRepository) -> None:
         super().__init__()
 
         self.entry_repo = entry_repo
         self.running = True
-
         self.prompt_worker = ManualPromptWorker()
 
     def stop(self) -> None:
@@ -158,6 +159,7 @@ class LLMQueueWorker(QObject):
                         self.log.emit(f"LLM: nie udało się zapisać wyniku dla {entry_id}")
                         break
 
+                    self.result.emit(entry_id)
                     self.log.emit(f"LLM: zakończono wpis {entry_id}")
 
                 except Exception as exc:

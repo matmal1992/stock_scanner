@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Sequence
 
-from PySide6.QtCore import QThread, Signal
+from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
     QHBoxLayout,
     QHeaderView,
@@ -12,10 +12,10 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.strategies.news_tracker.entry_repo import EntryRepository, NewsEntry, NewsFormatter
+from src.strategies.news_tracker.entry_repo import EntryRepository, NewsFormatter
 from src.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
 from src.ui.workers.espi_worker import ESPIService
-from src.ui.workers.llm_worker import LLMService, ManualPromptWorker
+from src.ui.workers.llm_worker import LLMService
 
 
 class NewsFeedList(QWidget):
@@ -36,6 +36,7 @@ class NewsFeedList(QWidget):
         self.llm.log.connect(self.on_llm_log)
         self.llm.error.connect(self.on_llm_error)
         self.llm.finished.connect(self.on_llm_finished)
+        self.llm.result.connect(self.on_llm_result)
 
         self._ids: list[int | None] = []
         self.selected_entry_id: int | None = None
@@ -72,21 +73,21 @@ class NewsFeedList(QWidget):
 
         get_news_btn = QPushButton("Get feed")
         self.load_data_btn = QPushButton("Load data")
+        self.stop_espi = QPushButton("Stop ESPI")
         self.run_llm_btn = QPushButton("Run LLM")
         self.clear_database_btn = QPushButton("Clear database")
         get_news_btn.clicked.connect(self.on_get_espi_clicked)
-        self.load_data_btn.clicked.connect(self.on_load_data_clicked)
+        self.load_data_btn.clicked.connect(self._update_list)
         self.run_llm_btn.clicked.connect(self.on_run_llm_clicked)
         self.clear_database_btn.clicked.connect(self.on_clear_database_clicked)
-
-        self.llm_thread: QThread | None = None
-        self.llm_worker: ManualPromptWorker | None = None
+        self.stop_espi.clicked.connect(self.on_stop_espi_clicked)
 
         test_buttons_box = QHBoxLayout()
         test_buttons_box.addWidget(get_news_btn)
         test_buttons_box.addWidget(self.load_data_btn)
         test_buttons_box.addWidget(self.run_llm_btn)
         test_buttons_box.addWidget(self.clear_database_btn)
+        test_buttons_box.addWidget(self.stop_espi)
 
         layout = QVBoxLayout()
         layout.addLayout(test_buttons_box)
@@ -109,7 +110,8 @@ class NewsFeedList(QWidget):
 
             self._ids.append(entry_id)
 
-    def on_load_data_clicked(self) -> None:
+    def _update_list(self) -> None:
+        print("update list")
         rows = self.entry_repo.get_all_entries()
         formatted_rows = NewsFormatter.format(rows)
         self.set_items(formatted_rows)
@@ -123,8 +125,6 @@ class NewsFeedList(QWidget):
     def on_llm_finished(self) -> None:
         self.notify.emit("Kolejka LLM zakończona", "ok")
 
-        self.on_load_data_clicked()
-
     def on_run_llm_clicked(self) -> None:
         if self.llm.is_running():
             self.notify.emit("LLM już działa", "error")
@@ -135,6 +135,10 @@ class NewsFeedList(QWidget):
 
         if not started:
             self.notify.emit("Nie udało się uruchomić LLM", "error")
+
+    def on_llm_result(self, entry_id: int) -> None:
+        self.notify.emit(f"LLM zakończony dla wpisu {entry_id}", "ok")
+        self._update_list()
 
     def on_clear_database_clicked(self) -> None:
         if self.espi.is_running():
@@ -151,12 +155,12 @@ class NewsFeedList(QWidget):
         )
         self.notify.emit("Wyczyszczono bazę danych", "ok")
 
-    def on_espi_result(self, items: list[NewsEntry], has_new_entries: bool) -> None:
-        rows = self.entry_repo.get_all_entries()
-        formatted_rows = NewsFormatter.format(rows)
-        self.set_items(formatted_rows)
+    def on_espi_result(self, has_new_entries: bool) -> None:
+        self._update_list()
 
         if has_new_entries:
+            if not self.llm.is_running():
+                self.llm.start()
             self.notify.emit("Pobrano nowe komunikaty ESPI", "ok")
         else:
             self.notify.emit("Brak nowych komunikatów ESPI", "neutral")
@@ -166,7 +170,7 @@ class NewsFeedList(QWidget):
             self.notify.emit("Pobieranie ESPI już trwa", "error")
             return
 
-        self.notify.emit("Pobieranie ESPI...", "neutral")
+        self.notify.emit("Uruchamiam automatyczne pobieranie ESPI...", "neutral")
         started = self.espi.start()
 
         if not started:
@@ -181,4 +185,12 @@ class NewsFeedList(QWidget):
         self.notify.emit(f"{error_time} Błąd ESPI: {text}", "error")
 
     def on_espi_finished(self) -> None:
-        self.notify.emit("Pobieranie ESPI zakończone", "ok")
+        self.notify.emit("Pojedyncze pobieranie ESPI zakończone", "ok")
+
+    def on_stop_espi_clicked(self) -> None:
+        if not self.espi.is_running():
+            self.notify.emit("Automatyczne ESPI nie jest uruchomione", "neutral")
+            return
+
+        self.espi.stop()
+        self.notify.emit("Automatyczne pobieranie ESPI zatrzymane", "ok")
