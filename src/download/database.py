@@ -1,13 +1,12 @@
 import sqlite3
-from typing import Protocol
 
+# from typing import Protocol
 from src.core.paths import get_data_dir
 
-
-class FeedEntry(Protocol):
-    id: str | None
-    link: str
-    title: str
+# class FeedEntry(Protocol):
+#     id: str | None
+#     link: str
+#     title: str
 
 
 class Database:
@@ -28,6 +27,7 @@ class Database:
             CREATE TABLE IF NOT EXISTS entries (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 source_type TEXT,
+                ticker TEXT,
                 title TEXT,
                 link TEXT UNIQUE,
                 published TEXT,

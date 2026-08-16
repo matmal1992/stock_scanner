@@ -4,13 +4,15 @@ import pyautogui
 import pyperclip
 from PySide6.QtCore import QObject, QThread, Signal
 
-# from src.core.debug_screen import show_mouse, take_screenshot
 from src.core.gui_automations import (
     find_last_copy_icon,
     paste_into_input,
     scroll_to_bottom,
 )
-from src.strategies.news_tracker.entry_repo import EntryRepository
+from src.strategies.news_tracker.entry_repo import (
+    EntryRepository,
+    NewsRow,
+)
 
 my_prompt = (
     "Przeanalizuj zawartość podanego linku i oceń jego potencjał "
@@ -68,7 +70,7 @@ class LLMService(QObject):
     log = Signal(str)
     error = Signal(str)
     finished = Signal()
-    result = Signal(int)
+    result = Signal(NewsRow)
 
     def __init__(self, entry_repo: EntryRepository) -> None:
         super().__init__()
@@ -119,7 +121,7 @@ class LLMQueueWorker(QObject):
     finished = Signal()
     error = Signal(str)
     log = Signal(str)
-    result = Signal(int)
+    result = Signal(object)
 
     def __init__(self, entry_repo: EntryRepository) -> None:
         super().__init__()
@@ -159,7 +161,13 @@ class LLMQueueWorker(QObject):
                         self.log.emit(f"LLM: nie udało się zapisać wyniku dla {entry_id}")
                         break
 
-                    self.result.emit(entry_id)
+                    updated_entry = self.entry_repo.get_by_id(entry_id)
+
+                    if updated_entry is None:
+                        self.error.emit(f"LLM: zapisano wynik, ale nie znaleziono wpisu {entry_id}")
+                        break
+
+                    self.result.emit(updated_entry)
                     self.log.emit(f"LLM: zakończono wpis {entry_id}")
 
                 except Exception as exc:

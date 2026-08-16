@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.strategies.news_tracker.entry_repo import EntryRepository, NewsFormatter
+from src.strategies.news_tracker.entry_repo import EntryRepository, NewsFormatter, NewsRow
 from src.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
 from src.ui.workers.espi_worker import ESPIService
 from src.ui.workers.llm_worker import LLMService
@@ -136,8 +136,8 @@ class NewsFeedList(QWidget):
         if not started:
             self.notify.emit("Nie udało się uruchomić LLM", "error")
 
-    def on_llm_result(self, entry_id: int) -> None:
-        self.notify.emit(f"LLM zakończony dla wpisu {entry_id}", "ok")
+    def on_llm_result(self, entry: NewsRow) -> None:
+        self.notify.emit(f"LLM zakończony dla wpisu {entry['id']}", "ok")
         self._update_list()
 
     def on_clear_database_clicked(self) -> None:

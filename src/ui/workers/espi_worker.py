@@ -71,6 +71,7 @@ class ESPIWorker(QObject):
                                 "link": link,
                                 "published": date_str,
                                 "source_type": "ESPI",
+                                "ticker": None,
                                 "llm": "pending",
                                 "sentiment": "-",
                             }
