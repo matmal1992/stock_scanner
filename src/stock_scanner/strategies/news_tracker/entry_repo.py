@@ -82,7 +82,7 @@ class EntryRepository:
 
             cursor.execute(
                 """
-                SELECT id, title, link, published, source_type, llm, sentiment
+                SELECT id, title, link, published, source_type, ticker, llm, sentiment
                 FROM entries
                 WHERE id = ?
                 """,
@@ -165,9 +165,9 @@ class EntryRepository:
             "link": row[2],
             "published": row[3],
             "source_type": row[4],
-            "llm": row[5],
-            "sentiment": row[6],
-            "ticker": row[7],
+            "ticker": row[5],
+            "llm": row[6],
+            "sentiment": row[7],
         }
 
     def clear_all(self) -> None:

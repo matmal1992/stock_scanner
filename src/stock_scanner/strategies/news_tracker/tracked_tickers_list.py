@@ -1,5 +1,3 @@
-from typing import Dict, List
-
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
     QHBoxLayout,
@@ -42,7 +40,7 @@ class TrackedTickersList(QWidget):
             self.tracked_list.addItem(item)
 
     def set_up_widgets(self) -> None:
-        self.ticker_list: List[Dict[str, str]] = []
+        self.ticker_list: list[dict[str, str]] = []
         self.ticker_symbol_input = QLineEdit()
         self.ticker_symbol_input.setFixedWidth(100)
         self.ticker_symbol_input.setPlaceholderText("Ticker")

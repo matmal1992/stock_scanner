@@ -7,7 +7,7 @@ import numpy as np
 import pyautogui
 import pyperclip
 
-from src.stock_scanner.core.debug_screen import show_detected
+from src.stock_scanner.core.debug_screen import take_screenshot
 from src.stock_scanner.core.paths import get_assets_dir
 
 
@@ -26,7 +26,7 @@ def find_input(threshold: float = 0.85) -> Optional[Tuple[int, int]]:
     img, monitor = get_screen_image()
 
     template_path = get_assets_dir() / "input_icon.png"
-    print(f"Input icon path: {template_path}")
+    # print(f"Input icon path: {template_path}")
     template = cv2.imread(template_path, cv2.IMREAD_COLOR)
 
     if template is None:
@@ -54,6 +54,7 @@ def paste_into_input(text: str) -> None:
 
     if input_point is None:
         print("Nie można wkleić — brak inputa")
+        take_screenshot("no_input_found.png")
         return
 
     x, y = input_point
@@ -69,6 +70,7 @@ def scroll_to_bottom() -> None:
 
     if input_point is None:
         print("Nie można wkleić — brak inputa")
+        take_screenshot("no_input_point_found.png")
         # dodać debugowanie w postaci zrzutu z ekranu + zapis do pliku z zaznaczonym obszarem
         return
 
@@ -93,6 +95,7 @@ def find_last_copy_icon(threshold: float = 0.85) -> Optional[Tuple[int, int]]:
     template = cv2.imread(template_path, cv2.IMREAD_COLOR)
     if template is None:
         print("\nTemplate not found")
+        take_screenshot("copy_not_found.png")
         # raise ValueError("Template not found")
         return None
 
@@ -116,7 +119,7 @@ def find_last_copy_icon(threshold: float = 0.85) -> Optional[Tuple[int, int]]:
         centers.append((center_x, center_y))
 
     # if debug:
-    show_detected(img, centers)
+    # show_detected(img, centers)
 
     bottom = max(centers, key=lambda p: p[1])
     return bottom

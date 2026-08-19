@@ -8,7 +8,7 @@ import pyautogui
 DEBUG_DIR = Path("debug")
 
 
-def take_screenshot(filename: str = "screen.png") -> np.ndarray:
+def take_screenshot(filename: str = "screen.png") -> None:
     DEBUG_DIR.mkdir(exist_ok=True)
 
     with mss.MSS() as sct:
@@ -22,8 +22,6 @@ def take_screenshot(filename: str = "screen.png") -> np.ndarray:
     cv2.imwrite(str(path), img)
 
     print(f"Screenshot saved: {path}")
-
-    return img
 
 
 def show_detected(img: np.ndarray, points: list[tuple[int, int]]) -> np.ndarray:

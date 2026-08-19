@@ -12,6 +12,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from src.stock_scanner.core.telegram import send_telegram_message
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository, NewsFormatter, NewsRow
 from src.stock_scanner.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
 from src.stock_scanner.ui.workers.espi_worker import ESPIService
@@ -139,6 +140,11 @@ class NewsFeedList(QWidget):
     def on_llm_result(self, entry: NewsRow) -> None:
         self.notify.emit(f"LLM zakończony dla wpisu {entry['id']}", "ok")
         self._update_list()
+
+        if entry["llm"] not in ("Wzrost", "Silny wzrost"):
+            return
+
+        send_telegram_message(entry)
 
     def on_clear_database_clicked(self) -> None:
         if self.espi.is_running():
