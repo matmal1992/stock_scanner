@@ -10,13 +10,13 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.strategies.news_tracker.entry_repo import EntryRepository
-from src.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
-from src.ui.windows.chart_window import ChartWindow
-from src.ui.windows.news_tracker_window import NewsTrackerWindow
-from src.ui.windows.speculation_window import SpeculationWindow
-from src.ui.windows.three_tier_window import ThreeTierWindow
-from src.ui.windows.wall_strategy_window import WallStrategyWindow
+from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository
+from src.stock_scanner.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
+from src.stock_scanner.ui.windows.chart_window import ChartWindow
+from src.stock_scanner.ui.windows.news_tracker_window import NewsTrackerWindow
+from src.stock_scanner.ui.windows.speculation_window import SpeculationWindow
+from src.stock_scanner.ui.windows.three_tier_window import ThreeTierWindow
+from src.stock_scanner.ui.windows.wall_strategy_window import WallStrategyWindow
 
 
 class MainWindow(QMainWindow):

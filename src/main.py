@@ -3,11 +3,11 @@ import traceback
 
 from PySide6.QtWidgets import QApplication
 
-from src.core.paths import configure_environment, configure_logging
-from src.download.database import Database
-from src.strategies.news_tracker.entry_repo import EntryRepository
-from src.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
-from src.ui.windows.main_window import MainWindow
+from src.stock_scanner.core.paths import configure_environment, configure_logging
+from src.stock_scanner.download.database import Database
+from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository
+from src.stock_scanner.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
+from src.stock_scanner.ui.windows.main_window import MainWindow
 
 
 def main() -> None:

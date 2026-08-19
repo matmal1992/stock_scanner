@@ -2,7 +2,7 @@ import logging
 import re
 from typing import Any, Sequence, TypedDict
 
-from src.download.database import Database
+from src.stock_scanner.download.database import Database
 
 logger = logging.getLogger(__name__)
 

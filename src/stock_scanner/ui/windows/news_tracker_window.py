@@ -2,11 +2,11 @@ import logging
 
 from PySide6.QtWidgets import QVBoxLayout, QWidget
 
-from src.strategies.news_tracker.entry_repo import EntryRepository
-from src.strategies.news_tracker.feed_list import NewsFeedList
-from src.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
-from src.strategies.news_tracker.tracked_tickers_list import TrackedTickersList
-from src.ui.gui_elements.Labels import StatusLabel
+from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository
+from src.stock_scanner.strategies.news_tracker.feed_list import NewsFeedList
+from src.stock_scanner.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
+from src.stock_scanner.strategies.news_tracker.tracked_tickers_list import TrackedTickersList
+from src.stock_scanner.ui.gui_elements.Labels import StatusLabel
 
 logger = logging.getLogger(__name__)
 

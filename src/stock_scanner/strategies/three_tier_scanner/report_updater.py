@@ -2,7 +2,7 @@ from pathlib import Path
 
 from matplotlib import typing
 
-from src.download.config import report_path
+from src.stock_scanner.download.config import report_path
 
 
 def update_down_section(results: dict[str, list[str]], location: str, tier: str) -> None:

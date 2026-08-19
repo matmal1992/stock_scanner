@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
+from src.stock_scanner.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
 
 
 class TrackedTickersList(QWidget):

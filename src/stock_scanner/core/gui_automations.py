@@ -7,8 +7,8 @@ import numpy as np
 import pyautogui
 import pyperclip
 
-from src.core.debug_screen import show_detected
-from src.core.paths import get_assets_dir
+from src.stock_scanner.core.debug_screen import show_detected
+from src.stock_scanner.core.paths import get_assets_dir
 
 
 def get_screen_image() -> Tuple[np.ndarray, dict]:

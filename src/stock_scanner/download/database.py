@@ -1,7 +1,7 @@
 import sqlite3
 
 # from typing import Protocol
-from src.core.paths import get_data_dir
+from src.stock_scanner.core.paths import get_data_dir
 
 # class FeedEntry(Protocol):
 #     id: str | None

@@ -4,12 +4,12 @@ import pyautogui
 import pyperclip
 from PySide6.QtCore import QObject, QThread, Signal
 
-from src.core.gui_automations import (
+from src.stock_scanner.core.gui_automations import (
     find_last_copy_icon,
     paste_into_input,
     scroll_to_bottom,
 )
-from src.strategies.news_tracker.entry_repo import (
+from src.stock_scanner.strategies.news_tracker.entry_repo import (
     EntryRepository,
     NewsRow,
 )

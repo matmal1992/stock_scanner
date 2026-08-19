@@ -1,11 +1,11 @@
 # profiles.py
-from src.download.config import CONFIG_1D, CONFIG_5M, CONFIG_15M
-from src.strategies.three_tier_scanner.config_filters import (
+from src.stock_scanner.download.config import CONFIG_1D, CONFIG_5M, CONFIG_15M
+from src.stock_scanner.strategies.three_tier_scanner.config_filters import (
     T1_FILTER,
     T2_FILTER,
     T3_FILTER,
 )
-from src.strategies.three_tier_scanner.strategy_profiles import (
+from src.stock_scanner.strategies.three_tier_scanner.strategy_profiles import (
     T1_COLUMNS,
     T2_COLUMNS,
     T3_COLUMNS,

@@ -1,6 +1,6 @@
 import pandas as pd
 
-from src.core.metrics import (
+from src.stock_scanner.core.metrics import (
     atr,
     compression_ratio,
     distance_from_high,

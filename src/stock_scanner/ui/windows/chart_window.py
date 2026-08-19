@@ -5,7 +5,7 @@ from typing import Optional
 import pandas as pd
 from PySide6.QtWidgets import QFileDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
-from src.ui.gui_elements.chart_widget import ChartWidget
+from src.stock_scanner.ui.gui_elements.chart_widget import ChartWidget
 
 
 class ChartWindow(QWidget):

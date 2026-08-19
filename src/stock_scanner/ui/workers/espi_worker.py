@@ -3,7 +3,7 @@ from typing import Optional
 from playwright.sync_api import Page, sync_playwright
 from PySide6.QtCore import QObject, QThread, QTimer, Signal
 
-from src.strategies.news_tracker.entry_repo import EntryRepository, NewsEntry
+from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository, NewsEntry
 
 
 class ESPIWorker(QObject):

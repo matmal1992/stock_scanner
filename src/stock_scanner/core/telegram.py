@@ -3,8 +3,8 @@ import logging
 import urllib.parse
 import urllib.request
 
-from src.download.config import load_config
-from src.strategies.news_tracker.entry_repo import NewsRow
+from src.stock_scanner.download.config import load_config
+from src.stock_scanner.strategies.news_tracker.entry_repo import NewsRow
 
 logger = logging.getLogger(__name__)
 

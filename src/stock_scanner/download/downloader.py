@@ -5,8 +5,8 @@ from typing import Callable
 import pandas as pd
 import yfinance as yf
 
-from src.download.config import DownloadConfig
-from src.strategies.three_tier_scanner.report_updater import update_down_section
+from src.stock_scanner.download.config import DownloadConfig
+from src.stock_scanner.strategies.three_tier_scanner.report_updater import update_down_section
 
 
 def is_T1_data_actual(config: DownloadConfig) -> bool:

@@ -12,10 +12,10 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.strategies.news_tracker.entry_repo import EntryRepository, NewsFormatter, NewsRow
-from src.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
-from src.ui.workers.espi_worker import ESPIService
-from src.ui.workers.llm_worker import LLMService
+from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository, NewsFormatter, NewsRow
+from src.stock_scanner.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
+from src.stock_scanner.ui.workers.espi_worker import ESPIService
+from src.stock_scanner.ui.workers.llm_worker import LLMService
 
 
 class NewsFeedList(QWidget):

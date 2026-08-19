@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from src.download.config import report_path
+from src.stock_scanner.download.config import report_path
 
 
 def create_empty_report() -> str:

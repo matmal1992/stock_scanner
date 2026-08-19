@@ -2,7 +2,7 @@ import logging
 from datetime import datetime
 from typing import List, Optional, TypedDict
 
-from src.download.database import Database
+from src.stock_scanner.download.database import Database
 
 logger = logging.getLogger(__name__)
 
