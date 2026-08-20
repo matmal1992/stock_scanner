@@ -1,17 +1,10 @@
 import json
-import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+from src.stock_scanner.core.paths import get_root_dir
 
-def get_project_root() -> Path:
-    if getattr(sys, "frozen", False):
-        return Path(sys.executable).resolve().parent.parent.parent.parent
-    else:
-        return Path(__file__).resolve().parent
-
-
-BASE_DIR = get_project_root()
+BASE_DIR = get_root_dir()
 CONFIG_PATH = BASE_DIR / "config" / "config.json"
 
 

@@ -3,7 +3,7 @@ import traceback
 
 from PySide6.QtWidgets import QApplication
 
-from src.stock_scanner.core.paths import configure_environment, configure_logging
+from src.stock_scanner.core.paths import configure_environment, configure_logging, print_paths
 from src.stock_scanner.download.database import Database
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository
 from src.stock_scanner.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
@@ -13,6 +13,7 @@ from src.stock_scanner.ui.windows.main_window import MainWindow
 def main() -> None:
     configure_logging()
     configure_environment()
+    print_paths()
 
     app = QApplication(sys.argv)
     db = Database()

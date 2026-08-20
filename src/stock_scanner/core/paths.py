@@ -6,7 +6,10 @@ from pathlib import Path
 
 
 def get_root_dir() -> Path:
-    return Path(__file__).resolve().parents[2]
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).resolve().parent.parent.parent.parent
+    else:
+        return Path(__file__).resolve().parent.parent.parent
 
 
 def is_frozen() -> bool:
@@ -23,9 +26,7 @@ def get_data_dir() -> Path:
 
 def get_assets_dir() -> Path:
     if is_frozen():
-        print(f"\nRoot dir: {get_root_dir()}")
-        # return get_root_dir() / "build" / "dist" / "assets"
-        return get_root_dir() / "assets"
+        return application_dir() / "_internal" / "assets"
     else:
         return get_root_dir() / "assets"
 
@@ -76,3 +77,9 @@ def configure_logging() -> None:
         ],
     )
     logging.info(f"Logging initialized. Log file: {log_file}")
+
+
+def print_paths() -> None:
+    print(f"Project dir: {get_root_dir()}")
+    print(f"Assets dir: {get_assets_dir()}")
+    print(f"Exe dir: {application_dir()}")
