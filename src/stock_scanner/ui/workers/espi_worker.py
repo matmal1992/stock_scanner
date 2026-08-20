@@ -67,6 +67,7 @@ class ESPIWorker(QObject):
 
                         results.append(
                             {
+                                "id": 0,
                                 "title": title,
                                 "link": link,
                                 "published": date_str,

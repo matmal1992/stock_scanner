@@ -4,7 +4,7 @@ import urllib.parse
 import urllib.request
 
 from config.app_config import load_config
-from src.stock_scanner.strategies.news_tracker.entry_repo import NewsRow
+from src.stock_scanner.strategies.news_tracker.entry_repo import NewsEntry
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +15,7 @@ telegram_chat_id = config.get("telegram_chat_id")
 ALERT_FORECASTS = {"Wzrost", "Silny wzrost"}
 
 
-def build_message(entry: NewsRow) -> str | None:
+def build_message(entry: NewsEntry) -> str | None:
     forecast = entry["llm"]
 
     if forecast not in ALERT_FORECASTS:
@@ -30,7 +30,7 @@ def build_message(entry: NewsRow) -> str | None:
     return f"{ticker}: {forecast}"
 
 
-def send_telegram_message(entry: NewsRow) -> bool:
+def send_telegram_message(entry: NewsEntry) -> bool:
     message = build_message(entry)
 
     if message is None:

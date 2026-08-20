@@ -1,6 +1,6 @@
 import logging
 import re
-from typing import Any, Sequence, TypedDict
+from typing import Any, TypedDict
 
 from src.stock_scanner.download.database import Database
 
@@ -8,16 +8,6 @@ logger = logging.getLogger(__name__)
 
 
 class NewsEntry(TypedDict):
-    title: str
-    link: str
-    published: str | None
-    source_type: str
-    ticker: str | None
-    llm: str
-    sentiment: str
-
-
-class NewsRow(TypedDict):
     id: int
     title: str
     link: str
@@ -28,25 +18,6 @@ class NewsRow(TypedDict):
     sentiment: str
 
 
-class NewsFormatter:
-    @staticmethod
-    def format(rows: Sequence[NewsRow]) -> list[tuple[dict, int]]:
-        result: list[tuple[dict, int]] = []
-
-        for row in rows:
-            formatted = {
-                "published": str(row["published"]),
-                "type": str(row["source_type"]),
-                "title": row["title"][:100],
-                "llm": str(row["llm"]),
-                "sentiment": str(row["sentiment"]),
-            }
-
-            result.append((formatted, row["id"]))
-
-        return result
-
-
 class EntryRepository:
     def __init__(self, db: Database):
         self.db = db
@@ -54,7 +25,7 @@ class EntryRepository:
     def save(self, entry: NewsEntry) -> bool:
         try:
             with self.db.connect() as conn:
-                conn.execute(
+                cursor = conn.execute(
                     """
                     INSERT OR IGNORE INTO entries (
                         source_type, ticker, title, link, published, llm, sentiment
@@ -71,12 +42,12 @@ class EntryRepository:
                         entry["sentiment"],
                     ),
                 )
-            return True
+                return cursor.rowcount > 0
         except Exception:
             logger.exception("Save failed")
             return False
 
-    def get_by_id(self, entry_id: int) -> NewsRow | None:
+    def get_by_id(self, entry_id: int) -> NewsEntry | None:
         with self.db.connect() as conn:
             cursor = conn.cursor()
 
@@ -96,7 +67,7 @@ class EntryRepository:
 
         return self._to_dict(row)
 
-    def get_all_entries(self) -> list[NewsRow]:
+    def get_all_entries(self) -> list[NewsEntry]:
         with self.db.connect() as conn:
             cur = conn.cursor()
             cur.execute(
@@ -158,7 +129,7 @@ class EntryRepository:
 
         return match.group(1).strip()
 
-    def _to_dict(self, row: list[Any]) -> NewsRow:
+    def _to_dict(self, row: list[Any]) -> NewsEntry:
         return {
             "id": row[0],
             "title": row[1],
@@ -174,7 +145,7 @@ class EntryRepository:
         with self.db.connect() as conn:
             conn.execute("DELETE FROM entries")
 
-    def get_last_pending(self) -> NewsRow | None:
+    def get_last_pending(self) -> NewsEntry | None:
         with self.db.connect() as conn:
             cursor = conn.cursor()
 

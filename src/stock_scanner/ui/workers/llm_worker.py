@@ -11,7 +11,7 @@ from src.stock_scanner.core.gui_automations import (
 )
 from src.stock_scanner.strategies.news_tracker.entry_repo import (
     EntryRepository,
-    NewsRow,
+    NewsEntry,
 )
 
 my_prompt = (
@@ -70,7 +70,7 @@ class LLMService(QObject):
     log = Signal(str)
     error = Signal(str)
     finished = Signal()
-    result = Signal(NewsRow)
+    result = Signal(NewsEntry)
 
     def __init__(self, entry_repo: EntryRepository) -> None:
         super().__init__()

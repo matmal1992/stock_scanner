@@ -13,7 +13,7 @@ from PySide6.QtWidgets import (
 )
 
 from src.stock_scanner.core.telegram import send_telegram_message
-from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository, NewsFormatter, NewsRow
+from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository, NewsEntry
 from src.stock_scanner.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
 from src.stock_scanner.ui.workers.espi_worker import ESPIService
 from src.stock_scanner.ui.workers.llm_worker import LLMService
@@ -111,11 +111,26 @@ class NewsFeedList(QWidget):
 
             self._ids.append(entry_id)
 
+    def format_rows(self, rows: Sequence[NewsEntry]) -> list[tuple[dict, int]]:
+        result: list[tuple[dict, int]] = []
+
+        for row in rows:
+            formatted = {
+                "published": str(row["published"]),
+                "type": str(row["source_type"]),
+                "title": row["title"][:100],
+                "llm": str(row["llm"]),
+                "sentiment": str(row["sentiment"]),
+            }
+
+            result.append((formatted, row["id"]))
+
+        return result
+
     def _update_list(self) -> None:
         print("update list")
         rows = self.entry_repo.get_all_entries()
-        formatted_rows = NewsFormatter.format(rows)
-        self.set_items(formatted_rows)
+        self.set_items(self.format_rows(rows))
 
     def on_llm_log(self, text: str) -> None:
         self.notify.emit(text, "neutral")
@@ -137,7 +152,7 @@ class NewsFeedList(QWidget):
         if not started:
             self.notify.emit("Nie udało się uruchomić LLM", "error")
 
-    def on_llm_result(self, entry: NewsRow) -> None:
+    def on_llm_result(self, entry: NewsEntry) -> None:
         self.notify.emit(f"LLM zakończony dla wpisu {entry['id']}", "ok")
         self._update_list()
 
