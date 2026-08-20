@@ -5,7 +5,7 @@ from typing import Callable
 import pandas as pd
 import yfinance as yf
 
-from src.stock_scanner.download.config import DownloadConfig
+from config.app_config import DownloadConfig
 from src.stock_scanner.strategies.three_tier_scanner.report_updater import update_down_section
 
 

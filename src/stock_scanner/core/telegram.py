@@ -3,7 +3,7 @@ import logging
 import urllib.parse
 import urllib.request
 
-from src.stock_scanner.download.config import load_config
+from config.app_config import load_config
 from src.stock_scanner.strategies.news_tracker.entry_repo import NewsRow
 
 logger = logging.getLogger(__name__)

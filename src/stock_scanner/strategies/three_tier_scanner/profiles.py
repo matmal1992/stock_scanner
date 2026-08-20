@@ -1,5 +1,5 @@
 # profiles.py
-from src.stock_scanner.download.config import CONFIG_1D, CONFIG_5M, CONFIG_15M
+from config.app_config import CONFIG_1D, CONFIG_5M, CONFIG_15M
 from src.stock_scanner.strategies.three_tier_scanner.config_filters import (
     T1_FILTER,
     T2_FILTER,

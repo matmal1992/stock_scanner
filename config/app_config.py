@@ -6,23 +6,22 @@ from pathlib import Path
 
 def get_project_root() -> Path:
     if getattr(sys, "frozen", False):
-        return Path(sys.executable).resolve().parent.parent
+        return Path(sys.executable).resolve().parent.parent.parent.parent
     else:
-        return Path(__file__).resolve().parent.parent
+        return Path(__file__).resolve().parent
 
 
 BASE_DIR = get_project_root()
-report_path = BASE_DIR / "report.html"
-alert_config_path = BASE_DIR / "core" / "config.json"
+CONFIG_PATH = BASE_DIR / "config" / "config.json"
 
 
 def load_config() -> dict:
-    if not alert_config_path.exists():
-        print(f"CONFIG NOT FOUND: {alert_config_path}")
+    if not CONFIG_PATH.exists():
+        print(f"CONFIG NOT FOUND: {CONFIG_PATH}")
         return {"path_error": " "}
 
     try:
-        with open(alert_config_path, "r", encoding="utf-8") as f:
+        with open(CONFIG_PATH, "r", encoding="utf-8") as f:
             return json.load(f)
     except Exception as e:
         print(f"CONFIG ERROR: {e}")

@@ -1,6 +1,6 @@
 from typing import Callable
 
-from src.stock_scanner.download.config import CONFIG_1D
+from config.app_config import CONFIG_1D
 from src.stock_scanner.download.downloader import run_download
 
 

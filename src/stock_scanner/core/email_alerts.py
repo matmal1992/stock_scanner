@@ -3,7 +3,7 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-from src.stock_scanner.download.config import load_config
+from config.app_config import load_config
 
 logger = logging.getLogger(__name__)
 
