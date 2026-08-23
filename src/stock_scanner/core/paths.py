@@ -19,7 +19,7 @@ def is_frozen() -> bool:
 
 def get_data_dir() -> Path:
     if is_frozen():
-        return Path(sys.executable).resolve().parents[3] / "data"
+        return get_root_dir() / "data"
     else:
         return get_root_dir() / "data"
 

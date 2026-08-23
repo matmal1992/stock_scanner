@@ -1,12 +1,16 @@
+import logging
 import sqlite3
 
 from src.stock_scanner.core.paths import get_data_dir
+
+logger = logging.getLogger(__name__)
 
 
 class Database:
     def __init__(self) -> None:
         self.db_path = get_data_dir() / "database.db"
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        logger.info("Database path: %s", self.db_path)
 
     def connect(self) -> sqlite3.Connection:
         return sqlite3.connect(self.db_path, timeout=10)

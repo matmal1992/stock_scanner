@@ -253,14 +253,18 @@ class NewsWorker(QObject):
 
     def _save_entries(self, entries: list[NewsEntry]) -> bool:
         found_new = False
+        saved_count = 0
 
         for entry in entries:
             try:
                 if self.entry_repo.save(entry):
                     found_new = True
+                    saved_count += 1
 
             except Exception as exc:
                 self.log.emit(f"Błąd zapisu: {exc}")
+
+        self.log.emit(f"Zapisano nowych wpisów: {saved_count}/{len(entries)}")
 
         return found_new
 
