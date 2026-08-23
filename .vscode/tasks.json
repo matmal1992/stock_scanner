@@ -58,7 +58,7 @@
             "label": "Run GUI Automations",
             "type": "shell",
             "command": "python",
-            "args": ["-m", "uv", "run", "python", "-m", "src.core.gui_automations"],
+            "args": ["-m", "uv", "run", "python", "-m", "src.stock_scanner.core.gui_automations"],
             "problemMatcher": []
         },
         {

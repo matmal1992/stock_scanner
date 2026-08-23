@@ -13,6 +13,9 @@ __pycache__/
 *.html
 *.db
 config.json
+*.db-shm
+*db-wal
+debug_news/
 
 #environment
 .venv/

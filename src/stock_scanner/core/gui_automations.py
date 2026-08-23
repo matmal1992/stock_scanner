@@ -1,4 +1,5 @@
 import time
+from pathlib import Path
 from typing import Optional, Tuple
 
 import cv2
@@ -6,9 +7,90 @@ import mss
 import numpy as np
 import pyautogui
 import pyperclip
+from playwright.sync_api import Page, sync_playwright
 
 from src.stock_scanner.core.debug_screen import take_screenshot
-from src.stock_scanner.core.paths import get_assets_dir
+from src.stock_scanner.core.paths import configure_environment, get_assets_dir
+from src.stock_scanner.strategies.news_tracker.entry_repo import NewsEntry
+
+
+def get_news(output_dir: Optional[Path] = None) -> list[NewsEntry]:
+    """Scrape Bankier news without starting the worker or using the database."""
+    configure_environment()
+    screenshot_dir = output_dir or Path.cwd() / "debug_news"
+    screenshot_dir.mkdir(parents=True, exist_ok=True)
+    url = "https://www.bankier.pl/gielda/wiadomosci"
+    item_selector = "li.m-listing-article-list__item"
+
+    def screenshot(page: Page, name: str) -> None:
+        page.screenshot(path=screenshot_dir / f"{name}.png", full_page=True)
+
+    entries: list[NewsEntry] = []
+
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True)
+        page = browser.new_page()
+
+        try:
+            screenshot(page, "01_before_navigation")
+            page.goto(url, timeout=30_000, wait_until="domcontentloaded")
+            screenshot(page, "02_after_navigation")
+
+            cookie_button = page.locator("button:has-text('Zaakceptuj i zamknij')").first
+            if cookie_button.count() > 0 and cookie_button.is_visible(timeout=2_000):
+                screenshot(page, "03_cookie_banner_before_click")
+                cookie_button.click()
+                page.wait_for_timeout(1_000)
+                screenshot(page, "04_after_cookie_click")
+            else:
+                screenshot(page, "03_no_cookie_banner")
+
+            screenshot(page, "05_page_validation")
+            page.wait_for_selector(item_selector, timeout=15_000)
+            items = page.locator(item_selector)
+            screenshot(page, "06_news_list_found")
+
+            for index in range(min(items.count(), 5)):
+                item = items.nth(index)
+                item.screenshot(path=screenshot_dir / f"07_item_{index}.png")
+
+                anchor = item.locator("a.m-listing-article-list__anchor")
+                if anchor.count() == 0:
+                    screenshot(page, f"08_item_{index}_invalid")
+                    continue
+
+                link = anchor.get_attribute("href")
+                title = item.locator(".m-listing-article-list__title").inner_text().strip()
+                published = item.locator(".m-listing-article-list__date-time").inner_text().strip()
+
+                if not link or not title:
+                    screenshot(page, f"08_item_{index}_invalid")
+                    continue
+
+                if link.startswith("/"):
+                    link = "https://www.bankier.pl" + link
+
+                entries.append(
+                    {
+                        "id": 0,
+                        "title": title,
+                        "link": link,
+                        "published": published,
+                        "source_type": "NEWS",
+                        "ticker": None,
+                        "llm": "pending",
+                        "sentiment": "-",
+                    }
+                )
+
+            screenshot(page, "09_scraping_finished")
+        except Exception:
+            screenshot(page, "error_last_page_state")
+            raise
+        finally:
+            browser.close()
+
+    return entries
 
 
 def get_screen_image() -> Tuple[np.ndarray, dict]:
@@ -140,4 +222,7 @@ def test_autogui() -> None:
 
 
 if __name__ == "__main__":
-    print("Screen size (pyautogui):", pyautogui.size())
+    news = get_news()
+    print(f"Zescrapowano wiadomości: {len(news)}")
+    for entry in news:
+        print(f"{entry['published']} | {entry['title']} | {entry['link']}")

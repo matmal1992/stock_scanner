@@ -9,7 +9,7 @@ def get_root_dir() -> Path:
     if getattr(sys, "frozen", False):
         return Path(sys.executable).resolve().parent.parent.parent.parent
     else:
-        return Path(__file__).resolve().parent.parent.parent
+        return Path(__file__).resolve().parent.parent.parent.parent
 
 
 def is_frozen() -> bool:
