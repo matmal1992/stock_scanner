@@ -48,7 +48,7 @@ class ESPIWorker(QObject):
                 page.wait_for_selector("a.m-quotes-announcements-item__anchor")
                 items = page.locator("li.m-quotes-announcements-list__item")
 
-                count = min(items.count(), 5)
+                count = items.count()
                 self.log.emit(f"Znaleziono {count} komunikatów")
 
                 for i in range(count):

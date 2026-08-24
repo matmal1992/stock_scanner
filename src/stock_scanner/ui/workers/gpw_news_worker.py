@@ -52,7 +52,7 @@ class NewsWorker(QObject):
                 page.wait_for_selector("li.m-listing-article-list__item")
                 items = self._get_news_items(page)
 
-                count = min(items.count(), 5)
+                count = items.count()
 
                 self.log.emit(f"Znaleziono {count} wpisów")
 
@@ -94,9 +94,8 @@ class NewsWorker(QObject):
         if not title:
             return None
 
-        # # Pomijamy linki nawigacyjne, notowania itd.
-        # if not self._looks_like_news(title, link):
-        #     return None
+        if not self._looks_like_news(title, link):
+            return None
 
         published = item.locator(".m-listing-article-list__date-time").inner_text().strip()
 
@@ -111,36 +110,39 @@ class NewsWorker(QObject):
             "sentiment": "-",
         }
 
-    # def _looks_like_news(self, title: str, link: str) -> bool:
-    #     """
-    #     Odrzuca elementy strony, które nie są newsami.
-    #     """
+    def _looks_like_news(self, title: str, link: str) -> bool:
+        if not title:
+            return False
 
-    #     if not title:
-    #         return False
+        if "/wiadomosc/" not in link:
+            return False
 
-    #     if "/wiadomosc/" not in link:
-    #         return False
+        ignored_keywords = {
+            "WIG",
+            "WIG20",
+            "WIG30",
+            "DAX",
+            "NASDAQ",
+            "S&P 500",
+            "SP500",
+            "EUR/PLN",
+            "USD/PLN",
+            "CHF/PLN",
+            "EUR/USD",
+            "ropa",
+            "miedź",
+            "złoto",
+            "srebro",
+            "bitcoin",
+            "kryptowalut",
+        }
 
-    #     ignored_titles = {
-    #         "WIG",
-    #         "WIG20",
-    #         "WIG30",
-    #         "MWIG40",
-    #         "DAX",
-    #         "NASDAQ",
-    #         "SP500",
-    #         "USD/PLN",
-    #         "EUR/PLN",
-    #         "CHF/PLN",
-    #         "ZŁOTO",
-    #         "ROPA",
-    #     }
+        title_upper = title.upper()
 
-    #     if title.strip() in ignored_titles:
-    #         return False
+        if any(keyword.upper() in title_upper for keyword in ignored_keywords):
+            return False
 
-    #     return True
+        return True
 
     def _extract_date(self, text: str) -> str:
         match = re.search(

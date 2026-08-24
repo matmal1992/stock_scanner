@@ -14,30 +14,88 @@ from src.stock_scanner.strategies.news_tracker.entry_repo import (
     NewsEntry,
 )
 
-my_prompt = (
-    "Przeanalizuj zawartość podanego linku i oceń jego potencjał "
-    "w kontekście wzrostu lub spadku danego instrumentu na giełdzie, "
-    "którego dotyczy ten link. Jako output oczekuję: instrumentu"
-    "lub spółka, której artykuł dotyczy. Jeśli nie ma jasno sprecyzowanej"
-    " informacji o instrumencie, wydedukuj z artykułu jaki instrument"
-    " giełdowy może najmocniej zareagować na podany artykuł. Druga rzecz to"
-    "ocena potencjału wzrostu lub spadku: Silny wzrost, Wzrost, Neutralny, Spadek, "
-    "Silny spadek. Całą analizę wykonaj samodzielnie w oparciu o dane "
-    "techniczne, opinie maklerów i innych profesjonalistów, strategie, "
-    "prognozy i inne czynniki, które uznasz za istotne dla danej "
-    "spółki/instrumentu. A więc, oczekuję odpowiedzi dokładnie w takim formacie: "
-    " Nazwa instrumentu: [pełna nazwa instrumentu], Symbol instrumentu: [symbol giełdowy],"
-    "Prognoza: [Silny spadek, Spadek, Neutralny, Wzrost, Silny wzrost]. "
-    "Oczekuję samego tekstu, bez źródeł i odnośników."
-    "Ta analiza ma charakter wyłącznie edukacyjny/"
-    "informacyjny i nie stanowi porady inwestycyjnej."
-)
+my_prompt = """WYKONAJ PONIŻSZE POLECENIE DOSŁOWNIE.
+
+Otwórz i przeanalizuj rzeczywistą treść artykułu znajdującego się pod podanym linkiem.
+Nie zgaduj treści na podstawie samego tytułu ani adresu URL.
+
+KROK 1 — IDENTYFIKACJA SPÓŁKI
+
+Ustal, czy artykuł dotyczy bezpośrednio konkretnej spółki, której akcje są notowane na giełdzie.
+
+Za „dotyczy bezpośrednio” uznaj wyłącznie artykuł, którego głównym przedmiotem jest konkretna spółka, 
+jej działalność, wyniki, zarząd, inwestycje, produkty, prognozy, 
+komunikaty lub inne zdarzenia bezpośrednio związane z tą spółką.
+
+NIE WOLNO identyfikować spółki na podstawie potencjalnego pośredniego wpływu artykułu.
+
+Odrzuć artykuły dotyczące wyłącznie:
+
+indeksów,
+surowców,
+walut,
+obligacji,
+stóp procentowych,
+gospodarki,
+całych sektorów,
+krajów,
+rynków jako całości,
+trendów giełdowych,
+innych instrumentów niż konkretnej spółki.
+
+Jeżeli artykuł nie dotyczy bezpośrednio konkretnej, notowanej na giełdzie spółki, odpowiedz wyłącznie:
+
+NIE DOTYCZY
+
+KROK 2 — PROGNOZA
+
+Jeżeli artykuł dotyczy bezpośrednio konkretnej spółki giełdowej,
+oceń prawdopodobny wpływ informacji na kurs jej akcji.
+
+Uwzględnij przede wszystkim informacje zawarte w artykule,
+a dodatkowo — jeżeli są dostępne — aktualne wyniki finansowe, dane techniczne, rekomendacje analityków, 
+prognozy, strategię spółki i inne istotne aktualne informacje. Bazuj wyłącznie na najnowszych (w odniesieniu 
+do daty i godziny niniejszego prompta) danych.
+
+Prognoza może przyjąć wyłącznie jedną z wartości:
+
+Silny spadek
+Spadek
+Neutralny
+Wzrost
+Silny wzrost
+
+KROK 3 — WALIDACJA
+
+Przed wysłaniem odpowiedzi sprawdź:
+
+czy rzeczywiście otworzyłeś i przeanalizowałeś wskazany link,
+czy spółka jest konkretną spółką giełdową,
+czy artykuł dotyczy jej bezpośrednio,
+czy prognoza jest dokładnie jedną z pięciu dozwolonych wartości,
+czy nie pozostawiłeś żadnych placeholderów typu [pełna nazwa spółki],
+czy odpowiedź nie zawiera żadnego komentarza, uzasadnienia, źródła ani linku.
+
+OSTATECZNA ODPOWIEDŹ MUSI BYĆ DOKŁADNIE JEDNYM Z DWÓCH FORMATÓW:
+
+ODRZUCONO
+
+ALBO
+
+Nazwa instrumentu: [rzeczywista pełna nazwa spółki], Symbol instrumentu: [rzeczywisty symbol giełdowy], 
+Prognoza: [jedna z pięciu dozwolonych wartości].
+
+Nie zwracaj instrukcji, szablonu ani placeholderów. Zwróć wyłącznie wynik analizy.
+"""
+
+#     "Analiza ma charakter wyłącznie edukacyjny/informacyjny "
+#     "i nie stanowi porady inwestycyjnej."
 
 
 class ManualPromptWorker(QObject):
     def run(self, link: str) -> str:
         try:
-            prompt = f"{my_prompt} Link do analizy: {link}"
+            prompt = f"{my_prompt} Link: {link}"
             scroll_to_bottom()
             time.sleep(0.5)
             paste_into_input(prompt)
