@@ -32,31 +32,31 @@ def get_news(output_dir: Optional[Path] = None) -> list[NewsEntry]:
         page = browser.new_page()
 
         try:
-            screenshot(page, "01_before_navigation")
+            # screenshot(page, "01_before_navigation")
             page.goto(url, timeout=30_000, wait_until="domcontentloaded")
-            screenshot(page, "02_after_navigation")
+            # screenshot(page, "02_after_navigation")
 
             cookie_button = page.locator("button:has-text('Zaakceptuj i zamknij')").first
             if cookie_button.count() > 0 and cookie_button.is_visible(timeout=2_000):
-                screenshot(page, "03_cookie_banner_before_click")
+                # screenshot(page, "03_cookie_banner_before_click")
                 cookie_button.click()
                 page.wait_for_timeout(1_000)
-                screenshot(page, "04_after_cookie_click")
-            else:
-                screenshot(page, "03_no_cookie_banner")
+                # screenshot(page, "04_after_cookie_click")
+            # else:
+            #     screenshot(page, "03_no_cookie_banner")
 
-            screenshot(page, "05_page_validation")
+            # screenshot(page, "05_page_validation")
             page.wait_for_selector(item_selector, timeout=15_000)
             items = page.locator(item_selector)
-            screenshot(page, "06_news_list_found")
+            # screenshot(page, "06_news_list_found")
 
             for index in range(min(items.count(), 5)):
                 item = items.nth(index)
-                item.screenshot(path=screenshot_dir / f"07_item_{index}.png")
+                # item.screenshot(path=screenshot_dir / f"07_item_{index}.png")
 
                 anchor = item.locator("a.m-listing-article-list__anchor")
                 if anchor.count() == 0:
-                    screenshot(page, f"08_item_{index}_invalid")
+                    # screenshot(page, f"08_item_{index}_invalid")
                     continue
 
                 link = anchor.get_attribute("href")
@@ -64,7 +64,7 @@ def get_news(output_dir: Optional[Path] = None) -> list[NewsEntry]:
                 published = item.locator(".m-listing-article-list__date-time").inner_text().strip()
 
                 if not link or not title:
-                    screenshot(page, f"08_item_{index}_invalid")
+                    # screenshot(page, f"08_item_{index}_invalid")
                     continue
 
                 if link.startswith("/"):
@@ -83,9 +83,9 @@ def get_news(output_dir: Optional[Path] = None) -> list[NewsEntry]:
                     }
                 )
 
-            screenshot(page, "09_scraping_finished")
+            # screenshot(page, "09_scraping_finished")
         except Exception:
-            screenshot(page, "error_last_page_state")
+            # screenshot(page, "error_last_page_state")
             raise
         finally:
             browser.close()

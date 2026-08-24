@@ -79,27 +79,27 @@ class NewsFeedList(QWidget):
         self.feed_list.setColumnWidth(3, 90)
         self.feed_list.setColumnWidth(4, 90)
 
-        get_espi_btn = QPushButton("Get ESPI")
-        get_news_btn = QPushButton("Get News")
+        start_scraping_btn = QPushButton("Start scraping")
+        # get_news_btn = QPushButton("Get News")
         self.load_data_btn = QPushButton("Load data")
-        self.stop_espi = QPushButton("Stop ESPI")
+        # self.stop_espi = QPushButton("Stop ESPI")
         self.run_llm_btn = QPushButton("Run LLM")
         self.clear_database_btn = QPushButton("Clear database")
 
-        get_espi_btn.clicked.connect(self.on_get_espi_clicked)
-        get_news_btn.clicked.connect(self.on_get_news_clicked)
+        start_scraping_btn.clicked.connect(self.on_start_scraping_clicked)
+        # get_news_btn.clicked.connect(self.on_get_news_clicked)
         self.load_data_btn.clicked.connect(self._update_list)
         self.run_llm_btn.clicked.connect(self.on_run_llm_clicked)
         self.clear_database_btn.clicked.connect(self.on_clear_database_clicked)
-        self.stop_espi.clicked.connect(self.on_stop_espi_clicked)
+        # self.stop_espi.clicked.connect(self.on_stop_espi_clicked)
 
         test_buttons_box = QHBoxLayout()
-        test_buttons_box.addWidget(get_espi_btn)
-        test_buttons_box.addWidget(get_news_btn)
+        test_buttons_box.addWidget(start_scraping_btn)
+        # test_buttons_box.addWidget(get_news_btn)
         test_buttons_box.addWidget(self.load_data_btn)
         test_buttons_box.addWidget(self.run_llm_btn)
         test_buttons_box.addWidget(self.clear_database_btn)
-        test_buttons_box.addWidget(self.stop_espi)
+        # test_buttons_box.addWidget(self.stop_espi)
 
         layout = QVBoxLayout()
         layout.addLayout(test_buttons_box)
@@ -139,7 +139,6 @@ class NewsFeedList(QWidget):
         return result
 
     def _update_list(self) -> None:
-        print("update list")
         rows = self.entry_repo.get_all_entries()
         self.set_items(self.format_rows(rows))
 
@@ -197,16 +196,16 @@ class NewsFeedList(QWidget):
         else:
             self.notify.emit("Brak nowych komunikatów ESPI", "neutral")
 
-    def on_get_espi_clicked(self) -> None:
-        if self.espi.is_running():
-            self.notify.emit("Pobieranie ESPI już trwa", "error")
-            return
+    # def on_get_espi_clicked(self) -> None:
+    #     if self.espi.is_running():
+    #         self.notify.emit("Pobieranie ESPI już trwa", "error")
+    #         return
 
-        self.notify.emit("Uruchamiam automatyczne pobieranie ESPI...", "neutral")
-        started = self.espi.start()
+    #     self.notify.emit("Uruchamiam automatyczne pobieranie ESPI...", "neutral")
+    #     started = self.espi.start()
 
-        if not started:
-            self.notify.emit("Nie udało się uruchomić ESPI", "error")
+    #     if not started:
+    #         self.notify.emit("Nie udało się uruchomić ESPI", "error")
 
     def on_espi_log(self, text: str) -> None:
         self.notify.emit(text, "neutral")
@@ -219,13 +218,13 @@ class NewsFeedList(QWidget):
     def on_espi_finished(self) -> None:
         self.notify.emit("Pojedyncze pobieranie ESPI zakończone", "ok")
 
-    def on_stop_espi_clicked(self) -> None:
-        if not self.espi.is_running():
-            self.notify.emit("Automatyczne ESPI nie jest uruchomione", "neutral")
-            return
+    # def on_stop_espi_clicked(self) -> None:
+    #     if not self.espi.is_running():
+    #         self.notify.emit("Automatyczne ESPI nie jest uruchomione", "neutral")
+    #         return
 
-        self.espi.stop()
-        self.notify.emit("Automatyczne pobieranie ESPI zatrzymane", "ok")
+    #     self.espi.stop()
+    #     self.notify.emit("Automatyczne pobieranie ESPI zatrzymane", "ok")
 
     def on_news_result(self, has_new_entries: bool) -> None:
         self._update_list()
@@ -237,16 +236,17 @@ class NewsFeedList(QWidget):
         else:
             self.notify.emit("Brak nowych GPW Bankier News", "neutral")
 
-    def on_get_news_clicked(self) -> None:
-        if self.news.is_running():
-            self.notify.emit("Pobieranie GPW Bankier News już trwa", "error")
+    def on_start_scraping_clicked(self) -> None:
+        if self.news.is_running() or self.espi.is_running():
+            self.notify.emit("Scraping już trwa", "error")
             return
 
-        self.notify.emit("Uruchamiam automatyczne pobieranie GPW Bankier News...", "neutral")
-        started = self.news.start()
+        self.notify.emit("Start scraping", "neutral")
+        started_news = self.news.start()
+        started_espi = self.espi.start()
 
-        if not started:
-            self.notify.emit("Nie udało się uruchomić GPW Bankier News", "error")
+        if not started_news or started_espi:
+            self.notify.emit("Nie udało się uruchomić scrapingu", "error")
 
     def on_news_log(self, text: str) -> None:
         self.notify.emit(text, "neutral")
