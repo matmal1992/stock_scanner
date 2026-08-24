@@ -127,7 +127,10 @@ class EntryRepository:
         if not match:
             return None
 
-        return match.group(1).strip()
+        forecast = match.group(1).strip()
+        forecast = forecast.rstrip(".,;:'\" ")
+        forecast = forecast.lstrip('" ')
+        return forecast
 
     def _to_dict(self, row: list[Any]) -> NewsEntry:
         return {

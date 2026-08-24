@@ -166,9 +166,15 @@ class NewsFeedList(QWidget):
         self.notify.emit(f"LLM zakończony dla wpisu {entry['id']}", "ok")
         self._update_list()
 
-        if entry["llm"] not in ("Wzrost", "Silny wzrost"):
+        forecast_value = entry["llm"]
+        self.notify.emit(f"LLM forecast: '{forecast_value}'", "neutral")
+
+        if forecast_value not in ("Wzrost", "Silny wzrost"):
+            msg = f"Forecast '{forecast_value}' — alert niespełniony"
+            self.notify.emit(msg, "neutral")
             return
 
+        self.notify.emit(f"Wysyłam alert Telegrama dla '{forecast_value}'", "ok")
         send_telegram_message(entry)
 
     def on_clear_database_clicked(self) -> None:
