@@ -196,8 +196,8 @@ def find_last_copy_icon(threshold: float = 0.85) -> Optional[Tuple[int, int]]:
 
         cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
-        center_x = x + w // 2
-        center_y = y + h // 2
+        center_x = x + w // 2 + monitor["left"]
+        center_y = y + h // 2 + monitor["top"]
         centers.append((center_x, center_y))
 
     # if debug:
