@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.stock_scanner.core.telegram import send_telegram_message
+from src.stock_scanner.core.telegram import send_telegram_message, send_test_telegram_message
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository, NewsEntry
 from src.stock_scanner.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
 from src.stock_scanner.ui.workers.espi_worker import ESPIService
@@ -80,26 +80,23 @@ class NewsFeedList(QWidget):
         self.feed_list.setColumnWidth(4, 90)
 
         start_scraping_btn = QPushButton("Start scraping")
-        # get_news_btn = QPushButton("Get News")
+        test_telegram_btn = QPushButton("Test telegram")
         self.load_data_btn = QPushButton("Load data")
-        # self.stop_espi = QPushButton("Stop ESPI")
         self.run_llm_btn = QPushButton("Run LLM")
         self.clear_database_btn = QPushButton("Clear database")
 
         start_scraping_btn.clicked.connect(self.on_start_scraping_clicked)
-        # get_news_btn.clicked.connect(self.on_get_news_clicked)
+        test_telegram_btn.clicked.connect(self.on_test_telegram_clicked)
         self.load_data_btn.clicked.connect(self._update_list)
         self.run_llm_btn.clicked.connect(self.on_run_llm_clicked)
         self.clear_database_btn.clicked.connect(self.on_clear_database_clicked)
-        # self.stop_espi.clicked.connect(self.on_stop_espi_clicked)
 
         test_buttons_box = QHBoxLayout()
         test_buttons_box.addWidget(start_scraping_btn)
-        # test_buttons_box.addWidget(get_news_btn)
+        test_buttons_box.addWidget(test_telegram_btn)
         test_buttons_box.addWidget(self.load_data_btn)
         test_buttons_box.addWidget(self.run_llm_btn)
         test_buttons_box.addWidget(self.clear_database_btn)
-        # test_buttons_box.addWidget(self.stop_espi)
 
         layout = QVBoxLayout()
         layout.addLayout(test_buttons_box)
@@ -137,6 +134,9 @@ class NewsFeedList(QWidget):
             result.append((formatted, row["id"]))
 
         return result
+
+    def on_test_telegram_clicked(self) -> None:
+        send_test_telegram_message()
 
     def _update_list(self) -> None:
         rows = self.entry_repo.get_all_entries()

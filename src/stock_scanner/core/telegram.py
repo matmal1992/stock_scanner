@@ -54,3 +54,26 @@ def send_telegram_message(entry: NewsEntry) -> bool:
     except Exception as e:
         logger.error(f"TELEGRAM ERROR: {type(e)}, {e}")
         return False
+
+
+def send_test_telegram_message() -> bool:
+    message = "test message"
+
+    url = f"https://api.telegram.org/bot{telegram_token}/sendMessage"
+
+    payload = {"chat_id": telegram_chat_id, "text": message}
+
+    data = urllib.parse.urlencode(payload).encode("utf-8")
+    request = urllib.request.Request(url, data=data, method="POST")
+
+    try:
+        with urllib.request.urlopen(request, timeout=10) as response:
+            body = response.read().decode("utf-8")
+
+        logger.info("TELEGRAM RESPONSE: %s", body)
+
+        result = json.loads(body)
+        return bool(result.get("ok", False))
+    except Exception as e:
+        logger.error(f"TELEGRAM ERROR: {type(e)}, {e}")
+        return False
