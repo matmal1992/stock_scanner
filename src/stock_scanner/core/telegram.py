@@ -17,17 +17,21 @@ ALERT_FORECASTS = {"Wzrost", "Silny wzrost"}
 
 def build_message(entry: NewsEntry) -> str | None:
     forecast = entry["llm"]
+    title = entry["title"]
+    published = entry["published"]
+    source = entry["source_type"]
 
-    if forecast not in ALERT_FORECASTS:
-        return None
+    # if forecast not in ALERT_FORECASTS:
+    #     return None
 
     ticker = entry["ticker"]
 
-    if not ticker:
-        logger.warning("Brak tickera dla entry %s", entry["id"])
-        return None
+    # if not ticker:
+    #     logger.warning("Brak tickera dla entry %s", entry["id"])
+    #     return None
 
-    return f"{ticker}: {forecast}"
+    # return f"{ticker}: {forecast}"
+    return f"{published}\n{source}: {title}\n{ticker}: {forecast}"
 
 
 def send_telegram_message(entry: NewsEntry) -> bool:

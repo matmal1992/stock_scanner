@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.stock_scanner.core.telegram import send_telegram_message, send_test_telegram_message
+from src.stock_scanner.core.telegram import send_telegram_message
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository, NewsEntry
 from src.stock_scanner.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
 from src.stock_scanner.ui.workers.espi_worker import ESPIService
@@ -80,20 +80,17 @@ class NewsFeedList(QWidget):
         self.feed_list.setColumnWidth(4, 90)
 
         start_scraping_btn = QPushButton("Start scraping")
-        test_telegram_btn = QPushButton("Test telegram")
         self.load_data_btn = QPushButton("Load data")
         self.run_llm_btn = QPushButton("Run LLM")
         self.clear_database_btn = QPushButton("Clear database")
 
         start_scraping_btn.clicked.connect(self.on_start_scraping_clicked)
-        test_telegram_btn.clicked.connect(self.on_test_telegram_clicked)
         self.load_data_btn.clicked.connect(self._update_list)
         self.run_llm_btn.clicked.connect(self.on_run_llm_clicked)
         self.clear_database_btn.clicked.connect(self.on_clear_database_clicked)
 
         test_buttons_box = QHBoxLayout()
         test_buttons_box.addWidget(start_scraping_btn)
-        test_buttons_box.addWidget(test_telegram_btn)
         test_buttons_box.addWidget(self.load_data_btn)
         test_buttons_box.addWidget(self.run_llm_btn)
         test_buttons_box.addWidget(self.clear_database_btn)
@@ -134,9 +131,6 @@ class NewsFeedList(QWidget):
             result.append((formatted, row["id"]))
 
         return result
-
-    def on_test_telegram_clicked(self) -> None:
-        send_test_telegram_message()
 
     def _update_list(self) -> None:
         rows = self.entry_repo.get_all_entries()
@@ -202,17 +196,6 @@ class NewsFeedList(QWidget):
         else:
             self.notify.emit("Brak nowych komunikatów ESPI", "neutral")
 
-    # def on_get_espi_clicked(self) -> None:
-    #     if self.espi.is_running():
-    #         self.notify.emit("Pobieranie ESPI już trwa", "error")
-    #         return
-
-    #     self.notify.emit("Uruchamiam automatyczne pobieranie ESPI...", "neutral")
-    #     started = self.espi.start()
-
-    #     if not started:
-    #         self.notify.emit("Nie udało się uruchomić ESPI", "error")
-
     def on_espi_log(self, text: str) -> None:
         self.notify.emit(text, "neutral")
 
@@ -223,14 +206,6 @@ class NewsFeedList(QWidget):
 
     def on_espi_finished(self) -> None:
         self.notify.emit("Pojedyncze pobieranie ESPI zakończone", "ok")
-
-    # def on_stop_espi_clicked(self) -> None:
-    #     if not self.espi.is_running():
-    #         self.notify.emit("Automatyczne ESPI nie jest uruchomione", "neutral")
-    #         return
-
-    #     self.espi.stop()
-    #     self.notify.emit("Automatyczne pobieranie ESPI zatrzymane", "ok")
 
     def on_news_result(self, has_new_entries: bool) -> None:
         self._update_list()
