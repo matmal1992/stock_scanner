@@ -1,4 +1,6 @@
+import json
 import time
+from typing import Any, cast
 
 import pyautogui
 import pyperclip
@@ -11,6 +13,7 @@ from src.stock_scanner.core.gui_automations import (
 )
 from src.stock_scanner.strategies.news_tracker.entry_repo import (
     EntryRepository,
+    LLMResponse,
     NewsEntry,
 )
 
@@ -196,7 +199,7 @@ OSTATECZNA ODPOWIEDŹ MUSI ZAWIERAĆ WYŁĄCZNIE POPRAWNY OBIEKT JSON.
 
 
 class ManualPromptWorker(QObject):
-    def run(self, link: str) -> str:
+    def run(self, link: str) -> LLMResponse:
         try:
             prompt = f"{my_prompt} Link: {link}"
             scroll_to_bottom()
@@ -219,12 +222,58 @@ class ManualPromptWorker(QObject):
             # self.response_received.emit(self.entry_id, response)
             # print("RESPONSE:\n", response)
 
-            return response
+            return self._parse_response(response)
 
         except Exception as exc:
             message = f"LLM worker error: {exc}"
             print(message)
-            return ""
+            raise
+
+    @staticmethod
+    def _parse_response(response: str) -> LLMResponse:
+        parsed: Any = json.loads(response)
+
+        if not isinstance(parsed, dict):
+            raise ValueError("Odpowiedź LLM nie jest obiektem JSON")
+
+        required_fields = {"relevant", "company", "ticker", "forecast", "sector"}
+        if set(parsed) != required_fields:
+            raise ValueError("Odpowiedź LLM ma nieprawidłowe pola")
+
+        allowed_forecasts = {
+            "Silny spadek",
+            "Spadek",
+            "Neutralny",
+            "Wzrost",
+            "Silny wzrost",
+        }
+        allowed_sectors = {
+            "zbrojeniowy",
+            "dronowy",
+            "medyczny",
+            "hi-tech",
+            "kosmiczny",
+            "other",
+        }
+
+        if not isinstance(parsed["relevant"], bool):
+            raise ValueError("Pole relevant musi być typu boolean")
+        if parsed["sector"] not in allowed_sectors:
+            raise ValueError("Nieprawidłowa wartość pola sector")
+
+        if parsed["relevant"]:
+            if not isinstance(parsed["company"], str) or not parsed["company"].strip():
+                raise ValueError("Pole company musi zawierać nazwę spółki")
+            if not isinstance(parsed["ticker"], str) or not parsed["ticker"].strip():
+                raise ValueError("Pole ticker musi zawierać symbol spółki")
+            if parsed["forecast"] not in allowed_forecasts:
+                raise ValueError("Nieprawidłowa wartość pola forecast")
+        elif parsed["company"] is not None or parsed["ticker"] is not None:
+            raise ValueError("Dla relevant=false company i ticker muszą być null")
+        elif parsed["forecast"] is not None or parsed["sector"] != "other":
+            raise ValueError("Dla relevant=false forecast musi być null, a sector musi być other")
+
+        return cast(LLMResponse, parsed)
 
 
 class LLMService(QObject):

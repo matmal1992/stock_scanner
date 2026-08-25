@@ -1,6 +1,5 @@
 import logging
-import re
-from typing import Any, TypedDict
+from typing import Any, Literal, TypedDict
 
 from src.stock_scanner.download.database import Database
 
@@ -16,6 +15,21 @@ class NewsEntry(TypedDict):
     ticker: str | None
     llm: str
     sentiment: str
+
+
+class LLMResponse(TypedDict):
+    relevant: bool
+    company: str | None
+    ticker: str | None
+    forecast: str | None
+    sector: Literal[
+        "zbrojeniowy",
+        "dronowy",
+        "medyczny",
+        "hi-tech",
+        "kosmiczny",
+        "other",
+    ]
 
 
 class EntryRepository:
@@ -81,9 +95,9 @@ class EntryRepository:
 
         return [self._to_dict(r) for r in rows]
 
-    def update_llm(self, entry_id: int, response: str) -> bool:
-        ticker = self._extract_ticker(response)
-        forecast = self._extract_forecast(response)
+    def update_llm(self, entry_id: int, response: LLMResponse) -> bool:
+        ticker = response["ticker"]
+        forecast = response["forecast"]
 
         if not ticker:
             logger.warning("Nie znaleziono tickera w odpowiedzi LLM dla entry %s", entry_id)
@@ -112,25 +126,6 @@ class EntryRepository:
         except Exception as e:
             logger.exception("DB ERROR:", e)
             return False
-
-    def _extract_ticker(self, text: str) -> str | None:
-        match = re.search(r"Symbol instrumentu:\s*([^,\n]+)", text, re.IGNORECASE)
-
-        if not match:
-            return None
-
-        return match.group(1).strip()
-
-    def _extract_forecast(self, text: str) -> str | None:
-        match = re.search(r"Prognoza:\s*(.+)", text, re.IGNORECASE)
-
-        if not match:
-            return None
-
-        forecast = match.group(1).strip()
-        forecast = forecast.rstrip(".,;:'\" ")
-        forecast = forecast.lstrip('" ')
-        return forecast
 
     def _to_dict(self, row: list[Any]) -> NewsEntry:
         return {
