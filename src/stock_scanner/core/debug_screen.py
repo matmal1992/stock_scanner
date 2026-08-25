@@ -21,7 +21,7 @@ def take_screenshot(filename: str = "screen.png") -> None:
     path = DEBUG_DIR / filename
     cv2.imwrite(str(path), img)
 
-    print(f"Screenshot saved: {path}")
+    # print(f"Screenshot saved: {path}")
 
 
 def show_detected(img: np.ndarray, points: list[tuple[int, int]]) -> np.ndarray:

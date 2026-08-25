@@ -31,61 +31,164 @@ NIE WOLNO identyfikować spółki na podstawie potencjalnego pośredniego wpływ
 
 Odrzuć artykuły dotyczące wyłącznie:
 
-indeksów,
-surowców,
-walut,
-obligacji,
-stóp procentowych,
-gospodarki,
-całych sektorów,
-krajów,
-rynków jako całości,
-trendów giełdowych,
-innych instrumentów niż konkretnej spółki.
+- indeksów,
+- surowców,
+- walut,
+- obligacji,
+- stóp procentowych,
+- gospodarki,
+- całych sektorów,
+- krajów,
+- rynków jako całości,
+- trendów giełdowych,
+- innych instrumentów niż konkretnej spółki.
 
-Jeżeli artykuł nie dotyczy bezpośrednio konkretnej, notowanej na giełdzie spółki, odpowiedz wyłącznie:
+Przykład:
+Jeżeli artykuł dotyczy wzrostu ceny miedzi, nie identyfikuj KGHM tylko dlatego, 
+że cena miedzi może wpływać na wyniki KGHM.
 
-NIE DOTYCZY
+Jeżeli artykuł dotyczy sytuacji na rynku ropy, 
+nie identyfikuj spółki naftowej tylko dlatego, że może ona na tym skorzystać lub stracić.
 
-KROK 2 — PROGNOZA
+Jeżeli artykuł dotyczy konkretnej spółki i jednocześnie opisuje wpływ cen surowców, 
+kursów walut lub sytuacji rynkowej na tę spółkę, traktuj go jako artykuł dotyczący tej spółki.
 
-Jeżeli artykuł dotyczy bezpośrednio konkretnej spółki giełdowej,
+Jeżeli artykuł nie dotyczy bezpośrednio konkretnej, notowanej na giełdzie spółki, ustaw:
+
+"relevant": false
+
+oraz:
+
+"company": null
+"ticker": null
+"forecast": null
+"sector": "other"
+
+KROK 2 — IDENTYFIKACJA SPÓŁKI
+
+Jeżeli artykuł dotyczy bezpośrednio konkretnej spółki giełdowej:
+
+- podaj jej rzeczywistą, pełną nazwę,
+- podaj rzeczywisty symbol giełdowy (ticker),
+- nie wymyślaj symbolu,
+- nie używaj nazwy indeksu, surowca, waluty ani innego instrumentu jako nazwy spółki.
+
+Jeżeli artykuł dotyczy kilku spółek, wybierz tę spółkę, 
+której artykuł dotyczy najbardziej bezpośrednio 
+i której kurs powinien być najbardziej wrażliwy na przedstawioną informację.
+
+KROK 3 — KLASYFIKACJA SEKTORA
+
+Ustal, czy spółka lub główny temat artykułu należy do jednego z poniższych sektorów:
+
+- "zbrojeniowy"
+- "dronowy"
+- "medyczny"
+- "hi-tech"
+- "kosmiczny"
+- "other"
+
+Pole "sector" musi przyjąć dokładnie jedną z powyższych wartości.
+
+Klasyfikację wykonuj na podstawie rzeczywistej działalności spółki 
+oraz głównego tematu artykułu.
+
+Nie przypisuj sektora wyłącznie na podstawie odległego lub 
+potencjalnego zastosowania produktu.
+
+Jeżeli spółka lub główny temat artykułu nie pasuje jednoznacznie 
+do żadnego z pięciu wymienionych sektorów, ustaw:
+
+"sector": "other"
+
+Jeżeli spółka działa w kilku sektorach, 
+wybierz sektor najbardziej związany z tematyką konkretnego artykułu.
+
+Przykłady:
+
+- producent broni, amunicji, systemów rakietowych lub technologii wojskowych → "zbrojeniowy"
+- producent dronów lub technologii bezzałogowych → "dronowy"
+- producent leków, urządzeń medycznych lub świadczący usługi medyczne → "medyczny"
+- spółka zajmująca się zaawansowanymi technologiami, sztuczną inteligencją, elektroniką, 
+oprogramowaniem lub innymi technologiami high-tech → "hi-tech"
+- spółka zajmująca się technologiami kosmicznymi, satelitami, 
+rakietami lub infrastrukturą kosmiczną → "kosmiczny"
+- jeżeli żaden z powyższych przypadków nie pasuje → "other"
+
+KROK 4 — PROGNOZA
+
+Jeżeli artykuł dotyczy bezpośrednio konkretnej spółki giełdowej, 
 oceń prawdopodobny wpływ informacji na kurs jej akcji.
 
-Uwzględnij przede wszystkim informacje zawarte w artykule,
-a dodatkowo — jeżeli są dostępne — aktualne wyniki finansowe, dane techniczne, rekomendacje analityków, 
-prognozy, strategię spółki i inne istotne aktualne informacje. Bazuj wyłącznie na najnowszych (w odniesieniu 
-do daty i godziny niniejszego prompta) danych.
+Uwzględnij przede wszystkim informacje zawarte w artykule, 
+a dodatkowo — jeżeli są dostępne — aktualne wyniki finansowe, dane techniczne, 
+rekomendacje analityków, prognozy, strategię spółki i inne istotne aktualne informacje.
 
-Prognoza może przyjąć wyłącznie jedną z wartości:
+Bazuj wyłącznie na najnowszych dostępnych danych w odniesieniu do 
+daty i godziny wykonania niniejszego polecenia.
 
-Silny spadek
-Spadek
-Neutralny
-Wzrost
-Silny wzrost
+Prognoza może przyjąć wyłącznie jedną z pięciu wartości:
 
-KROK 3 — WALIDACJA
+- "Silny spadek"
+- "Spadek"
+- "Neutralny"
+- "Wzrost"
+- "Silny wzrost"
+
+KROK 5 — FORMAT ODPOWIEDZI
+
+Odpowiedź MUSI być poprawnym składniowo obiektem JSON.
+
+Jeżeli artykuł NIE DOTYCZY konkretnej spółki giełdowej, zwróć dokładnie:
+
+{
+  "relevant": false,
+  "company": null,
+  "ticker": null,
+  "forecast": null,
+  "sector": "other"
+}
+
+Jeżeli artykuł DOTYCZY konkretnej spółki giełdowej, zwróć:
+
+{
+  "relevant": true,
+  "company": "rzeczywista pełna nazwa spółki",
+  "ticker": "rzeczywisty symbol giełdowy",
+  "forecast": "jedna z pięciu dozwolonych wartości",
+  "sector": "jedna z sześciu dozwolonych wartości"
+}
+
+KROK 6 — WALIDACJA
 
 Przed wysłaniem odpowiedzi sprawdź:
 
-czy rzeczywiście otworzyłeś i przeanalizowałeś wskazany link,
-czy spółka jest konkretną spółką giełdową,
-czy artykuł dotyczy jej bezpośrednio,
-czy prognoza jest dokładnie jedną z pięciu dozwolonych wartości,
-czy nie pozostawiłeś żadnych placeholderów typu [pełna nazwa spółki],
-czy odpowiedź nie zawiera żadnego komentarza, uzasadnienia, źródła ani linku.
+1. Czy rzeczywiście otworzyłeś i przeanalizowałeś wskazany link.
+2. Czy spółka jest konkretną spółką giełdową.
+3. Czy artykuł dotyczy jej bezpośrednio, a nie tylko pośrednio.
+4. Czy nie zakwalifikowałeś indeksu, surowca, waluty, obligacji, sektora lub rynku jako spółki.
+5. Czy nazwa spółki jest rzeczywistą pełną nazwą.
+6. Czy ticker jest rzeczywistym symbolem giełdowym.
+7. Czy prognoza jest dokładnie jedną z pięciu dozwolonych wartości.
+8. Czy sector jest dokładnie jedną z sześciu dozwolonych wartości.
+9. Jeżeli "relevant" = false, czy company, ticker i forecast mają wartość null.
+10. Jeżeli "relevant" = false, czy sector ma wartość "other".
+11. Czy odpowiedź jest poprawnym JSON-em.
+12. Czy odpowiedź nie zawiera żadnego tekstu poza obiektem JSON.
 
-OSTATECZNA ODPOWIEDŹ MUSI BYĆ DOKŁADNIE JEDNYM Z DWÓCH FORMATÓW:
+WAŻNE:
 
-ODRZUCONO
+- Nie dodawaj komentarzy.
+- Nie dodawaj uzasadnienia.
+- Nie dodawaj źródeł.
+- Nie dodawaj linków.
+- Nie dodawaj Markdown.
+- Nie używaj bloków ```json.
+- Nie dodawaj tekstu przed ani po obiekcie JSON.
+- Nie zwracaj placeholderów.
+- Nie zwracaj dodatkowych pól, których nie określono w tym poleceniu.
 
-ALBO
-
-Nazwa instrumentu: [rzeczywista pełna nazwa spółki], Symbol instrumentu: [rzeczywisty symbol giełdowy], 
-Prognoza: [jedna z pięciu dozwolonych wartości].
-
-Nie zwracaj instrukcji, szablonu ani placeholderów. Zwróć wyłącznie wynik analizy.
+OSTATECZNA ODPOWIEDŹ MUSI ZAWIERAĆ WYŁĄCZNIE POPRAWNY OBIEKT JSON.
 """
 
 #     "Analiza ma charakter wyłącznie edukacyjny/informacyjny "

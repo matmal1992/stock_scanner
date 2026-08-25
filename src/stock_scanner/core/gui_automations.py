@@ -173,7 +173,7 @@ def find_last_copy_icon(threshold: float = 0.85) -> Optional[Tuple[int, int]]:
         img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
 
     template_path = get_assets_dir() / "copy_icon.png"
-    print(f"Copy icon path: {template_path}")
+    # print(f"Copy icon path: {template_path}")
     template = cv2.imread(template_path, cv2.IMREAD_COLOR)
     if template is None:
         print("\nTemplate not found")
@@ -187,7 +187,7 @@ def find_last_copy_icon(threshold: float = 0.85) -> Optional[Tuple[int, int]]:
 
     locations = np.where(result >= threshold)
 
-    print(f"Znaleziono {len(locations[0])} dopasowań copy icon")
+    # print(f"Znaleziono {len(locations[0])} dopasowań copy icon")
 
     centers = []
 
