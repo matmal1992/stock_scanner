@@ -1,4 +1,5 @@
 import json
+import logging
 import time
 from typing import Any, cast
 
@@ -8,6 +9,8 @@ from PySide6.QtCore import QObject, QThread, Signal
 
 from src.stock_scanner.core.gui_automations import find_last_copy_icon, paste_into_input, scroll_to_bottom
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository, LLMResponse, NewsEntry
+
+logger = logging.getLogger(__name__)
 
 my_prompt = """WYKONAJ PONIŻSZE POLECENIE DOSŁOWNIE.
 
@@ -211,14 +214,10 @@ class ManualPromptWorker(QObject):
             pyautogui.click(copy_icon)
 
             response = pyperclip.paste()
-            # self.response_received.emit(self.entry_id, response)
-            # print("RESPONSE:\n", response)
-
             return self._parse_response(response)
 
         except Exception as exc:
-            message = f"LLM worker error: {exc}"
-            print(message)
+            logger.error(f"LLM worker error: {exc}")
             raise
 
     @staticmethod

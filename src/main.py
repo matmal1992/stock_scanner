@@ -23,6 +23,7 @@ def main() -> None:
     window = MainWindow(entry_repo, tracked_repo)
     window.showMaximized()
     window.show()
+    window.start_news_strategy()
 
     exit_code = 0
     try:
