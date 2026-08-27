@@ -231,7 +231,7 @@ class NewsFeedList(QWidget):
         started_news = self.news.start()
         started_espi = self.espi.start()
 
-        if not started_news or started_espi:
+        if not started_news or not started_espi:
             self.notify.emit("Nie udało się uruchomić scrapingu", "error")
 
     def on_news_log(self, text: str) -> None:

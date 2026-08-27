@@ -223,6 +223,11 @@ class ManualPromptWorker(QObject):
 
     @staticmethod
     def _parse_response(response: str) -> LLMResponse:
+        response = response.strip()
+
+        if not response:
+            raise ValueError("LLM zwrócił pustą odpowiedź")
+
         parsed: Any = json.loads(response)
 
         if not isinstance(parsed, dict):
@@ -374,7 +379,7 @@ class LLMQueueWorker(QObject):
 
                 except Exception as exc:
                     self.error.emit(f"LLM worker error dla {entry_id}: {exc}")
-                    break
+                    continue
 
                 time.sleep(0.2)
 
