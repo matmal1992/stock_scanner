@@ -1,3 +1,4 @@
+import logging
 import time
 from pathlib import Path
 from typing import Optional, Tuple
@@ -11,7 +12,10 @@ from playwright.sync_api import Page, sync_playwright
 
 from src.stock_scanner.core.debug_screen import take_screenshot
 from src.stock_scanner.core.paths import configure_environment, get_assets_dir
+from src.stock_scanner.core.utils import get_actual_time
 from src.stock_scanner.strategies.news_tracker.entry_repo import NewsEntry
+
+logger = logging.getLogger(__name__)
 
 
 def get_news(output_dir: Optional[Path] = None) -> list[NewsEntry]:
@@ -84,7 +88,8 @@ def get_news(output_dir: Optional[Path] = None) -> list[NewsEntry]:
                 )
 
             # screenshot(page, "09_scraping_finished")
-        except Exception:
+        except Exception as e:
+            logger.error(f"{get_actual_time()} Automation error - Scraping exception: {e}")
             # screenshot(page, "error_last_page_state")
             raise
         finally:
@@ -112,8 +117,7 @@ def find_input(threshold: float = 0.85) -> Optional[Tuple[int, int]]:
     template = cv2.imread(template_path, cv2.IMREAD_COLOR)
 
     if template is None:
-        print("\nTemplate not found")
-        # raise ValueError("Template not found")
+        logger.error(f"{get_actual_time()} Automation error - Input template not found")
         return None
 
     result = cv2.matchTemplate(img, template, cv2.TM_CCOEFF_NORMED)
@@ -127,7 +131,7 @@ def find_input(threshold: float = 0.85) -> Optional[Tuple[int, int]]:
 
         return (x + 200, y)
     else:
-        print("Nie znaleziono pola inputu")
+        logger.error(f"{get_actual_time()} Automation error - Input field not found")
         return None
 
 
@@ -135,7 +139,7 @@ def paste_into_input(text: str) -> None:
     input_point = find_input()
 
     if input_point is None:
-        print("Nie można wkleić — brak inputa")
+        logger.error(f"{get_actual_time()} Automation error: Cant paste - input not found")
         take_screenshot("no_input_found.png")
         return
 
@@ -151,7 +155,7 @@ def scroll_to_bottom() -> None:
     input_point = find_input()
 
     if input_point is None:
-        print("Nie można wkleić — brak inputa")
+        logger.error(f"{get_actual_time()} Automation error - Cant scroll - Input not found")
         take_screenshot("no_input_point_found.png")
         # dodać debugowanie w postaci zrzutu z ekranu + zapis do pliku z zaznaczonym obszarem
         return
@@ -176,9 +180,8 @@ def find_last_copy_icon(threshold: float = 0.85) -> Optional[Tuple[int, int]]:
     # print(f"Copy icon path: {template_path}")
     template = cv2.imread(template_path, cv2.IMREAD_COLOR)
     if template is None:
-        print("\nTemplate not found")
+        logger.error(f"{get_actual_time()} Automation error - copy icon not found")
         take_screenshot("copy_not_found.png")
-        # raise ValueError("Template not found")
         return None
 
     h, w = template.shape[:2]
@@ -186,8 +189,6 @@ def find_last_copy_icon(threshold: float = 0.85) -> Optional[Tuple[int, int]]:
     result = cv2.matchTemplate(img, template, cv2.TM_CCOEFF_NORMED)
 
     locations = np.where(result >= threshold)
-
-    # print(f"Znaleziono {len(locations[0])} dopasowań copy icon")
 
     centers = []
 

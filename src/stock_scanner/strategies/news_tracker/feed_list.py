@@ -1,4 +1,4 @@
-from datetime import datetime
+import logging
 from typing import Sequence
 
 from PySide6.QtCore import Signal
@@ -13,11 +13,14 @@ from PySide6.QtWidgets import (
 )
 
 from src.stock_scanner.core.telegram import send_telegram_message
+from src.stock_scanner.core.utils import get_actual_time
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository, NewsEntry
 from src.stock_scanner.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
 from src.stock_scanner.ui.workers.espi_worker import ESPIService
 from src.stock_scanner.ui.workers.gpw_news_worker import NewsService
 from src.stock_scanner.ui.workers.llm_worker import LLMService
+
+logger = logging.getLogger(__name__)
 
 
 class NewsFeedList(QWidget):
@@ -140,9 +143,11 @@ class NewsFeedList(QWidget):
         self.notify.emit(text, "neutral")
 
     def on_llm_error(self, text: str) -> None:
+        logger.error(f"{get_actual_time()} - LLM ERROR: {text}")
         self.notify.emit(text, "error")
 
     def on_llm_finished(self) -> None:
+        logger.info(f"{get_actual_time()} - Kolejka LLM zakończona")
         self.notify.emit("Kolejka LLM zakończona", "ok")
 
     def on_run_llm_clicked(self) -> None:
@@ -154,6 +159,7 @@ class NewsFeedList(QWidget):
         started = self.llm.start()
 
         if not started:
+            logger.error(f"{get_actual_time()} - LLM ERROR: Nie udało się uruchomić LLM")
             self.notify.emit("Nie udało się uruchomić LLM", "error")
 
     def on_llm_result(self, entry: NewsEntry) -> None:
@@ -200,9 +206,8 @@ class NewsFeedList(QWidget):
         self.notify.emit(text, "neutral")
 
     def on_espi_error(self, text: str) -> None:
-        now = datetime.now()
-        error_time = now.strftime("%Y-%m-%d %H:%M:%S")
-        self.notify.emit(f"{error_time} Błąd ESPI: {text}", "error")
+        logger.error(f"{get_actual_time()} - ESPI ERROR: {text}")
+        self.notify.emit(f"{get_actual_time()} Błąd ESPI: {text}", "error")
 
     def on_espi_finished(self) -> None:
         self.notify.emit("Pojedyncze pobieranie ESPI zakończone", "ok")
@@ -233,9 +238,8 @@ class NewsFeedList(QWidget):
         self.notify.emit(text, "neutral")
 
     def on_news_error(self, text: str) -> None:
-        now = datetime.now()
-        error_time = now.strftime("%Y-%m-%d %H:%M:%S")
-        self.notify.emit(f"{error_time} Błąd ESPI: {text}", "error")
+        logger.error(f"{get_actual_time()} - GPW News ERROR: {text}")
+        self.notify.emit(f"{get_actual_time()} Błąd GPW News: {text}", "error")
 
     def on_news_finished(self) -> None:
         self.notify.emit("Pojedyncze pobieranie GPW Bankier News zakończone", "ok")

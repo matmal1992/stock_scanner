@@ -6,6 +6,11 @@ from typing import Any
 import pandas as pd
 
 
+def get_actual_time() -> str:
+    now = datetime.now()
+    return now.strftime("%H:%M:%S")
+
+
 def read_parquet(path: Path) -> pd.DataFrame | None:
     try:
         return pd.read_parquet(path)

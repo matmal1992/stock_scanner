@@ -4,6 +4,7 @@ import urllib.parse
 import urllib.request
 
 from config.app_config import load_config
+from src.stock_scanner.core.utils import get_actual_time
 from src.stock_scanner.strategies.news_tracker.entry_repo import NewsEntry
 
 logger = logging.getLogger(__name__)
@@ -56,7 +57,7 @@ def send_telegram_message(entry: NewsEntry) -> bool:
         result = json.loads(body)
         return bool(result.get("ok", False))
     except Exception as e:
-        logger.error(f"TELEGRAM ERROR: {type(e)}, {e}")
+        logger.error(f"{get_actual_time()} - TELEGRAM ERROR: {type(e)}, {e}")
         return False
 
 
@@ -79,5 +80,5 @@ def send_test_telegram_message() -> bool:
         result = json.loads(body)
         return bool(result.get("ok", False))
     except Exception as e:
-        logger.error(f"TELEGRAM ERROR: {type(e)}, {e}")
+        logger.error(f"{get_actual_time()} -TELEGRAM ERROR: {type(e)}, {e}")
         return False

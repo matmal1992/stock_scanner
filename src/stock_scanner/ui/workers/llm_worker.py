@@ -6,16 +6,8 @@ import pyautogui
 import pyperclip
 from PySide6.QtCore import QObject, QThread, Signal
 
-from src.stock_scanner.core.gui_automations import (
-    find_last_copy_icon,
-    paste_into_input,
-    scroll_to_bottom,
-)
-from src.stock_scanner.strategies.news_tracker.entry_repo import (
-    EntryRepository,
-    LLMResponse,
-    NewsEntry,
-)
+from src.stock_scanner.core.gui_automations import find_last_copy_icon, paste_into_input, scroll_to_bottom
+from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository, LLMResponse, NewsEntry
 
 my_prompt = """WYKONAJ PONIŻSZE POLECENIE DOSŁOWNIE.
 
@@ -368,7 +360,7 @@ class LLMQueueWorker(QObject):
                     )
 
                     if not success:
-                        self.log.emit(f"LLM: nie udało się zapisać wyniku dla {entry_id}")
+                        self.error.emit(f"LLM: nie udało się zapisać wyniku dla {entry_id}")
                         break
 
                     updated_entry = self.entry_repo.get_by_id(entry_id)
