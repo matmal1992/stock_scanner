@@ -1,4 +1,5 @@
 import logging
+import subprocess
 import time
 from pathlib import Path
 from typing import Optional, Tuple
@@ -8,6 +9,7 @@ import mss
 import numpy as np
 import pyautogui
 import pyperclip
+from bs4 import BeautifulSoup
 from playwright.sync_api import Page, sync_playwright
 
 from src.stock_scanner.core.debug_screen import take_screenshot
@@ -266,6 +268,57 @@ def send_prompt_and_copy_response(prompt: str = "Test prompt", headless: bool = 
 
 if __name__ == "__main__":
     configure_environment()
-    odpowiedz = send_prompt_and_copy_response("Test prompt")
-    print("--- Skopiowana odpowiedź z ChatGPT ---")
-    print(odpowiedz)
+
+    url = "https://www.gpw.pl/komunikaty?categoryRaports=EBI,ESPI&typeRaports=RB,P,Q,O,R&searchText=&date="
+
+    result = subprocess.run(
+        [
+            "curl.exe",
+            "-s",
+            "-L",
+            url,
+        ],
+        capture_output=True,
+        timeout=30,
+    )
+
+    print("RETURN CODE:", result.returncode)
+    print("HTML BYTES:", len(result.stdout))
+    print("ERROR:", result.stderr.decode("utf-8", errors="replace"))
+
+    html = result.stdout.decode(
+        "utf-8",
+        errors="replace",
+    )
+
+    print("HTML LENGTH:", len(html))
+    print(html[:500])
+
+    with open("gpw.html", "w", encoding="utf-8") as f:
+        f.write(html)
+
+    print("HTML zapisany do gpw.html")
+
+    with open("gpw.html", "r", encoding="utf-8") as f:
+        html = f.read()
+
+    soup = BeautifulSoup(html, "html.parser")
+
+    print("TITLE:")
+    print(soup.title.get_text(strip=True) if soup.title else "BRAK")
+
+    print("\nTABELKI:")
+    for i, table in enumerate(soup.find_all("table")):
+        print(f"\n===== TABLE {i} =====")
+
+        rows = table.find_all("tr")
+
+        print("LICZBA WIERSZY:", len(rows))
+
+        for row in rows[:5]:
+            print(
+                row.get_text(
+                    " | ",
+                    strip=True,
+                )
+            )

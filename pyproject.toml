@@ -29,7 +29,8 @@ dependencies = [
     "mss",
     "opencv-python",
     "playwright",
-    "mypy"
+    "mypy",
+    "types-requests"
 ]
 
 [project.optional-dependencies]

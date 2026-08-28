@@ -18,6 +18,7 @@ from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository
 from src.stock_scanner.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
 from src.stock_scanner.ui.workers.espi_worker import ESPIService
 from src.stock_scanner.ui.workers.gpw_news_worker import NewsService
+from src.stock_scanner.ui.workers.gpw_worker import GPWService
 from src.stock_scanner.ui.workers.llm_worker import LLMService
 
 logger = logging.getLogger(__name__)
@@ -36,6 +37,12 @@ class NewsFeedList(QWidget):
         self.espi.log.connect(self.on_espi_log)
         self.espi.error.connect(self.on_espi_error)
         self.espi.finished.connect(self.on_espi_finished)
+
+        self.gpw = GPWService(entry_repo)
+        self.gpw.result.connect(self.on_gpw_result)
+        self.gpw.log.connect(self.on_gpw_log)
+        self.gpw.error.connect(self.on_gpw_error)
+        self.gpw.finished.connect(self.on_gpw_finished)
 
         self.news = NewsService(entry_repo)
         self.news.result.connect(self.on_news_result)
@@ -223,16 +230,17 @@ class NewsFeedList(QWidget):
             self.notify.emit("Brak nowych GPW Bankier News", "neutral")
 
     def on_start_scraping_clicked(self) -> None:
-        if self.news.is_running() or self.espi.is_running():
-            self.notify.emit("Scraping już trwa", "error")
-            return
+        # if self.news.is_running() or self.espi.is_running():
+        #     self.notify.emit("Scraping już trwa", "error")
+        #     return
 
         self.notify.emit("Start scraping", "neutral")
-        started_news = self.news.start()
-        started_espi = self.espi.start()
+        # started_news = self.news.start()
+        # started_espi = self.espi.start()
+        self.gpw.start()
 
-        if not started_news or not started_espi:
-            self.notify.emit("Nie udało się uruchomić scrapingu", "error")
+        # if not started_news or not started_espi:
+        #     self.notify.emit("Nie udało się uruchomić scrapingu", "error")
 
     def on_news_log(self, text: str) -> None:
         self.notify.emit(text, "neutral")
@@ -243,3 +251,23 @@ class NewsFeedList(QWidget):
 
     def on_news_finished(self) -> None:
         self.notify.emit("Pojedyncze pobieranie GPW Bankier News zakończone", "ok")
+
+    def on_gpw_result(self, has_new_entries: bool) -> None:
+        self._update_list()
+
+        if has_new_entries:
+            if not self.llm.is_running():
+                self.llm.start()
+            self.notify.emit("Pobrano nowe komunikaty gpw", "ok")
+        else:
+            self.notify.emit("Brak nowych komunikatów gpw", "neutral")
+
+    def on_gpw_log(self, text: str) -> None:
+        self.notify.emit(text, "neutral")
+
+    def on_gpw_error(self, text: str) -> None:
+        logger.error(f"{get_actual_time()} - GPW ERROR: {text}")
+        self.notify.emit(f"{get_actual_time()} Błąd GPW: {text}", "error")
+
+    def on_gpw_finished(self) -> None:
+        self.notify.emit("Pojedyncze pobieranie GPW zakończone", "ok")
