@@ -1,324 +1,69 @@
 import logging
-import subprocess
-import time
-from pathlib import Path
-from typing import Optional, Tuple
+import os
 
-import cv2
-import mss
-import numpy as np
-import pyautogui
 import pyperclip
-from bs4 import BeautifulSoup
-from playwright.sync_api import Page, sync_playwright
+from playwright.sync_api import sync_playwright
 
-from src.stock_scanner.core.debug_screen import take_screenshot
-from src.stock_scanner.core.paths import configure_environment, get_assets_dir
-from src.stock_scanner.core.utils import get_actual_time
-from src.stock_scanner.strategies.news_tracker.entry_repo import NewsEntry
+from src.stock_scanner.core.paths import configure_environment
 
 logger = logging.getLogger(__name__)
 
 
-def get_news(output_dir: Optional[Path] = None) -> list[NewsEntry]:
-    """Scrape Bankier news without starting the worker or using the database."""
-    configure_environment()
-    screenshot_dir = output_dir or Path.cwd() / "debug_news"
-    screenshot_dir.mkdir(parents=True, exist_ok=True)
-    url = "https://www.bankier.pl/gielda/wiadomosci"
-    item_selector = "li.m-listing-article-list__item"
-
-    def screenshot(page: Page, name: str) -> None:
-        page.screenshot(path=screenshot_dir / f"{name}.png", full_page=True)
-
-    entries: list[NewsEntry] = []
-
-    with sync_playwright() as playwright:
-        browser = playwright.chromium.launch(headless=True)
-        page = browser.new_page()
-
-        try:
-            # screenshot(page, "01_before_navigation")
-            page.goto(url, timeout=30_000, wait_until="domcontentloaded")
-            # screenshot(page, "02_after_navigation")
-
-            cookie_button = page.locator("button:has-text('Zaakceptuj i zamknij')").first
-            if cookie_button.count() > 0 and cookie_button.is_visible(timeout=2_000):
-                # screenshot(page, "03_cookie_banner_before_click")
-                cookie_button.click()
-                page.wait_for_timeout(1_000)
-                # screenshot(page, "04_after_cookie_click")
-            # else:
-            #     screenshot(page, "03_no_cookie_banner")
-
-            # screenshot(page, "05_page_validation")
-            page.wait_for_selector(item_selector, timeout=15_000)
-            items = page.locator(item_selector)
-            # screenshot(page, "06_news_list_found")
-
-            for index in range(min(items.count(), 5)):
-                item = items.nth(index)
-                # item.screenshot(path=screenshot_dir / f"07_item_{index}.png")
-
-                anchor = item.locator("a.m-listing-article-list__anchor")
-                if anchor.count() == 0:
-                    # screenshot(page, f"08_item_{index}_invalid")
-                    continue
-
-                link = anchor.get_attribute("href")
-                title = item.locator(".m-listing-article-list__title").inner_text().strip()
-                published = item.locator(".m-listing-article-list__date-time").inner_text().strip()
-
-                if not link or not title:
-                    # screenshot(page, f"08_item_{index}_invalid")
-                    continue
-
-                if link.startswith("/"):
-                    link = "https://www.bankier.pl" + link
-
-                entries.append(
-                    {
-                        "id": 0,
-                        "title": title,
-                        "link": link,
-                        "published": published,
-                        "source_type": "NEWS",
-                        "ticker": None,
-                        "llm": "pending",
-                        "sentiment": "-",
-                    }
-                )
-
-            # screenshot(page, "09_scraping_finished")
-        except Exception as e:
-            logger.error(f"{get_actual_time()} Automation error - Scraping exception: {e}")
-            # screenshot(page, "error_last_page_state")
-            raise
-        finally:
-            browser.close()
-
-    return entries
-
-
-def get_screen_image() -> Tuple[np.ndarray, dict]:
-    with mss.MSS() as sct:
-        monitor = sct.monitors[0]
-        screenshot = sct.grab(monitor)
-
-        img = np.array(screenshot)
-        img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
-
-    return img, monitor
-
-
-def find_input(threshold: float = 0.85) -> Optional[Tuple[int, int]]:
-    img, monitor = get_screen_image()
-
-    template_path = get_assets_dir() / "input_icon.png"
-    # print(f"Input icon path: {template_path}")
-    template = cv2.imread(template_path, cv2.IMREAD_COLOR)
-
-    if template is None:
-        logger.error(f"{get_actual_time()} Automation error - Input template not found")
-        return None
-
-    result = cv2.matchTemplate(img, template, cv2.TM_CCOEFF_NORMED)
-    min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
-
-    if max_val >= threshold:
-        h, w = template.shape[:2]
-
-        x = max_loc[0] + w // 2 + monitor["left"]
-        y = max_loc[1] + h // 2 + monitor["top"]
-
-        return (x + 200, y)
-    else:
-        logger.error(f"{get_actual_time()} Automation error - Input field not found")
-        return None
-
-
-def paste_into_input(text: str) -> None:
-    input_point = find_input()
-
-    if input_point is None:
-        logger.error(f"{get_actual_time()} Automation error: Cant paste - input not found")
-        take_screenshot("no_input_found.png")
-        return
-
-    x, y = input_point
-    pyperclip.copy(text)
-    time.sleep(1)
-    pyautogui.click(x, y)
-    time.sleep(1)
-    pyautogui.hotkey("ctrl", "v")
-
-
-def scroll_to_bottom() -> None:
-    input_point = find_input()
-
-    if input_point is None:
-        logger.error(f"{get_actual_time()} Automation error - Cant scroll - Input not found")
-        take_screenshot("no_input_point_found.png")
-        # dodać debugowanie w postaci zrzutu z ekranu + zapis do pliku z zaznaczonym obszarem
-        return
-
-    x, y = input_point
-    empty_field = (x - 300, y)
-    pyautogui.moveTo(empty_field, duration=1)
-    pyautogui.click(empty_field)
-    time.sleep(0.5)
-    pyautogui.press("end")
-
-
-def find_last_copy_icon(threshold: float = 0.85) -> Optional[Tuple[int, int]]:
-    with mss.MSS() as sct:
-        monitor = sct.monitors[0]
-        screenshot = sct.grab(monitor)
-
-        img = np.array(screenshot)
-        img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
-
-    template_path = get_assets_dir() / "copy_icon.png"
-    # print(f"Copy icon path: {template_path}")
-    template = cv2.imread(template_path, cv2.IMREAD_COLOR)
-    if template is None:
-        logger.error(f"{get_actual_time()} Automation error - copy icon not found")
-        take_screenshot("copy_not_found.png")
-        return None
-
-    h, w = template.shape[:2]
-
-    result = cv2.matchTemplate(img, template, cv2.TM_CCOEFF_NORMED)
-
-    locations = np.where(result >= threshold)
-
-    centers = []
-
-    for pt in zip(*locations[::-1]):
-        x, y = pt
-
-        cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
-
-        center_x = x + w // 2 + monitor["left"]
-        center_y = y + h // 2 + monitor["top"]
-        centers.append((center_x, center_y))
-
-    # if debug:
-    # show_detected(img, centers)
-
-    bottom = max(centers, key=lambda p: p[1])
-    return bottom
-
-
-def test_autogui() -> None:
-    print("Start soon...")
-    paste_into_input("some_text")
-    time.sleep(0.5)
-    scroll_to_bottom()
-    time.sleep(1)
-    copy_icon = find_last_copy_icon()
-    pyautogui.moveTo(copy_icon, duration=0.5)
-    time.sleep(1)
-    pyautogui.click(copy_icon)
-    print("LLM ended")
-    # todo: zwracaj odpowiednie sygnały/komunikaty w zależności co się wysypało
-
-
 def send_prompt_and_copy_response(prompt: str = "Test prompt", headless: bool = False) -> str:
+    # Tworzymy katalog na zapisanie sesji (zalogowania)
+    user_data_dir = os.path.join(os.getcwd(), "browsers/browser_user_data")
+
     with sync_playwright() as p:
-        # Uruchamiamy przeglądarkę (headless=False pozwala obserwować jej działanie)
-        browser = p.chromium.launch(headless=headless)
+        # Używamy trwałego kontekstu zamiast p.chromium.launch()
+        context = p.chromium.launch_persistent_context(
+            user_data_dir=user_data_dir,
+            headless=headless,
+            args=["--disable-blink-features=AutomationControlled"],
+            permissions=["clipboard-read", "clipboard-write"],
+        )
 
-        # Nadajemy uprawnienia do schowka dla kontekstu przeglądarki
-        context = browser.new_context(permissions=["clipboard-read", "clipboard-write"])
-        page = context.new_page()
+        page = context.pages[0] if context.pages else context.new_page()
 
-        # 1. Wejście na stronę
         page.goto("https://chatgpt.com/", timeout=60000)
 
-        # 2. Wprowadzenie promptu (używamy aktywnego pola tekstowego ContentEditable)
-        prompt_input = page.locator("#prompt-textarea")
+        # 1. Obsługa zalogowania / przekierowania
+        # Jeśli pojawi się strona logowania, dajemy użytkownikowi czas na ręczne zalogowanie
+        if "auth" in page.url or "accounts.google" in page.url or page.locator("text=Log in").count() > 0:
+            print("Wykryto ekran logowania! Zaloguj się ręcznie w oknie przeglądarki...")
+            # Czekamy aż pojawi się pole promptu po zalogowaniu
+            page.wait_for_selector("#prompt-textarea, div[contenteditable='true']", timeout=120000)
+            print("Zalogowano pomyślnie! Sesja została zapisana.")
+
+        # 2. Odnajdywanie i wypełnianie pola promptu
+        prompt_input = page.locator("#prompt-textarea, div[contenteditable='true']").first
         prompt_input.wait_for(state="visible", timeout=30000)
+        prompt_input.click()
         prompt_input.fill(prompt)
 
-        # 3. Wysyłanie promptu
+        # 3. Wysyłanie wiadomości
         send_button = page.locator(
             """button[data-testid="send-button"], button[aria-label="Wyślij wiadomość"], 
             button[aria-label="Send prompt"]"""
-        )
-        send_button.click()
+        ).first
 
-        # 4. Oczekiwanie na zakończenie generowania odpowiedzi przez ChatGPT
-        # Szukamy przycisku "Kopiuj" pod ostatnią odpowiedzią (pojawia się po zakończeniu pisania)
-        copy_button = page.locator('button[aria-label="Kopiuj"]').last
+        if send_button.is_visible():
+            send_button.click()
+        else:
+            page.keyboard.press("Enter")
+
+        # 4. Oczekiwanie na przycisk "Kopiuj" pod odpowiedzią
+        copy_button = page.locator('button[aria-label*="Kopiuj"], button[aria-label*="Copy"]').last
         copy_button.wait_for(state="visible", timeout=60000)
 
-        # 5. Kliknięcie przycisku "Kopiuj" na stronie
+        # 5. Kliknięcie i pobranie ze schowka
         copy_button.click()
-
-        # Krótka pauza na zaktualizowanie schowka systemowego
         page.wait_for_timeout(1000)
-
-        # 6. Pobranie treści ze schowka w Pythonie
         response_text = pyperclip.paste()
 
-        browser.close()
+        context.close()
         return response_text
 
 
 if __name__ == "__main__":
     configure_environment()
-
-    url = "https://www.gpw.pl/komunikaty?categoryRaports=EBI,ESPI&typeRaports=RB,P,Q,O,R&searchText=&date="
-
-    result = subprocess.run(
-        [
-            "curl.exe",
-            "-s",
-            "-L",
-            url,
-        ],
-        capture_output=True,
-        timeout=30,
-    )
-
-    print("RETURN CODE:", result.returncode)
-    print("HTML BYTES:", len(result.stdout))
-    print("ERROR:", result.stderr.decode("utf-8", errors="replace"))
-
-    html = result.stdout.decode(
-        "utf-8",
-        errors="replace",
-    )
-
-    print("HTML LENGTH:", len(html))
-    print(html[:500])
-
-    with open("gpw.html", "w", encoding="utf-8") as f:
-        f.write(html)
-
-    print("HTML zapisany do gpw.html")
-
-    with open("gpw.html", "r", encoding="utf-8") as f:
-        html = f.read()
-
-    soup = BeautifulSoup(html, "html.parser")
-
-    print("TITLE:")
-    print(soup.title.get_text(strip=True) if soup.title else "BRAK")
-
-    print("\nTABELKI:")
-    for i, table in enumerate(soup.find_all("table")):
-        print(f"\n===== TABLE {i} =====")
-
-        rows = table.find_all("tr")
-
-        print("LICZBA WIERSZY:", len(rows))
-
-        for row in rows[:5]:
-            print(
-                row.get_text(
-                    " | ",
-                    strip=True,
-                )
-            )
+    send_prompt_and_copy_response()
