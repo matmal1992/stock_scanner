@@ -222,8 +222,50 @@ def test_autogui() -> None:
     # todo: zwracaj odpowiednie sygnały/komunikaty w zależności co się wysypało
 
 
+def send_prompt_and_copy_response(prompt: str = "Test prompt", headless: bool = False) -> str:
+    with sync_playwright() as p:
+        # Uruchamiamy przeglądarkę (headless=False pozwala obserwować jej działanie)
+        browser = p.chromium.launch(headless=headless)
+
+        # Nadajemy uprawnienia do schowka dla kontekstu przeglądarki
+        context = browser.new_context(permissions=["clipboard-read", "clipboard-write"])
+        page = context.new_page()
+
+        # 1. Wejście na stronę
+        page.goto("https://chatgpt.com/", timeout=60000)
+
+        # 2. Wprowadzenie promptu (używamy aktywnego pola tekstowego ContentEditable)
+        prompt_input = page.locator("#prompt-textarea")
+        prompt_input.wait_for(state="visible", timeout=30000)
+        prompt_input.fill(prompt)
+
+        # 3. Wysyłanie promptu
+        send_button = page.locator(
+            """button[data-testid="send-button"], button[aria-label="Wyślij wiadomość"], 
+            button[aria-label="Send prompt"]"""
+        )
+        send_button.click()
+
+        # 4. Oczekiwanie na zakończenie generowania odpowiedzi przez ChatGPT
+        # Szukamy przycisku "Kopiuj" pod ostatnią odpowiedzią (pojawia się po zakończeniu pisania)
+        copy_button = page.locator('button[aria-label="Kopiuj"]').last
+        copy_button.wait_for(state="visible", timeout=60000)
+
+        # 5. Kliknięcie przycisku "Kopiuj" na stronie
+        copy_button.click()
+
+        # Krótka pauza na zaktualizowanie schowka systemowego
+        page.wait_for_timeout(1000)
+
+        # 6. Pobranie treści ze schowka w Pythonie
+        response_text = pyperclip.paste()
+
+        browser.close()
+        return response_text
+
+
 if __name__ == "__main__":
-    news = get_news()
-    print(f"Zescrapowano wiadomości: {len(news)}")
-    for entry in news:
-        print(f"{entry['published']} | {entry['title']} | {entry['link']}")
+    configure_environment()
+    odpowiedz = send_prompt_and_copy_response("Test prompt")
+    print("--- Skopiowana odpowiedź z ChatGPT ---")
+    print(odpowiedz)
