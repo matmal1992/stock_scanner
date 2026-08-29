@@ -18,10 +18,11 @@ def is_frozen() -> bool:
 
 
 def get_data_dir() -> Path:
-    if is_frozen():
-        return get_root_dir() / "data"
-    else:
-        return get_root_dir() / "data"
+    return get_root_dir() / "data"
+
+
+def get_browser_dir() -> Path:
+    return get_root_dir() / "browsers"
 
 
 def get_assets_dir() -> Path:

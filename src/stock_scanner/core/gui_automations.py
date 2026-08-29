@@ -1,9 +1,11 @@
 import logging
 import os
+import time
 
 import pyperclip
 from playwright.sync_api import sync_playwright
 
+from src.stock_scanner.core.gpt_prompter import GPTPrompter
 from src.stock_scanner.core.paths import configure_environment
 
 logger = logging.getLogger(__name__)
@@ -66,4 +68,19 @@ def send_prompt_and_copy_response(prompt: str = "Test prompt", headless: bool = 
 
 if __name__ == "__main__":
     configure_environment()
-    send_prompt_and_copy_response()
+
+    bot = GPTPrompter(headless=False)
+    bot.start()
+
+    # Pierwszy prompt
+    odpowiedz_1 = bot.send_prompt("Test prompt")
+    print("\n--- Otrzymano odpowiedź 1 ---")
+    print(odpowiedz_1[:150] + "...")  # Wyświetlenie fragmentu
+
+    print("\nCzekam 20 sekund przed wysłaniem drugiego zapytania...")
+    time.sleep(20)
+
+    # Drugi prompt (przeglądarka nadal otwarta)
+    odpowiedz_2 = bot.send_prompt("second test")
+    print("\n--- Otrzymano odpowiedź 2 ---")
+    print(odpowiedz_2)
