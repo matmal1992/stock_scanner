@@ -1,14 +1,15 @@
-# import os
+import logging
 
 from playwright.sync_api import BrowserContext, Page, Playwright, sync_playwright
 
 from src.stock_scanner.core.paths import get_browser_dir
 
+logger = logging.getLogger(__name__)
+
 
 class GPTPrompter:
     def __init__(self, headless: bool = False):
         self.headless = headless
-        # self.user_data_dir = os.path.join(os.getcwd(), "browsers/browser_user_data")
         self.playwright: Playwright | None = None
         self.context: BrowserContext | None = None
         self.page: Page | None = None
@@ -30,9 +31,9 @@ class GPTPrompter:
             or "accounts.google" in self.page.url
             or self.page.locator("text=Log in").count() > 0
         ):
-            print("Wykryto ekran logowania! Zaloguj się ręcznie w przeglądarce...")
+            logger.error("Wykryto ekran logowania! Zaloguj się ręcznie w przeglądarce...")
             self.page.wait_for_selector("#prompt-textarea, div[contenteditable='true']", timeout=120000)
-            print("Zalogowano pomyślnie!")
+            logger.info("Zalogowano pomyślnie")
 
     def send_prompt(self, prompt: str) -> str:
         if self.page is None:
@@ -41,8 +42,6 @@ class GPTPrompter:
         # 1. Pobieramy obecny obiekt odpowiedzi oraz ich liczbę
         responses = self.page.locator('[data-message-author-role="assistant"]')
         initial_responses_count = responses.count()
-
-        print(f"Wysyłanie promptu: '{prompt}'...")
 
         # 2. Odnalezienie i wypełnienie pola tekstowego
         prompt_input = self.page.locator("#prompt-textarea, div[contenteditable='true']").first
@@ -66,21 +65,25 @@ class GPTPrompter:
         new_response = responses.nth(target_index)
         new_response.wait_for(state="attached", timeout=30000)
 
-        # 5. Oczekiwanie na zakończenie generowania (zniknięcie przycisku Stop)
+        # Oczekiwanie na zakończenie generowania (zniknięcie przycisku Stop)
         stop_button = self.page.locator('button[data-testid="stop-button"], button[aria-label*="Stop"]')
         try:
-            stop_button.wait_for(state="hidden", timeout=90000)
+            stop_button.wait_for(state="hidden", timeout=15000)
         except Exception:
-            pass
+            logger.warning("Przekroczono czas oczekiwania na zniknięcie przycisku Stop")
 
-        # 6. Odczekanie chwili na dokończenie renderowania tekstu w DOM
+        # Odczekanie chwili na dokończenie renderowania tekstu w DOM
         self.page.wait_for_timeout(1000)
 
-        # 7. Pobranie tekstu z nowej odpowiedzi
-        if new_response.locator(".markdown").count() > 0:
-            return new_response.locator(".markdown").last.inner_text().strip()
+        # Pobieramy OSTATNIĄ wiadomość asystenta
+        responses = self.page.locator('[data-message-author-role="assistant"]')
+        last_response = responses.last
+        last_response.wait_for(state="attached", timeout=10000)
 
-        return new_response.inner_text().strip()
+        if last_response.locator(".markdown").count() > 0:
+            return last_response.locator(".markdown").last.inner_text().strip()
+
+        return last_response.inner_text().strip()
 
     def close(self) -> None:
         """Zamyka przeglądarkę."""

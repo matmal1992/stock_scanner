@@ -52,8 +52,6 @@ def send_telegram_message(entry: NewsEntry) -> bool:
         with urllib.request.urlopen(request, timeout=10) as response:
             body = response.read().decode("utf-8")
 
-        logger.info("TELEGRAM RESPONSE: %s", body)
-
         result = json.loads(body)
         return bool(result.get("ok", False))
     except Exception as e:

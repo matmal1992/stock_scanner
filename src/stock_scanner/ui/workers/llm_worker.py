@@ -7,6 +7,7 @@ import pyautogui
 import pyperclip
 from PySide6.QtCore import QObject, QThread, Signal
 
+from src.stock_scanner.core.gpt_prompter import GPTPrompter
 from src.stock_scanner.core.py_autogui import find_last_copy_icon, paste_into_input, scroll_to_bottom
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository, LLMResponse, NewsEntry
 
@@ -341,8 +342,13 @@ class LLMQueueWorker(QObject):
 
     def run(self) -> None:
         self.log.emit("LLM queue started")
+        prompter: GPTPrompter | None = None
 
         try:
+            self.log.emit("Uruchamianie przeglądarki ChatGPT...")
+            prompter = GPTPrompter(headless=False)
+            prompter.start()
+
             while self.running:
                 pending = self.entry_repo.get_last_pending()
 
@@ -356,11 +362,14 @@ class LLMQueueWorker(QObject):
                 self.log.emit(f"LLM: przetwarzanie wpisu {entry_id}")
 
                 try:
-                    response = self.prompt_worker.run(link)
+                    full_prompt = f"{my_prompt} Link: {link}"
+                    raw_response = prompter.send_prompt(full_prompt)
+                    # response = self.prompt_worker.run(link)
+                    parsed_response = self._parse_response(raw_response)
 
                     success = self.entry_repo.update_llm(
                         entry_id,
-                        response,
+                        parsed_response,
                     )
 
                     if not success:
@@ -385,3 +394,54 @@ class LLMQueueWorker(QObject):
         finally:
             self.log.emit("LLM queue finished")
             self.finished.emit()
+
+    @staticmethod
+    def _parse_response(response: str) -> LLMResponse:
+        response = response.strip()
+
+        if not response:
+            raise ValueError("LLM zwrócił pustą odpowiedź")
+
+        parsed: Any = json.loads(response)
+
+        if not isinstance(parsed, dict):
+            raise ValueError("Odpowiedź LLM nie jest obiektem JSON")
+
+        required_fields = {"relevant", "company", "ticker", "forecast", "sector"}
+        if set(parsed) != required_fields:
+            raise ValueError("Odpowiedź LLM ma nieprawidłowe pola")
+
+        allowed_forecasts = {
+            "Silny spadek",
+            "Spadek",
+            "Neutralny",
+            "Wzrost",
+            "Silny wzrost",
+        }
+        allowed_sectors = {
+            "zbrojeniowy",
+            "dronowy",
+            "medyczny",
+            "hi-tech",
+            "kosmiczny",
+            "other",
+        }
+
+        if not isinstance(parsed["relevant"], bool):
+            raise ValueError("Pole relevant musi być typu boolean")
+        if parsed["sector"] not in allowed_sectors:
+            raise ValueError("Nieprawidłowa wartość pola sector")
+
+        if parsed["relevant"]:
+            if not isinstance(parsed["company"], str) or not parsed["company"].strip():
+                raise ValueError("Pole company musi zawierać nazwę spółki")
+            if not isinstance(parsed["ticker"], str) or not parsed["ticker"].strip():
+                raise ValueError("Pole ticker musi zawierać symbol spółki")
+            if parsed["forecast"] not in allowed_forecasts:
+                raise ValueError("Nieprawidłowa wartość pola forecast")
+        elif parsed["company"] is not None or parsed["ticker"] is not None:
+            raise ValueError("Dla relevant=false company i ticker muszą być null")
+        elif parsed["forecast"] is not None or parsed["sector"] != "other":
+            raise ValueError("Dla relevant=false forecast musi być null, a sector musi być other")
+
+        return cast(LLMResponse, parsed)
