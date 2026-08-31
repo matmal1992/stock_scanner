@@ -9,31 +9,31 @@ from PySide6.QtCore import QObject, QThread, QTimer, Signal
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository, NewsEntry
 
 
-class GPWWorker(QObject):
+class NewConnectWorker(QObject):
     result = Signal(bool)
     error = Signal(str)
     log = Signal(str)
 
-    URL = "https://www.gpw.pl/komunikaty"
+    URL = "https://newconnect.pl/spolki-komunikaty-spolek"
 
     def __init__(self, entry_repo: EntryRepository) -> None:
         super().__init__()
         self.entry_repo = entry_repo
 
     def run(self) -> None:
-        self.log.emit("Start scrapowania GPW")
+        self.log.emit("Start scrapowania New Connect")
 
         try:
             entries = self._scrape()
 
-            self.log.emit(f"GPW: znaleziono {len(entries)} komunikatów")
+            self.log.emit(f"New Connect: znaleziono {len(entries)} komunikatów")
 
             has_new = self._save_entries(entries)
 
             self.result.emit(has_new)
 
         except Exception as exc:
-            self.error.emit(f"GPW error: {exc}")
+            self.error.emit(f"New Connect error: {exc}")
 
     def _scrape(self) -> list[NewsEntry]:
         html = self._download()
@@ -42,7 +42,7 @@ class GPWWorker(QObject):
 
         items = soup.select("#search-result > li")
 
-        self.log.emit(f"GPW: znaleziono {len(items)} elementów")
+        self.log.emit(f"New Connect: znaleziono {len(items)} elementów")
 
         results: list[NewsEntry] = []
 
@@ -57,19 +57,19 @@ class GPWWorker(QObject):
                 link_element = item.select_one("a[href^='komunikat?']")
 
                 if not date_element:
-                    self.log.emit(f"GPW: brak daty dla elementu {i}")
+                    self.log.emit(f"New Connect: brak daty dla elementu {i}")
                     continue
 
                 if not company_element:
-                    self.log.emit(f"GPW: brak spółki dla elementu {i}")
+                    self.log.emit(f"New Connect: brak spółki dla elementu {i}")
                     continue
 
                 if not title_element:
-                    self.log.emit(f"GPW: brak tytułu dla elementu {i}")
+                    self.log.emit(f"New Connect: brak tytułu dla elementu {i}")
                     continue
 
                 if not link_element:
-                    self.log.emit(f"GPW: brak linku dla elementu {i}")
+                    self.log.emit(f"New Connect: brak linku dla elementu {i}")
                     continue
 
                 date_str = date_element.get_text(" ", strip=True)[:19]
@@ -81,10 +81,10 @@ class GPWWorker(QObject):
                 link = link_element.get("href")
 
                 if not isinstance(link, str):
-                    self.log.emit(f"GPW: nieprawidłowy link dla elementu {i}")
+                    self.log.emit(f"New Connect: nieprawidłowy link dla elementu {i}")
                     continue
 
-                link = urljoin("https://www.gpw.pl/", link)
+                link = urljoin("https://www.newconnect.pl/", link)
 
                 results.append(
                     {
@@ -92,7 +92,7 @@ class GPWWorker(QObject):
                         "title": title,
                         "link": link,
                         "published": date_str,
-                        "source_type": "GPW",
+                        "source_type": "New Connect",
                         "ticker": company,
                         "llm": "pending",
                         "sentiment": "-",
@@ -100,12 +100,12 @@ class GPWWorker(QObject):
                 )
 
             except Exception as exc:
-                self.log.emit(f"GPW: błąd parsowania elementu {i}: {exc}")
+                self.log.emit(f"New Connect: błąd parsowania elementu {i}: {exc}")
 
         return results
 
     def _download(self) -> str:
-        self.log.emit("GPW: pobieranie przez curl...")
+        self.log.emit("New Connect: pobieranie przez curl...")
 
         result = subprocess.run(["curl.exe", "-s", "-L", self.URL], capture_output=True, timeout=30)
 
@@ -117,7 +117,7 @@ class GPWWorker(QObject):
         html = result.stdout.decode("utf-8", errors="replace")
 
         if not html:
-            raise RuntimeError("GPW zwróciło pustą odpowiedź")
+            raise RuntimeError("New Connect zwróciło pustą odpowiedź")
 
         return html
 
@@ -136,7 +136,7 @@ class GPWWorker(QObject):
         return found_new
 
 
-class GPWService(QObject):
+class NewConnectService(QObject):
     result = Signal(bool)
     error = Signal(str)
     log = Signal(str)
@@ -153,7 +153,7 @@ class GPWService(QObject):
         self.entry_repo = entry_repo
 
         self._thread: Optional[QThread] = None
-        self.worker: Optional[GPWWorker] = None
+        self.worker: Optional[NewConnectWorker] = None
 
         self._timer = QTimer(self)
         self._timer.setInterval(self.INTERVAL_MS)
@@ -161,10 +161,10 @@ class GPWService(QObject):
 
     def start(self) -> bool:
         if self._timer.isActive():
-            self.log.emit("Automatyczne pobieranie GPW już działa")
+            self.log.emit("Automatyczne pobieranie New Connect już działa")
             return False
 
-        self.log.emit("Uruchamiam automatyczne pobieranie GPW")
+        self.log.emit("Uruchamiam automatyczne pobieranie New Connect")
 
         self._run_once()
         self._timer.start()
@@ -175,25 +175,25 @@ class GPWService(QObject):
         self._timer.stop()
 
         if self._thread is not None and self._thread.isRunning():
-            self.log.emit("GPW: oczekiwanie na zakończenie bieżącego scrapowania")
+            self.log.emit("New Connect: oczekiwanie na zakończenie bieżącego scrapowania")
         else:
-            self.log.emit("Automatyczne pobieranie GPW zatrzymane")
+            self.log.emit("Automatyczne pobieranie New Connect zatrzymane")
 
     def is_running(self) -> bool:
         return self._timer.isActive() or (self._thread is not None and self._thread.isRunning())
 
     def _on_timer(self) -> None:
-        self.log.emit("GPW: czas na kolejne pobieranie")
+        self.log.emit("New Connect: czas na kolejne pobieranie")
 
         self._run_once()
 
     def _run_once(self) -> None:
         if self._thread is not None and self._thread.isRunning():
-            self.log.emit("GPW: poprzednie scrapowanie jeszcze trwa")
+            self.log.emit("New Connect: poprzednie scrapowanie jeszcze trwa")
             return
 
         self._thread = QThread()
-        self.worker = GPWWorker(self.entry_repo)
+        self.worker = NewConnectWorker(self.entry_repo)
 
         self.worker.moveToThread(self._thread)
 

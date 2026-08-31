@@ -91,3 +91,14 @@ class GPTPrompter:
             self.context.close()
         if self.playwright:
             self.playwright.stop()
+
+    def new_chat(self) -> None:
+        """Otwiera nowy chat i czeka na załadowanie pola wpisywania."""
+        if self.page is None:
+            return
+
+        logger.info("Otwieranie nowego chatu w ChatGPT...")
+        self.page.goto("https://chatgpt.com/", timeout=60000)
+
+        # Czekamy aż nowe pole tekstowe będzie gotowe do interakcji
+        self.page.wait_for_selector("#prompt-textarea, div[contenteditable='true']", timeout=30000)

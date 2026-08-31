@@ -16,10 +16,9 @@ from src.stock_scanner.core.telegram import send_telegram_message
 from src.stock_scanner.core.utils import get_actual_time
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository, NewsEntry
 from src.stock_scanner.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
-from src.stock_scanner.ui.workers.espi_worker import ESPIService
-from src.stock_scanner.ui.workers.gpw_news_worker import NewsService
 from src.stock_scanner.ui.workers.gpw_worker import GPWService
 from src.stock_scanner.ui.workers.llm_worker import LLMService
+from src.stock_scanner.ui.workers.new_connect_worker import NewConnectService
 
 logger = logging.getLogger(__name__)
 
@@ -32,23 +31,17 @@ class NewsFeedList(QWidget):
         super().__init__()
         self.entry_repo = entry_repo
 
-        self.espi = ESPIService(entry_repo)
-        self.espi.result.connect(self.on_espi_result)
-        self.espi.log.connect(self.on_espi_log)
-        self.espi.error.connect(self.on_espi_error)
-        self.espi.finished.connect(self.on_espi_finished)
-
         self.gpw = GPWService(entry_repo)
         self.gpw.result.connect(self.on_gpw_result)
         self.gpw.log.connect(self.on_gpw_log)
         self.gpw.error.connect(self.on_gpw_error)
         self.gpw.finished.connect(self.on_gpw_finished)
 
-        self.news = NewsService(entry_repo)
-        self.news.result.connect(self.on_news_result)
-        self.news.log.connect(self.on_news_log)
-        self.news.error.connect(self.on_news_error)
-        self.news.finished.connect(self.on_news_finished)
+        self.new_connect = NewConnectService(entry_repo)
+        self.new_connect.result.connect(self.on_gpw_result)
+        self.new_connect.log.connect(self.on_gpw_log)
+        self.new_connect.error.connect(self.on_gpw_error)
+        self.new_connect.finished.connect(self.on_gpw_finished)
 
         self.llm = LLMService(entry_repo)
         self.llm.log.connect(self.on_llm_log)
@@ -97,13 +90,11 @@ class NewsFeedList(QWidget):
         start_scraping_btn.clicked.connect(self.on_start_scraping_clicked)
         self.load_data_btn.clicked.connect(self._update_list)
         self.run_llm_btn.clicked.connect(self.on_run_llm_clicked)
-        self.clear_database_btn.clicked.connect(self.on_clear_database_clicked)
 
         test_buttons_box = QHBoxLayout()
         test_buttons_box.addWidget(start_scraping_btn)
         test_buttons_box.addWidget(self.load_data_btn)
         test_buttons_box.addWidget(self.run_llm_btn)
-        test_buttons_box.addWidget(self.clear_database_btn)
 
         layout = QVBoxLayout()
         layout.addLayout(test_buttons_box)
@@ -184,73 +175,14 @@ class NewsFeedList(QWidget):
         self.notify.emit(f"Wysyłam alert Telegrama dla '{forecast_value}'", "ok")
         send_telegram_message(entry)
 
-    def on_clear_database_clicked(self) -> None:
-        if self.espi.is_running():
-            self.notify.emit("Nie można wyczyścić bazy podczas pobierania ESPI", "error")
-            return
-
-        if self.llm.is_running():
-            self.notify.emit("Nie można wyczyścić bazy podczas pracy LLM", "error")
-            return
-
-        self.entry_repo.clear_all()
-        self.set_items(
-            [({"published": "", "type": "", "title": "Brak danych", "llm": "", "sentiment": ""}, None)]
-        )
-        self.notify.emit("Wyczyszczono bazę danych", "ok")
-
-    def on_espi_result(self, has_new_entries: bool) -> None:
-        self._update_list()
-
-        if has_new_entries:
-            if not self.llm.is_running():
-                self.llm.start()
-            self.notify.emit("Pobrano nowe komunikaty ESPI", "ok")
-        else:
-            self.notify.emit("Brak nowych komunikatów ESPI", "neutral")
-
-    def on_espi_log(self, text: str) -> None:
-        self.notify.emit(text, "neutral")
-
-    def on_espi_error(self, text: str) -> None:
-        logger.error(f"{get_actual_time()} - ESPI ERROR: {text}")
-        self.notify.emit(f"{get_actual_time()} Błąd ESPI: {text}", "error")
-
-    def on_espi_finished(self) -> None:
-        self.notify.emit("Pojedyncze pobieranie ESPI zakończone", "ok")
-
-    def on_news_result(self, has_new_entries: bool) -> None:
-        self._update_list()
-
-        if has_new_entries:
-            if not self.llm.is_running():
-                self.llm.start()
-            self.notify.emit("Pobrano nowe GPW Bankier News", "ok")
-        else:
-            self.notify.emit("Brak nowych GPW Bankier News", "neutral")
-
     def on_start_scraping_clicked(self) -> None:
-        # if self.news.is_running() or self.espi.is_running():
-        #     self.notify.emit("Scraping już trwa", "error")
-        #     return
+        if self.gpw.is_running() or self.new_connect.is_running():
+            self.notify.emit("Scraping już trwa", "error")
+            return
 
         self.notify.emit("Start scraping", "neutral")
-        # started_news = self.news.start()
-        # started_espi = self.espi.start()
         self.gpw.start()
-
-        # if not started_news or not started_espi:
-        #     self.notify.emit("Nie udało się uruchomić scrapingu", "error")
-
-    def on_news_log(self, text: str) -> None:
-        self.notify.emit(text, "neutral")
-
-    def on_news_error(self, text: str) -> None:
-        logger.error(f"{get_actual_time()} - GPW News ERROR: {text}")
-        self.notify.emit(f"{get_actual_time()} Błąd GPW News: {text}", "error")
-
-    def on_news_finished(self) -> None:
-        self.notify.emit("Pojedyncze pobieranie GPW Bankier News zakończone", "ok")
+        self.new_connect.start()
 
     def on_gpw_result(self, has_new_entries: bool) -> None:
         self._update_list()
@@ -271,3 +203,23 @@ class NewsFeedList(QWidget):
 
     def on_gpw_finished(self) -> None:
         self.notify.emit("Pojedyncze pobieranie GPW zakończone", "ok")
+
+    def on_new_connect_result(self, has_new_entries: bool) -> None:
+        self._update_list()
+
+        if has_new_entries:
+            if not self.llm.is_running():
+                self.llm.start()
+            self.notify.emit("Pobrano nowe komunikaty New Connect", "ok")
+        else:
+            self.notify.emit("Brak nowych komunikatów New Connect", "neutral")
+
+    def on_new_connect_log(self, text: str) -> None:
+        self.notify.emit(text, "neutral")
+
+    def on_new_connect_error(self, text: str) -> None:
+        logger.error(f"{get_actual_time()} - New Connect ERROR: {text}")
+        self.notify.emit(f"{get_actual_time()} Błąd New Connect: {text}", "error")
+
+    def on_new_connect_finished(self) -> None:
+        self.notify.emit("Pojedyncze pobieranie New Connect zakończone", "ok")

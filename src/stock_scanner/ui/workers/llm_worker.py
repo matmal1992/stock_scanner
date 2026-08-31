@@ -343,6 +343,7 @@ class LLMQueueWorker(QObject):
     def run(self) -> None:
         self.log.emit("LLM queue started")
         prompter: GPTPrompter | None = None
+        entry_count: int = 0
 
         try:
             self.log.emit("Uruchamianie przeglądarki ChatGPT...")
@@ -356,6 +357,11 @@ class LLMQueueWorker(QObject):
                     self.log.emit("Brak wpisów pending")
                     break
 
+                # Nowy chat co 10 wpisów (omijamy pierwszy wpis gdy entry_count == 0)
+                if entry_count > 0 and entry_count % 10 == 0:
+                    self.log.emit(f"Przetworzono {entry_count} wpisów. Otwieranie nowego chatu...")
+                    prompter.new_chat()
+
                 entry_id = pending["id"]
                 link = pending["link"]
 
@@ -364,13 +370,9 @@ class LLMQueueWorker(QObject):
                 try:
                     full_prompt = f"{my_prompt} Link: {link}"
                     raw_response = prompter.send_prompt(full_prompt)
-                    # response = self.prompt_worker.run(link)
                     parsed_response = self._parse_response(raw_response)
 
-                    success = self.entry_repo.update_llm(
-                        entry_id,
-                        parsed_response,
-                    )
+                    success = self.entry_repo.update_llm(entry_id, parsed_response)
 
                     if not success:
                         self.error.emit(f"LLM: nie udało się zapisać wyniku dla {entry_id}")
@@ -382,11 +384,14 @@ class LLMQueueWorker(QObject):
                         self.error.emit(f"LLM: zapisano wynik, ale nie znaleziono wpisu {entry_id}")
                         break
 
+                    entry_count += 1
                     self.result.emit(updated_entry)
                     self.log.emit(f"LLM: zakończono wpis {entry_id}")
 
                 except Exception as exc:
                     self.error.emit(f"LLM worker error dla {entry_id}: {exc}")
+                    prompter.new_chat()
+                    time.sleep(2)
                     continue
 
                 time.sleep(0.2)
