@@ -21,8 +21,8 @@ def main() -> None:
     entry_repo = EntryRepository(db)
     tracked_repo = TrackedTickerRepository(db)
     window = MainWindow(entry_repo, tracked_repo)
-    window.showMaximized()
-    window.show()
+    window.showMinimized()
+    # window.show()
     window.start_news_strategy()
 
     exit_code = 0

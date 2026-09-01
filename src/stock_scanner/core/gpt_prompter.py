@@ -17,10 +17,22 @@ class GPTPrompter:
     def start(self) -> None:
         """Uruchamia przeglądarkę i wchodzi na stronę ChatGPT."""
         self.playwright = sync_playwright().start()
+        chrome_args = ["--disable-blink-features=AutomationControlled"]
+        if self.headless:
+            chrome_args.append("--headless=new")
+
+        user_agent = (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/125.0.0.0 Safari/537.36"
+        )
+
         self.context = self.playwright.chromium.launch_persistent_context(
             user_data_dir=get_browser_dir() / "browser_user_data",
-            headless=self.headless,
-            args=["--disable-blink-features=AutomationControlled"],
+            headless=False,
+            user_agent=user_agent,
+            args=chrome_args,
+            viewport={"width": 1280, "height": 800},
         )
         self.page = self.context.pages[0] if self.context.pages else self.context.new_page()
         self.page.goto("https://chatgpt.com/", timeout=60000)
