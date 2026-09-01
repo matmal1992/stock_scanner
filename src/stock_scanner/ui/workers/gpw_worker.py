@@ -14,7 +14,7 @@ class GPWWorker(QObject):
     error = Signal(str)
     log = Signal(str)
 
-    URL = "https://www.gpw.pl/komunikaty"
+    URL = "https://www.gpw.pl/komunikaty?categoryRaports=EBI,ESPI&typeRaports=RB&searchText=&date="
 
     def __init__(self, entry_repo: EntryRepository) -> None:
         super().__init__()

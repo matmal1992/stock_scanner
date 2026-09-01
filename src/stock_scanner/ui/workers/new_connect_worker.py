@@ -14,7 +14,9 @@ class NewConnectWorker(QObject):
     error = Signal(str)
     log = Signal(str)
 
-    URL = "https://newconnect.pl/spolki-komunikaty-spolek"
+    URL = (
+        "https://newconnect.pl/spolki-komunikaty-spolek?categoryRaports=ESPI&typeRaports=RB&searchText=&date="
+    )
 
     def __init__(self, entry_repo: EntryRepository) -> None:
         super().__init__()
