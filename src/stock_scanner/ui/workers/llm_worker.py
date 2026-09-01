@@ -347,7 +347,7 @@ class LLMQueueWorker(QObject):
 
         try:
             self.log.emit("Uruchamianie przeglądarki ChatGPT...")
-            prompter = GPTPrompter(headless=True)
+            prompter = GPTPrompter(headless=False)
             prompter.start()
 
             while self.running:
