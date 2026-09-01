@@ -38,10 +38,10 @@ class NewsFeedList(QWidget):
         self.gpw.finished.connect(self.on_gpw_finished)
 
         self.new_connect = NewConnectService(entry_repo)
-        self.new_connect.result.connect(self.on_gpw_result)
-        self.new_connect.log.connect(self.on_gpw_log)
-        self.new_connect.error.connect(self.on_gpw_error)
-        self.new_connect.finished.connect(self.on_gpw_finished)
+        self.new_connect.result.connect(self.on_new_connect_result)
+        self.new_connect.log.connect(self.on_new_connect_log)
+        self.new_connect.error.connect(self.on_new_connect_error)
+        self.new_connect.finished.connect(self.on_new_connect_finished)
 
         self.llm = LLMService(entry_repo)
         self.llm.log.connect(self.on_llm_log)
