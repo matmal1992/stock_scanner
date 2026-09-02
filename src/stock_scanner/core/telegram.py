@@ -21,6 +21,7 @@ def build_message(entry: NewsEntry) -> str | None:
     title = entry["title"]
     published = entry["published"]
     source = entry["source_type"]
+    url = entry["link"]
 
     # if forecast not in ALERT_FORECASTS:
     #     return None
@@ -31,8 +32,7 @@ def build_message(entry: NewsEntry) -> str | None:
     #     logger.warning("Brak tickera dla entry %s", entry["id"])
     #     return None
 
-    # return f"{ticker}: {forecast}"
-    return f"{published}\n{source}: {title}\n{ticker}: {forecast}"
+    return f'{published}\n<a href="{url}">{source}</a>: {title}\n{ticker}: {forecast}'
 
 
 def send_telegram_message(entry: NewsEntry) -> bool:

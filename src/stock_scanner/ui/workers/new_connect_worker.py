@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 from PySide6.QtCore import QObject, QThread, QTimer, Signal
 
 # from src.stock_scanner.core.telegram import send_telegram_message
+from src.stock_scanner.core.telegram import send_telegram_message
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository, NewsEntry
 
 
@@ -129,11 +130,11 @@ class NewConnectWorker(QObject):
         for entry in entries:
             try:
                 if self.entry_repo.save(entry):
-                    # send_telegram_message(entry)
+                    send_telegram_message(entry)
                     found_new = True
 
             except Exception as exc:
-                self.log.emit(f"GPW: błąd zapisu: {exc}")
+                self.log.emit(f"New Connect: błąd zapisu: {exc}")
 
         return found_new
 

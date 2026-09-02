@@ -188,8 +188,8 @@ class NewsFeedList(QWidget):
         self._update_list()
 
         if has_new_entries:
-            if not self.llm.is_running():
-                self.llm.start()
+            # if not self.llm.is_running():
+            #     self.llm.start()
             self.notify.emit("Pobrano nowe komunikaty gpw", "ok")
         else:
             self.notify.emit("Brak nowych komunikatów gpw", "neutral")
@@ -208,8 +208,8 @@ class NewsFeedList(QWidget):
         self._update_list()
 
         if has_new_entries:
-            if not self.llm.is_running():
-                self.llm.start()
+            # if not self.llm.is_running():
+            #     self.llm.start()
             self.notify.emit("Pobrano nowe komunikaty New Connect", "ok")
         else:
             self.notify.emit("Brak nowych komunikatów New Connect", "neutral")
