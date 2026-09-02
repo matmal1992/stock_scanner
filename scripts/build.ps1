@@ -28,6 +28,7 @@ Write-Host "Running PyInstaller..." -ForegroundColor Cyan
 
 python -m uv run pyinstaller `
     --onedir `
+    --noconsole `
     --name stock_scanner `
     --add-data "$browserPath;browsers" `
     --add-data "$projectRoot/assets;assets" `
@@ -35,11 +36,6 @@ python -m uv run pyinstaller `
     --workpath build/work `
     --specpath build/spec `
     src/main.py
-
-# if (Test-Path "src/assets") {
-#     Write-Host "Copying assets..." -ForegroundColor Yellow
-#     Copy-Item -Recurse -Force src/assets build/dist/assets
-# }
 
 $timer.Stop()
 

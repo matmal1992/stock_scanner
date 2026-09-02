@@ -110,7 +110,12 @@ class NewConnectWorker(QObject):
     def _download(self) -> str:
         self.log.emit("New Connect: pobieranie przez curl...")
 
-        result = subprocess.run(["curl.exe", "-s", "-L", self.URL], capture_output=True, timeout=30)
+        result = subprocess.run(
+            ["curl.exe", "-s", "-L", self.URL],
+            capture_output=True,
+            timeout=30,
+            creationflags=subprocess.CREATE_NO_WINDOW,
+        )
 
         if result.returncode != 0:
             stderr = result.stderr.decode("utf-8", errors="replace")
