@@ -28,9 +28,9 @@ def build_message(entry: NewsEntry) -> str | None:
 
     published = published[11:]
 
-    # ticker = entry["ticker"]
+    ticker = entry["ticker"]
 
-    return f'{published} | <a href="{url}">{source}</a>\n{title}'
+    return f'{published} | <a href="{url}">{source}</a>\n{title}\n{ticker}'
 
 
 def send_telegram_message(entry: NewsEntry) -> bool:
