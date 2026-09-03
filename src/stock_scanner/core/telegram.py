@@ -17,22 +17,20 @@ ALERT_FORECASTS = {"Wzrost", "Silny wzrost"}
 
 
 def build_message(entry: NewsEntry) -> str | None:
-    forecast = entry["llm"]
+    # forecast = entry["llm"]
     title = entry["title"]
     published = entry["published"]
     source = entry["source_type"]
     url = entry["link"]
 
-    # if forecast not in ALERT_FORECASTS:
-    #     return None
+    if published is None:
+        return None
 
-    ticker = entry["ticker"]
+    published = published[11:]
 
-    # if not ticker:
-    #     logger.warning("Brak tickera dla entry %s", entry["id"])
-    #     return None
+    # ticker = entry["ticker"]
 
-    return f'{published}\n<a href="{url}">{source}</a>: {title}\n{ticker}: {forecast}'
+    return f'{published} | <a href="{url}">{source}</a>\n{title}'
 
 
 def send_telegram_message(entry: NewsEntry) -> bool:
@@ -43,7 +41,12 @@ def send_telegram_message(entry: NewsEntry) -> bool:
 
     url = f"https://api.telegram.org/bot{telegram_token}/sendMessage"
 
-    payload = {"chat_id": telegram_chat_id, "text": message}
+    payload = {
+        "chat_id": telegram_chat_id,
+        "text": message,
+        "parse_mode": "HTML",
+        "link_preview_options": json.dumps({"is_disabled": True}),
+    }
 
     data = urllib.parse.urlencode(payload).encode("utf-8")
     request = urllib.request.Request(url, data=data, method="POST")
