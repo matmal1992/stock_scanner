@@ -62,12 +62,10 @@ def send_telegram_message(entry: NewsEntry) -> bool:
         return False
 
 
-def send_test_telegram_message() -> bool:
-    message = "test message"
-
+def send_telegram_alert(alert: str) -> bool:
     url = f"https://api.telegram.org/bot{telegram_token}/sendMessage"
 
-    payload = {"chat_id": telegram_chat_id, "text": message}
+    payload = {"chat_id": telegram_chat_id, "text": alert}
 
     data = urllib.parse.urlencode(payload).encode("utf-8")
     request = urllib.request.Request(url, data=data, method="POST")
@@ -75,8 +73,6 @@ def send_test_telegram_message() -> bool:
     try:
         with urllib.request.urlopen(request, timeout=10) as response:
             body = response.read().decode("utf-8")
-
-        logger.info("TELEGRAM RESPONSE: %s", body)
 
         result = json.loads(body)
         return bool(result.get("ok", False))

@@ -1,11 +1,14 @@
 import sys
 import traceback
+from types import TracebackType
+from typing import Type
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction, QIcon
 from PySide6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
 from src.stock_scanner.core.paths import configure_environment, configure_logging, get_assets_dir
+from src.stock_scanner.core.telegram import send_telegram_alert
 from src.stock_scanner.download.database import Database
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository
 from src.stock_scanner.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
@@ -13,8 +16,10 @@ from src.stock_scanner.ui.windows.main_window import MainWindow
 
 
 def main() -> None:
+    sys.excepthook = handle_exception
     configure_logging()
     configure_environment()
+    send_telegram_alert("🟢 Stock Scanner uruchomiony.")
 
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)
@@ -50,6 +55,7 @@ def main() -> None:
         window.hide()
 
     def quit_application() -> None:
+        send_telegram_alert("🛑 Stock Scanner został zamknięty.")
         tray_icon.hide()
         app.quit()
 
@@ -72,6 +78,21 @@ def main() -> None:
         exit_code = 1
 
     sys.exit(exit_code)
+
+
+def handle_exception(
+    exc_type: Type[BaseException], exc_value: BaseException, exc_traceback: TracebackType | None
+) -> None:
+    if issubclass(exc_type, KeyboardInterrupt):
+        sys.__excepthook__(exc_type, exc_value, exc_traceback)
+        return
+
+    traceback.print_exception(exc_type, exc_value, exc_traceback)
+
+    try:
+        send_telegram_alert(f"💥 Stock Scanner zakończył działanie przez wyjątek:\n{exc_value}")
+    except Exception:
+        traceback.print_exc()
 
 
 if __name__ == "__main__":
