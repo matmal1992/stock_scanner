@@ -33,10 +33,37 @@ class LLMResponse(TypedDict):
 
 
 class EntryRepository:
+    FILTERED_TITLE_SUBSTRINGS = (
+        "waln",
+        "zgromadzeni",
+        "akcji serii",
+        "członka zarządu",
+        "członka rady",
+        "księgi popytu",
+        "okresowego raportu",
+        "zmiana terminu publikacji",
+        "skupu akcji własnych",
+        "emitenta",
+    )
+
     def __init__(self, db: Database):
         self.db = db
 
+    def _is_filtered(self, title: str) -> bool:
+        title_lower = title.casefold()
+
+        for substring in self.FILTERED_TITLE_SUBSTRINGS:
+            matched = substring.casefold() in title_lower
+
+            if matched:
+                return True
+
+        return False
+
     def save(self, entry: NewsEntry) -> bool:
+        if self._is_filtered(entry["title"]):
+            logger.info("Entry skipped: %s", entry["title"])
+            return False
         try:
             with self.db.connect() as conn:
                 cursor = conn.execute(
