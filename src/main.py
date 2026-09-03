@@ -14,6 +14,8 @@ from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository
 from src.stock_scanner.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
 from src.stock_scanner.ui.windows.main_window import MainWindow
 
+NORMAL_EXIT_CODE = 42
+
 
 def main() -> None:
     sys.excepthook = handle_exception
@@ -57,7 +59,7 @@ def main() -> None:
     def quit_application() -> None:
         send_telegram_alert("🛑 Stock Scanner został zamknięty.")
         tray_icon.hide()
-        app.quit()
+        app.exit(NORMAL_EXIT_CODE)
 
     show_action.triggered.connect(show_window)
     hide_action.triggered.connect(hide_window)

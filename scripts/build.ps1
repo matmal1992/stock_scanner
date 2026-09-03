@@ -23,8 +23,7 @@ if (-Not (Test-Path "browsers")) {
     exit 1
 }
 
-# Build PyInstaller
-Write-Host "Running PyInstaller..." -ForegroundColor Cyan
+Write-Host "Building Stock Scanner..." -ForegroundColor Cyan
 
 python -m uv run pyinstaller `
     --onedir `
@@ -36,6 +35,17 @@ python -m uv run pyinstaller `
     --workpath build/work `
     --specpath build/spec `
     src/main.py
+
+Write-Host "Building Watchdog..." -ForegroundColor Cyan
+
+python -m uv run pyinstaller `
+    --onedir `
+    --noconsole `
+    --name watchdog `
+    --distpath build/dist `
+    --workpath build/work `
+    --specpath build/spec `
+    src/stock_scanner/core/watchdog.py
 
 $timer.Stop()
 
