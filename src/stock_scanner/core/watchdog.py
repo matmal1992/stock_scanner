@@ -15,9 +15,13 @@ def main() -> None:
 
         exit_code = process.wait()
 
+        print(f"Stock Scanner zakończył się z kodem: {exit_code}")
+
         if exit_code == NORMAL_EXIT_CODE:
+            print("Normal exit code")
             break
 
+        print("Nieprawidłowe zakończenie - restart za 5 sekund")
         time.sleep(5)
 
 

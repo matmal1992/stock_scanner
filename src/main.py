@@ -57,9 +57,14 @@ def main() -> None:
         window.hide()
 
     def quit_application() -> None:
-        send_telegram_alert("🛑 Stock Scanner został zamknięty.")
-        tray_icon.hide()
+        # try:
+        #     send_telegram_alert("🛑 Stock Scanner został zamknięty.")
+        # except Exception:
+        #     traceback.print_exc()
+        # tray_icon.hide()
+        print("1. quit_application")
         app.exit(NORMAL_EXIT_CODE)
+        print("2. app.exit called")
 
     show_action.triggered.connect(show_window)
     hide_action.triggered.connect(hide_window)
@@ -71,7 +76,7 @@ def main() -> None:
 
     tray_icon.show()
     window.hide()
-    window.start_news_strategy()
+    # window.start_news_strategy()
 
     try:
         exit_code = app.exec()

@@ -27,7 +27,7 @@ Write-Host "Building Stock Scanner..." -ForegroundColor Cyan
 
 python -m uv run pyinstaller `
     --onedir `
-    --noconsole `
+    --console `
     --name stock_scanner `
     --add-data "$browserPath;browsers" `
     --add-data "$projectRoot/assets;assets" `
@@ -40,7 +40,7 @@ Write-Host "Building Watchdog..." -ForegroundColor Cyan
 
 python -m uv run pyinstaller `
     --onedir `
-    --noconsole `
+    --console `
     --name watchdog `
     --distpath build/dist `
     --workpath build/work `
