@@ -1,9 +1,14 @@
+import logging
 import os
 import subprocess
 import sys
 import time
 from datetime import datetime
 from pathlib import Path
+
+from stock_scanner.core.paths import configure_logging, print_paths
+
+logger = logging.getLogger(__name__)
 
 NORMAL_EXIT_CODE = 42
 
@@ -101,4 +106,7 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    # main()
+    configure_logging()
+    print_paths()
+    time.sleep(10000)

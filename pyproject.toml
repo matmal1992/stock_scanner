@@ -30,7 +30,8 @@ dependencies = [
     "opencv-python",
     "playwright",
     "mypy",
-    "types-requests"
+    "types-requests",
+    "minidump"
 ]
 
 [project.optional-dependencies]

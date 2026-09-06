@@ -4,17 +4,14 @@ import os
 import sys
 from pathlib import Path
 
+logger = logging.getLogger(__name__)
+
 
 def get_root_dir() -> Path:
     if getattr(sys, "frozen", False):
         return Path(sys.executable).resolve().parent.parent.parent.parent
     else:
         return Path(__file__).resolve().parent.parent.parent.parent
-
-
-def is_frozen() -> bool:
-    """Czy aplikacja działa jako build PyInstaller."""
-    return getattr(sys, "frozen", False)
 
 
 def get_data_dir() -> Path:
@@ -26,31 +23,31 @@ def get_browser_dir() -> Path:
 
 
 def get_assets_dir() -> Path:
-    if is_frozen():
+    if getattr(sys, "frozen", False):
         return application_dir() / "_internal" / "assets"
     else:
         return get_root_dir() / "assets"
 
 
 def application_dir() -> Path:
-    if is_frozen():  # sciezka przy exe
+    if getattr(sys, "frozen", False):  # sciezka przy exe
         return Path(sys.executable).resolve().parent
 
     return get_root_dir()
 
 
-def bundle_dir() -> Path:
+def internal_dir() -> Path:
     """
     Katalog zasobów dołączonych przez PyInstaller.
     """
-    if is_frozen():
+    if getattr(sys, "frozen", False):
         return Path(getattr(sys, "_MEIPASS"))
 
     return application_dir()
 
 
 def configure_environment() -> None:
-    browsers_path = bundle_dir() / "browsers"
+    browsers_path = internal_dir() / "browsers"
 
     # ctypes.windll.user32.SetProcessDPIAware()
 
@@ -81,6 +78,20 @@ def configure_logging() -> None:
 
 
 def print_paths() -> None:
-    print(f"Project dir: {get_root_dir()}")
-    print(f"Assets dir: {get_assets_dir()}")
-    print(f"Exe dir: {application_dir()}")
+    print(f"get_root_dir: {get_root_dir()}")
+    print(f"get_assets_dir: {get_assets_dir()}")
+    print(f"application_dir: {application_dir()}")
+    print(f"get_log_file_path: {get_log_file_path()}")
+    print(f"internal_dir: {internal_dir()}")
+    print(f"get_data_dir: {get_data_dir()}")
+    print(f"get_browser_dir: {get_browser_dir()}")
+    # print(f"watchdog_dir: {internal_dir()}")
+
+    logger.info(f"get_root_dir: {get_root_dir()}")
+    logger.info(f"get_assets_dir: {get_assets_dir()}")
+    logger.info(f"application_dir: {application_dir()}")
+    logger.info(f"get_log_file_path: {get_log_file_path()}")
+    logger.info(f"internal_dir: {internal_dir()}")
+    logger.info(f"get_data_dir: {get_data_dir()}")
+    logger.info(f"get_browser_dir: {get_browser_dir()}")
+    # logger.info(f"watchdog_dir: {internal_dir()}")

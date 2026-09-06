@@ -42,6 +42,7 @@ python -m uv run pyinstaller `
     --onedir `
     --console `
     --name watchdog `
+    --paths "$projectRoot/src" `
     --distpath build/dist `
     --workpath build/work `
     --specpath build/spec `
