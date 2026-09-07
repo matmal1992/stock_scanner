@@ -7,6 +7,22 @@ from src.stock_scanner.core.paths import get_root_dir
 BASE_DIR = get_root_dir()
 CONFIG_PATH = BASE_DIR / "config" / "config.json"
 
+FILTERED_TITLE_SUBSTRINGS = (
+    "waln",
+    "zgromadzeni",
+    "akcji serii",
+    "akcji własnych",
+    "członka zarządu",
+    "członka rady",
+    "księgi popytu",
+    "okresowego raportu",
+    "zmiana terminu publikacji",
+    "skupu akcji własnych",
+    "emitenta",
+    "zawiadomienia akcjonariuszy",
+    "w trybie art.",
+)
+
 
 def load_config() -> dict:
     if not CONFIG_PATH.exists():

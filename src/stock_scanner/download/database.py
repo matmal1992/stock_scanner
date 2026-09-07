@@ -30,7 +30,8 @@ class Database:
                 link TEXT UNIQUE,
                 published TEXT,
                 llm TEXT DEFAULT 'pending',
-                sentiment TEXT DEFAULT '-'
+                sentiment TEXT DEFAULT '-',
+                skipped INTEGER NOT NULL DEFAULT 0 CHECK (skipped IN (0, 1))
             )
             """)
 

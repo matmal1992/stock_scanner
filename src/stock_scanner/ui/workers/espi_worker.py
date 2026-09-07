@@ -76,6 +76,7 @@ class ESPIWorker(QObject):
                                 "ticker": None,
                                 "llm": "pending",
                                 "sentiment": "-",
+                                "skipped": 0,
                             }
                         )
 

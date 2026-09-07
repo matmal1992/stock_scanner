@@ -1,3 +1,4 @@
+import logging
 import subprocess
 from typing import Optional
 from urllib.parse import urljoin
@@ -5,9 +6,11 @@ from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 from PySide6.QtCore import QObject, QThread, QTimer, Signal
 
-# from src.stock_scanner.core.telegram import send_telegram_message
+from config.app_config import FILTERED_TITLE_SUBSTRINGS
 from src.stock_scanner.core.telegram import send_telegram_message
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository, NewsEntry
+
+logger = logging.getLogger(__name__)
 
 
 class GPWWorker(QObject):
@@ -87,6 +90,8 @@ class GPWWorker(QObject):
 
                 link = urljoin("https://www.gpw.pl/", link)
 
+                skipped = self._has_keywords(title)
+
                 results.append(
                     {
                         "id": 0,
@@ -97,6 +102,7 @@ class GPWWorker(QObject):
                         "ticker": company,
                         "llm": "pending",
                         "sentiment": "-",
+                        "skipped": skipped,
                     }
                 )
 
@@ -127,13 +133,27 @@ class GPWWorker(QObject):
 
         return html
 
+    def _has_keywords(self, title: str) -> bool:
+        title_lower = title.casefold()
+
+        for substring in FILTERED_TITLE_SUBSTRINGS:
+            matched = substring.casefold() in title_lower
+
+            if matched:
+                return True
+
+        return False
+
     def _save_entries(self, entries: list[NewsEntry]) -> bool:
         found_new = False
 
         for entry in entries:
             try:
                 if self.entry_repo.save(entry):
-                    send_telegram_message(entry)
+                    if entry["skipped"] == 0:
+                        send_telegram_message(entry)
+                    else:
+                        logger.info(f"GPW: skipped: {entry['title']}")
                     found_new = True
 
             except Exception as exc:

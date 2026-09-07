@@ -169,6 +169,7 @@ def main() -> None:
 
     tray_icon.show()
     window.hide()
+    window.start_news_strategy()
 
     try:
         exit_code = app.exec()

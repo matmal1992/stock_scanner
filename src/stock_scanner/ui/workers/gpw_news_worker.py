@@ -108,6 +108,7 @@ class NewsWorker(QObject):
             "ticker": None,
             "llm": "pending",
             "sentiment": "-",
+            "skipped": 0,
         }
 
     def _looks_like_news(self, title: str, link: str) -> bool:
