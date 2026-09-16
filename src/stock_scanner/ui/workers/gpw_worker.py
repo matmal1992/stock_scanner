@@ -114,8 +114,7 @@ class GPWWorker(QObject):
     def _download(self) -> str:
         self.log.emit("GPW: pobieranie przez curl...")
 
-        USER_AGENT = """Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) 
-                Chrome/120.0.0.0 Safari/537.36"""
+        USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
         result = subprocess.run(
             ["curl.exe", "-s", "-L", "--connect-timeout", "10", "-A", USER_AGENT, self.URL],
