@@ -21,6 +21,7 @@ FILTERED_TITLE_SUBSTRINGS = (
     "emitenta",
     "zawiadomienia akcjonariuszy",
     "w trybie art.",
+    "okaziciela",
 )
 
 

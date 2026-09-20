@@ -17,7 +17,7 @@ class Database:
 
     def init_db(self) -> None:
         with self.connect() as conn:
-            conn.execute("PRAGMA journal_mode=WAL")
+            # conn.execute("PRAGMA journal_mode=WAL")
 
             cur = conn.cursor()
 

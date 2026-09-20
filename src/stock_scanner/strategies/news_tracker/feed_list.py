@@ -176,13 +176,12 @@ class NewsFeedList(QWidget):
         send_telegram_message(entry)
 
     def on_start_scraping_clicked(self) -> None:
-        if self.gpw.is_running() or self.new_connect.is_running():
+        if self.gpw.is_running():
             self.notify.emit("Scraping już trwa", "error")
             return
 
         self.notify.emit("Start scraping", "neutral")
         self.gpw.start()
-        self.new_connect.start()
 
     def on_gpw_result(self, has_new_entries: bool) -> None:
         self._update_list()
