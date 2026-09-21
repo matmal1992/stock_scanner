@@ -15,9 +15,9 @@ from PySide6.QtWidgets import (
 from src.stock_scanner.core.telegram import send_telegram_message
 from src.stock_scanner.core.utils import get_actual_time
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository, NewsEntry
+from src.stock_scanner.strategies.news_tracker.gpw_worker import GPWService
+from src.stock_scanner.strategies.news_tracker.llm_worker import LLMService
 from src.stock_scanner.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
-from src.stock_scanner.ui.workers.gpw_worker import GPWService
-from src.stock_scanner.ui.workers.llm_worker import LLMService
 from src.stock_scanner.ui.workers.new_connect_worker import NewConnectService
 
 logger = logging.getLogger(__name__)

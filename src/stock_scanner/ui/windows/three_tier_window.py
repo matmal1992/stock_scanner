@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.stock_scanner.ui.workers.three_tier_worker import ThreeTierWorker
+from src.stock_scanner.strategies.three_tier_scanner.three_tier_worker import ThreeTierWorker
 
 
 class ThreeTierWindow(QWidget):
