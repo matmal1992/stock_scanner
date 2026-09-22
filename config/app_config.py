@@ -22,6 +22,13 @@ FILTERED_TITLE_SUBSTRINGS = (
     "zawiadomienia akcjonariuszy",
     "w trybie art.",
     "okaziciela",
+    "kapitału zakładowego",
+    "korekta oznaczenia raportu",
+    "korekta raportu bieżącego",
+    "ETF",
+    "Zawiadomienie o zmianie stanu posiadania",
+    "publikacji raportu",
+    "publikacji raportów",
 )
 
 
