@@ -6,7 +6,6 @@ from playwright.sync_api import BrowserContext, Locator, Page, Playwright, sync_
 from PySide6.QtCore import QObject, QThread, QTimer, Signal
 
 from config.app_config import FILTERED_TITLE_SUBSTRINGS
-from src.stock_scanner.core.telegram import send_telegram_message
 from src.stock_scanner.strategies.news_tracker.entry_repo import (
     EntryRepository,
     NewsEntry,
@@ -221,10 +220,10 @@ class GPWWorker(QObject):
         for entry in entries:
             try:
                 if self.entry_repo.save(entry):
-                    if entry["skipped"] == 0:
-                        send_telegram_message(entry)
-                    else:
-                        logger.info(f"GPW: skipped: {entry['title']}")
+                    # if entry["skipped"] == 0:
+                    #     send_telegram_message(entry)
+                    # else:
+                    #     logger.info(f"GPW: skipped: {entry['title']}")
                     found_new = True
 
             except Exception as exc:

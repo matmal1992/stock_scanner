@@ -26,6 +26,7 @@ FILTERED_TITLE_SUBSTRINGS = (
     "korekta oznaczenia raportu",
     "korekta raportu bieżącego",
     "ETF",
+    "FIZ",
     "Zawiadomienie o zmianie stanu posiadania",
     "publikacji raportu",
     "publikacji raportów",

@@ -18,9 +18,10 @@ from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository
 from src.stock_scanner.strategies.news_tracker.gpw_worker import GPWService
 from src.stock_scanner.strategies.news_tracker.llm_worker import LLMService
 from src.stock_scanner.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
-from src.stock_scanner.ui.workers.new_connect_worker import NewConnectService
 
 logger = logging.getLogger(__name__)
+
+# dodać listę spółek z perspektywicznych sektorów: medyczny, obronny, dronowy hitech, kosmiczny...
 
 
 class NewsFeedList(QWidget):
@@ -36,12 +37,6 @@ class NewsFeedList(QWidget):
         self.gpw.log.connect(self.on_gpw_log)
         self.gpw.error.connect(self.on_gpw_error)
         self.gpw.finished.connect(self.on_gpw_finished)
-
-        self.new_connect = NewConnectService(entry_repo)
-        self.new_connect.result.connect(self.on_new_connect_result)
-        self.new_connect.log.connect(self.on_new_connect_log)
-        self.new_connect.error.connect(self.on_new_connect_error)
-        self.new_connect.finished.connect(self.on_new_connect_finished)
 
         self.llm = LLMService(entry_repo)
         self.llm.log.connect(self.on_llm_log)
@@ -161,18 +156,18 @@ class NewsFeedList(QWidget):
             self.notify.emit("Nie udało się uruchomić LLM", "error")
 
     def on_llm_result(self, entry: NewsEntry) -> None:
-        self.notify.emit(f"LLM zakończony dla wpisu {entry['id']}", "ok")
+        # self.notify.emit(f"LLM zakończony dla wpisu {entry['id']}", "ok")
         self._update_list()
 
-        forecast_value = entry["llm"]
-        self.notify.emit(f"LLM forecast: '{forecast_value}'", "neutral")
+        # forecast_value = entry["llm"]
+        # self.notify.emit(f"LLM forecast: '{forecast_value}'", "neutral")
 
-        if forecast_value not in ("Wzrost", "Silny wzrost"):
-            msg = f"Forecast '{forecast_value}' — alert niespełniony"
-            self.notify.emit(msg, "neutral")
-            return
+        # if forecast_value not in ("Wzrost", "Silny wzrost"):
+        #     msg = f"Forecast '{forecast_value}' — alert niespełniony"
+        #     self.notify.emit(msg, "neutral")
+        #     return
 
-        self.notify.emit(f"Wysyłam alert Telegrama dla '{forecast_value}'", "ok")
+        # self.notify.emit(f"Wysyłam alert Telegrama dla '{forecast_value}'", "ok")
         send_telegram_message(entry)
 
     def on_start_scraping_clicked(self) -> None:
@@ -187,8 +182,8 @@ class NewsFeedList(QWidget):
         self._update_list()
 
         if has_new_entries:
-            # if not self.llm.is_running():
-            #     self.llm.start()
+            if not self.llm.is_running():
+                self.llm.start()
             self.notify.emit("Pobrano nowe komunikaty gpw", "ok")
         else:
             self.notify.emit("Brak nowych komunikatów gpw", "neutral")
@@ -202,23 +197,3 @@ class NewsFeedList(QWidget):
 
     def on_gpw_finished(self) -> None:
         self.notify.emit("Pojedyncze pobieranie GPW zakończone", "ok")
-
-    def on_new_connect_result(self, has_new_entries: bool) -> None:
-        self._update_list()
-
-        if has_new_entries:
-            # if not self.llm.is_running():
-            #     self.llm.start()
-            self.notify.emit("Pobrano nowe komunikaty New Connect", "ok")
-        else:
-            self.notify.emit("Brak nowych komunikatów New Connect", "neutral")
-
-    def on_new_connect_log(self, text: str) -> None:
-        self.notify.emit(text, "neutral")
-
-    def on_new_connect_error(self, text: str) -> None:
-        logger.error(f"{get_actual_time()} - New Connect ERROR: {text}")
-        self.notify.emit(f"{get_actual_time()} Błąd New Connect: {text}", "error")
-
-    def on_new_connect_finished(self) -> None:
-        self.notify.emit("Pojedyncze pobieranie New Connect zakończone", "ok")

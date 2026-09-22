@@ -17,7 +17,7 @@ ALERT_FORECASTS = {"Wzrost", "Silny wzrost"}
 
 
 def build_message(entry: NewsEntry) -> str | None:
-    # forecast = entry["llm"]
+    forecast = entry["llm"]
     title = entry["title"]
     published = entry["published"]
     source = entry["source_type"]
@@ -28,9 +28,7 @@ def build_message(entry: NewsEntry) -> str | None:
 
     published = published[11:]
 
-    ticker = entry["ticker"]
-
-    return f'{published} | <a href="{url}">{source}</a>\n{title}\n{ticker}'
+    return f'{published} | <a href="{url}">{source}</a>\n{title}\n{forecast} - uzasadnienie'
 
 
 def send_telegram_message(entry: NewsEntry) -> bool:
