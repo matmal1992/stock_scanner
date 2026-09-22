@@ -3,73 +3,126 @@ import time
 
 from playwright.sync_api import sync_playwright
 
-from src.stock_scanner.core.paths import configure_environment
+from src.stock_scanner.core.paths import configure_environment, get_browser_dir
 
 logger = logging.getLogger(__name__)
 
-URL = "https://espiebi.pap.pl/"
-INTERVAL_SECONDS = 5
+GEMINI_URL = "https://gemini.google.com/"
+PAP_URL = "https://espiebi.pap.pl/node/737428"
 
 
 def main() -> None:
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
+    with sync_playwright() as playwright:
+        logger.info("Uruchamiam Chromium...")
 
-        print("Otwieranie strony...")
-        page.goto(URL, wait_until="domcontentloaded")
+        context = playwright.chromium.launch_persistent_context(
+            user_data_dir=get_browser_dir() / "browser_user_data",
+            headless=False,
+            args=["--disable-blink-features=AutomationControlled"],
+            viewport={"width": 1280, "height": 800},
+        )
+
+        page = context.pages[0] if context.pages else context.new_page()
+
+        logger.info("Otwieram Gemini...")
+        page.goto(GEMINI_URL, timeout=60000)
+
+        # Dajemy przeglądarce chwilę na załadowanie aplikacji
         page.wait_for_timeout(3000)
 
-        refresh_button = page.locator("#refreshHomeId a.refreshButton")
-        refresh_button.wait_for(state="visible", timeout=10_000)
-
-        counter = 1
+        # Czekamy na pole promptu.
+        # Jeżeli nie jesteś zalogowany, możesz zalogować się ręcznie.
+        prompt_input = page.locator("#prompt-textarea, " "div[contenteditable='true'], " "textarea").first
 
         try:
-            while True:
-                print(f"\n[{time.strftime('%H:%M:%S')}] --- Cykl nr {counter} ---")
+            prompt_input.wait_for(state="visible", timeout=15000)
+        except Exception:
+            logger.warning(
+                "Nie znaleziono pola promptu. " "Jeżeli Gemini pokazuje ekran logowania, zaloguj się ręcznie."
+            )
 
-                refresh_button.click()
+            # Czekamy dłużej na ręczne zalogowanie
+            prompt_input.wait_for(state="visible", timeout=120000)
 
-                page.wait_for_timeout(1000)
+        logger.info("Gemini jest gotowe.")
 
-                refresh_time = page.locator("#refreshHomeId .refreshDateTime").inner_text().strip()
-                print(f" SUCCESS: Kliknięto 'ODŚWIEŻ'. Czas danych na stronie: {refresh_time}")
+        prompt = f"""
+Otwórz i przeanalizuj poniższy link:
 
-                links = page.locator("a")
-                messages = []
-                found_refresh = False
+{PAP_URL}
 
-                for i in range(links.count()):
-                    text = links.nth(i).inner_text().strip()
+Chcę sprawdzić, czy masz dostęp do jego właściwej treści.
+Nie zgaduj i nie korzystaj tylko z wyników wyszukiwania.
 
-                    if not text:
-                        continue
+Napisz:
+1. czy udało Ci się otworzyć stronę,
+2. jaki jest tytuł komunikatu,
+3. jaka jest data komunikatu,
+4. kto jest jego autorem/nadawcą, jeśli informacja jest dostępna,
+5. podaj krótkie streszczenie treści.
+"""
 
-                    if text == "ODŚWIEŻ":
-                        found_refresh = True
-                        continue
+        logger.info("Wysyłam prompt do Gemini...")
 
-                    if found_refresh:
-                        messages.append(text)
+        prompt_input.click()
+        prompt_input.fill(prompt)
 
-                    if len(messages) == 5:
-                        break
+        # Próbujemy znaleźć przycisk wysyłania.
+        send_button = page.locator(
+            'button[data-testid="send-button"], '
+            'button[aria-label="Wyślij wiadomość"], '
+            'button[aria-label="Send prompt"], '
+            'button[aria-label*="Wyślij"], '
+            'button[aria-label*="Send"]'
+        ).first
 
-                print("PIERWSZE 5 KOMUNIKATÓW:")
-                for i, message in enumerate(messages, start=1):
-                    print(f"  {i}. {message}")
+        if send_button.count() > 0 and send_button.is_visible():
+            logger.info("Klikam przycisk wysyłania.")
+            send_button.click()
+        else:
+            logger.info("Nie znaleziono przycisku wysyłania — używam Enter.")
+            prompt_input.press("Enter")
 
-                counter += 1
+        logger.info("Czekam na odpowiedź Gemini...")
 
-                print(f"Czekam {INTERVAL_SECONDS} sekund na następne odświeżenie...")
-                page.wait_for_timeout(INTERVAL_SECONDS * 1000)
+        # Czekamy, aż pojawi się odpowiedź.
+        response_locator = page.locator('[data-message-author-role="assistant"]')
 
-        except KeyboardInterrupt:
-            print("\nZatrzymano pętlę na żądanie użytkownika.")
+        try:
+            response_locator.last.wait_for(
+                state="visible",
+                timeout=120000,
+            )
+        except Exception:
+            logger.warning(
+                "Nie udało się znaleźć odpowiedzi przez " "[data-message-author-role='assistant']."
+            )
 
-        finally:
-            browser.close()
+        # Dajemy Gemini czas na zakończenie generowania.
+        page.wait_for_timeout(10000)
+
+        # Próbujemy odczytać odpowiedź.
+        responses = page.locator('[data-message-author-role="assistant"]')
+
+        if responses.count() > 0:
+            response = responses.last.inner_text().strip()
+
+            logger.info("=" * 80)
+            logger.info("ODPOWIEDŹ GEMINI:")
+            logger.info("=" * 80)
+            print("\n" + response + "\n")
+            logger.info("=" * 80)
+        else:
+            logger.error("Nie udało się znaleźć odpowiedzi Gemini.")
+
+            # Awaryjnie zapisujemy cały tekst strony.
+            print("\n--- TEKST STRONY ---\n")
+            print(page.locator("body").inner_text())
+
+        logger.info("Przeglądarka pozostaje otwarta przez 30 sekund...")
+        time.sleep(30)
+
+        context.close()
 
 
 if __name__ == "__main__":
