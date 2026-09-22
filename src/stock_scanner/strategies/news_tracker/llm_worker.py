@@ -72,7 +72,7 @@ Odpowiedź MUSI być poprawnym składniowo obiektem JSON, o strukturze:
 
 {
   "forecast": "jedna z pięciu dozwolonych wartości",
-  "uzasadnienie": "dokładnie dwa zdania"
+  "uzasadnienie": "Pierwsze zdanie uzasadnienia. Drugie zdanie uzasadnienia."
 }
 
 KROK 6 — WALIDACJA

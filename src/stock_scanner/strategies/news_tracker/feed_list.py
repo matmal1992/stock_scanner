@@ -52,7 +52,7 @@ class NewsFeedList(QWidget):
         self.feed_list.setSelectionBehavior(self.feed_list.SelectionBehavior.SelectRows)
         self.feed_list.verticalHeader().setVisible(False)
         self.feed_list.setColumnCount(5)
-        self.feed_list.setHorizontalHeaderLabels(["Published", "Type", "Title", "LLM", "Sentiment"])
+        self.feed_list.setHorizontalHeaderLabels(["Published", "Type", "Title", "LLM"])
         self.feed_list.setStyleSheet("""
             QHeaderView {
                 border: none;
@@ -108,7 +108,6 @@ class NewsFeedList(QWidget):
             self.feed_list.setItem(row_idx, 1, QTableWidgetItem(data["type"]))
             self.feed_list.setItem(row_idx, 2, QTableWidgetItem(data["title"][:100]))
             self.feed_list.setItem(row_idx, 3, QTableWidgetItem(data["llm"]))
-            self.feed_list.setItem(row_idx, 4, QTableWidgetItem(data["sentiment"]))
 
             self._ids.append(entry_id)
 
@@ -121,7 +120,6 @@ class NewsFeedList(QWidget):
                 "type": str(row["source_type"]),
                 "title": row["title"][:100],
                 "llm": str(row["llm"]),
-                "sentiment": str(row["sentiment"]),
             }
 
             result.append((formatted, row["id"]))

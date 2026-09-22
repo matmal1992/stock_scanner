@@ -22,13 +22,14 @@ def build_message(entry: NewsEntry) -> str | None:
     published = entry["published"]
     source = entry["source_type"]
     url = entry["link"]
+    justification = entry["justification"]
 
     if published is None:
         return None
 
     published = published[11:]
 
-    return f'{published} | <a href="{url}">{source}</a>\n{title}\n{forecast} - uzasadnienie'
+    return f'{published} | <a href="{url}">{source}</a>\n{title}\n{forecast} - {justification}'
 
 
 def send_telegram_message(entry: NewsEntry) -> bool:

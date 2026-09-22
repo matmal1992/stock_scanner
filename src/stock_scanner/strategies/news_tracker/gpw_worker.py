@@ -173,7 +173,7 @@ class GPWWorker(QObject):
             "source_type": "ESPI",
             "ticker": self._extract_ticker(title),
             "llm": "pending",
-            "sentiment": "-",
+            "justification": "-",
             "skipped": is_skipped,
         }
 

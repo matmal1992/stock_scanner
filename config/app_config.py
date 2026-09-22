@@ -16,6 +16,7 @@ FILTERED_TITLE_SUBSTRINGS = (
     "członka rady",
     "księgi popytu",
     "okresowego raportu",
+    "subskrypcji obligacji",
     "zmiana terminu publikacji",
     "skupu akcji własnych",
     "emitenta",

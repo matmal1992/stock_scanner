@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Literal, TypedDict
+from typing import Any, TypedDict
 
 from src.stock_scanner.download.database import Database
 
@@ -14,7 +14,7 @@ class NewsEntry(TypedDict):
     source_type: str
     ticker: str | None
     llm: str
-    sentiment: str
+    justification: str
     skipped: int
 
 
@@ -23,14 +23,7 @@ class LLMResponse(TypedDict):
     company: str | None
     ticker: str | None
     forecast: str | None
-    sector: Literal[
-        "zbrojeniowy",
-        "dronowy",
-        "medyczny",
-        "hi-tech",
-        "kosmiczny",
-        "other",
-    ]
+    justification: str | None
 
 
 class EntryRepository:
@@ -43,7 +36,7 @@ class EntryRepository:
                 cursor = conn.execute(
                     """
                     INSERT OR IGNORE INTO entries (
-                        source_type, ticker, title, link, published, llm, sentiment, skipped
+                        source_type, ticker, title, link, published, llm, justification, skipped
                     )
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                     """,
@@ -54,7 +47,7 @@ class EntryRepository:
                         entry["link"],
                         entry["published"],
                         entry["llm"],
-                        entry["sentiment"],
+                        entry["justification"],
                         entry["skipped"],
                     ),
                 )
@@ -69,7 +62,7 @@ class EntryRepository:
 
             cursor.execute(
                 """
-                SELECT id, title, link, published, source_type, ticker, llm, sentiment, skipped
+                SELECT id, title, link, published, source_type, ticker, llm, justification, skipped
                 FROM entries
                 WHERE id = ?
                 """,
@@ -88,7 +81,7 @@ class EntryRepository:
             cur = conn.cursor()
             cur.execute(
                 """
-                SELECT id, title, link, published, source_type, ticker, llm, sentiment, skipped
+                SELECT id, title, link, published, source_type, ticker, llm, justification, skipped
                 FROM entries
                 WHERE skipped = 0
                 ORDER BY published DESC
@@ -101,6 +94,7 @@ class EntryRepository:
     def update_llm(self, entry_id: int, response: LLMResponse) -> bool:
         ticker = response["ticker"]
         forecast = response["forecast"]
+        justification = response["justification"]
 
         if not ticker:
             logger.warning("Nie znaleziono tickera w odpowiedzi LLM dla entry %s", entry_id)
@@ -115,11 +109,13 @@ class EntryRepository:
                     SET 
                         ticker = ?,
                         llm = ?
+                        justification = ?
                     WHERE id = ?
                     """,
                     (
                         ticker,
                         forecast,
+                        justification,
                         entry_id,
                     ),
                 )
@@ -139,7 +135,7 @@ class EntryRepository:
             "source_type": row[4],
             "ticker": row[5],
             "llm": row[6],
-            "sentiment": row[7],
+            "justification": row[7],
             "skipped": row[8],
         }
 
@@ -153,7 +149,7 @@ class EntryRepository:
 
             cursor.execute(
                 """
-                SELECT id, title, link, published, source_type, ticker, llm, sentiment, skipped
+                SELECT id, title, link, published, source_type, ticker, llm, justification, skipped
                 FROM entries
                 WHERE llm = ?
                 ORDER BY id DESC

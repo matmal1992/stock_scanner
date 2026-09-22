@@ -17,8 +17,6 @@ class Database:
 
     def init_db(self) -> None:
         with self.connect() as conn:
-            # conn.execute("PRAGMA journal_mode=WAL")
-
             cur = conn.cursor()
 
             cur.execute("""
@@ -30,7 +28,7 @@ class Database:
                 link TEXT UNIQUE,
                 published TEXT,
                 llm TEXT DEFAULT 'pending',
-                sentiment TEXT DEFAULT '-',
+                justification TEXT DEFAULT '-',
                 skipped INTEGER NOT NULL DEFAULT 0 CHECK (skipped IN (0, 1))
             )
             """)
