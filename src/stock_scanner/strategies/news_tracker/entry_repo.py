@@ -19,9 +19,6 @@ class NewsEntry(TypedDict):
 
 
 class LLMResponse(TypedDict):
-    relevant: bool
-    company: str | None
-    ticker: str | None
     forecast: str | None
     justification: str | None
 
@@ -92,12 +89,8 @@ class EntryRepository:
         return [self._to_dict(r) for r in rows]
 
     def update_llm(self, entry_id: int, response: LLMResponse) -> bool:
-        ticker = response["ticker"]
         forecast = response["forecast"]
         justification = response["justification"]
-
-        if not ticker:
-            logger.warning("Nie znaleziono tickera w odpowiedzi LLM dla entry %s", entry_id)
 
         if not forecast:
             logger.warning("Nie znaleziono prognozy w odpowiedzi LLM dla entry %s", entry_id)
@@ -107,13 +100,11 @@ class EntryRepository:
                     """
                     UPDATE entries
                     SET 
-                        ticker = ?,
-                        llm = ?
+                        llm = ?,
                         justification = ?
                     WHERE id = ?
                     """,
                     (
-                        ticker,
                         forecast,
                         justification,
                         entry_id,

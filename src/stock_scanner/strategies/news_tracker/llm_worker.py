@@ -5,7 +5,7 @@ from typing import Any, cast
 
 from PySide6.QtCore import QObject, QThread, Signal
 
-from src.stock_scanner.core.gpt_prompter import GPTPrompter
+from src.stock_scanner.core.gemini_prompter import GeminiPrompter
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository, LLMResponse, NewsEntry
 
 logger = logging.getLogger(__name__)
@@ -72,7 +72,7 @@ Odpowiedź MUSI być poprawnym składniowo obiektem JSON, o strukturze:
 
 {
   "forecast": "jedna z pięciu dozwolonych wartości",
-  "uzasadnienie": "Pierwsze zdanie uzasadnienia. Drugie zdanie uzasadnienia."
+  "justification": "Pierwsze zdanie uzasadnienia. Drugie zdanie uzasadnienia."
 }
 
 KROK 6 — WALIDACJA
@@ -84,7 +84,7 @@ Przed zwróceniem odpowiedzi sprawdź:
 - Czy prognoza jest dokładnie jedną z pięciu dozwolonych wartości.
 - Czy uzasadnienie zawiera dokładnie dwa zdania.
 - Czy odpowiedź jest poprawnym JSON-em.
-- Czy JSON zawiera dokładnie pola "forecast" oraz "uzasadnienie".
+- Czy JSON zawiera dokładnie pola "forecast" oraz "justification".
 - Czy poza obiektem JSON nie znajduje się żaden dodatkowy tekst.
 
 WAŻNE:
@@ -173,12 +173,12 @@ class LLMQueueWorker(QObject):
 
     def run(self) -> None:
         self.log.emit("LLM queue started")
-        prompter: GPTPrompter | None = None
+        prompter: GeminiPrompter | None = None
         entry_count: int = 0
 
         try:
             self.log.emit("Uruchamianie przeglądarki ChatGPT...")
-            prompter = GPTPrompter(headless=False)
+            prompter = GeminiPrompter(headless=False)
             prompter.start()
 
             while self.running:
@@ -243,41 +243,8 @@ class LLMQueueWorker(QObject):
         if not isinstance(parsed, dict):
             raise ValueError("Odpowiedź LLM nie jest obiektem JSON")
 
-        required_fields = {"relevant", "company", "ticker", "forecast", "sector"}
+        required_fields = {"forecast", "justification"}
         if set(parsed) != required_fields:
             raise ValueError("Odpowiedź LLM ma nieprawidłowe pola")
-
-        allowed_forecasts = {
-            "Silny spadek",
-            "Spadek",
-            "Neutralny",
-            "Wzrost",
-            "Silny wzrost",
-        }
-        allowed_sectors = {
-            "zbrojeniowy",
-            "dronowy",
-            "medyczny",
-            "hi-tech",
-            "kosmiczny",
-            "other",
-        }
-
-        if not isinstance(parsed["relevant"], bool):
-            raise ValueError("Pole relevant musi być typu boolean")
-        if parsed["sector"] not in allowed_sectors:
-            raise ValueError("Nieprawidłowa wartość pola sector")
-
-        if parsed["relevant"]:
-            if not isinstance(parsed["company"], str) or not parsed["company"].strip():
-                raise ValueError("Pole company musi zawierać nazwę spółki")
-            if not isinstance(parsed["ticker"], str) or not parsed["ticker"].strip():
-                raise ValueError("Pole ticker musi zawierać symbol spółki")
-            if parsed["forecast"] not in allowed_forecasts:
-                raise ValueError("Nieprawidłowa wartość pola forecast")
-        elif parsed["company"] is not None or parsed["ticker"] is not None:
-            raise ValueError("Dla relevant=false company i ticker muszą być null")
-        elif parsed["forecast"] is not None or parsed["sector"] != "other":
-            raise ValueError("Dla relevant=false forecast musi być null, a sector musi być other")
 
         return cast(LLMResponse, parsed)

@@ -51,10 +51,6 @@ class GeminiPrompter:
         if self.page is None:
             raise RuntimeError("Przeglądarka nie została uruchomiona. Wywołaj najpierw metodę .start()")
 
-        # 1. Pobieramy obecny obiekt odpowiedzi oraz ich liczbę
-        responses = self.page.locator('[data-message-author-role="assistant"]')
-        initial_responses_count = responses.count()
-
         # 2. Odnalezienie i wypełnienie pola tekstowego
         prompt_input = self.page.locator("#prompt-textarea, div[contenteditable='true']").first
         prompt_input.wait_for(state="visible", timeout=30000)
@@ -72,11 +68,6 @@ class GeminiPrompter:
         else:
             self.page.keyboard.press("Enter")
 
-        # 4. Czekamy na dodanie NOWEJ odpowiedzi przy użyciu czystej metody Playwright .nth()
-        target_index = initial_responses_count  # 0-indexed: np. dla 0 starych odpowiedzi celujemy w indeks 0
-        new_response = responses.nth(target_index)
-        new_response.wait_for(state="attached", timeout=30000)
-
         # Oczekiwanie na zakończenie generowania (zniknięcie przycisku Stop)
         stop_button = self.page.locator('button[data-testid="stop-button"], button[aria-label*="Stop"]')
         try:
@@ -85,17 +76,17 @@ class GeminiPrompter:
             logger.warning("Przekroczono czas oczekiwania na zniknięcie przycisku Stop")
 
         # Odczekanie chwili na dokończenie renderowania tekstu w DOM
-        self.page.wait_for_timeout(1000)
+        self.page.wait_for_timeout(15000)
 
         # Pobieramy OSTATNIĄ wiadomość asystenta
-        responses = self.page.locator('[data-message-author-role="assistant"]')
-        last_response = responses.last
-        last_response.wait_for(state="attached", timeout=10000)
+        response = self.page.locator("message-content .markdown").last
 
-        if last_response.locator(".markdown").count() > 0:
-            return last_response.locator(".markdown").last.inner_text().strip()
+        try:
+            response.wait_for(state="visible", timeout=120000)
+        except Exception:
+            logger.error("Nie znaleziono elementu .markdown z odpowiedzią Gemini.")
 
-        return last_response.inner_text().strip()
+        return response.inner_text()
 
     def close(self) -> None:
         """Zamyka przeglądarkę."""

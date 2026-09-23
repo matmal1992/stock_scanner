@@ -32,13 +32,13 @@ def main() -> None:
 
         # Czekamy na pole promptu.
         # Jeżeli nie jesteś zalogowany, możesz zalogować się ręcznie.
-        prompt_input = page.locator("#prompt-textarea, " "div[contenteditable='true'], " "textarea").first
+        prompt_input = page.locator("#prompt-textarea, div[contenteditable='true'], textarea").first
 
         try:
             prompt_input.wait_for(state="visible", timeout=15000)
         except Exception:
             logger.warning(
-                "Nie znaleziono pola promptu. " "Jeżeli Gemini pokazuje ekran logowania, zaloguj się ręcznie."
+                "Nie znaleziono pola promptu. Jeżeli Gemini pokazuje ekran logowania, zaloguj się ręcznie."
             )
 
             # Czekamy dłużej na ręczne zalogowanie
@@ -47,20 +47,20 @@ def main() -> None:
         logger.info("Gemini jest gotowe.")
 
         prompt = f"""
-Otwórz i przeanalizuj poniższy link:
+            Otwórz i przeanalizuj poniższy link:
 
-{PAP_URL}
+            {PAP_URL}
 
-Chcę sprawdzić, czy masz dostęp do jego właściwej treści.
-Nie zgaduj i nie korzystaj tylko z wyników wyszukiwania.
+            Chcę sprawdzić, czy masz dostęp do jego właściwej treści.
+            Nie zgaduj i nie korzystaj tylko z wyników wyszukiwania.
 
-Napisz:
-1. czy udało Ci się otworzyć stronę,
-2. jaki jest tytuł komunikatu,
-3. jaka jest data komunikatu,
-4. kto jest jego autorem/nadawcą, jeśli informacja jest dostępna,
-5. podaj krótkie streszczenie treści.
-"""
+            Napisz:
+            1. czy udało Ci się otworzyć stronę,
+            2. jaki jest tytuł komunikatu,
+            3. jaka jest data komunikatu,
+            4. kto jest jego autorem/nadawcą, jeśli informacja jest dostępna,
+            5. podaj krótkie streszczenie treści.
+            """
 
         logger.info("Wysyłam prompt do Gemini...")
 
@@ -83,43 +83,28 @@ Napisz:
             logger.info("Nie znaleziono przycisku wysyłania — używam Enter.")
             prompt_input.press("Enter")
 
-        logger.info("Czekam na odpowiedź Gemini...")
-
-        # Czekamy, aż pojawi się odpowiedź.
-        response_locator = page.locator('[data-message-author-role="assistant"]')
+        response = page.locator("message-content .markdown").last
 
         try:
-            response_locator.last.wait_for(
+            response.wait_for(
                 state="visible",
                 timeout=120000,
             )
         except Exception:
-            logger.warning(
-                "Nie udało się znaleźć odpowiedzi przez " "[data-message-author-role='assistant']."
-            )
+            logger.error("Nie znaleziono elementu .markdown z odpowiedzią Gemini.")
 
         # Dajemy Gemini czas na zakończenie generowania.
         page.wait_for_timeout(10000)
 
-        # Próbujemy odczytać odpowiedź.
-        responses = page.locator('[data-message-author-role="assistant"]')
+        if response.count() > 0:
+            response = page.locator("message-content .markdown").last
 
-        if responses.count() > 0:
-            response = responses.last.inner_text().strip()
-
-            logger.info("=" * 80)
-            logger.info("ODPOWIEDŹ GEMINI:")
-            logger.info("=" * 80)
-            print("\n" + response + "\n")
-            logger.info("=" * 80)
+            print("\n========== ODPOWIEDŹ GEMINI ==========\n")
+            print(response.inner_text())
+            print("\n=======================================\n")
         else:
-            logger.error("Nie udało się znaleźć odpowiedzi Gemini.")
+            logger.error("Nie znaleziono odpowiedzi Gemini.")
 
-            # Awaryjnie zapisujemy cały tekst strony.
-            print("\n--- TEKST STRONY ---\n")
-            print(page.locator("body").inner_text())
-
-        logger.info("Przeglądarka pozostaje otwarta przez 30 sekund...")
         time.sleep(30)
 
         context.close()

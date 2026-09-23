@@ -162,8 +162,13 @@ class GPWWorker(QObject):
             return None
 
         full_published = f"{date_str} {hour_str}"
+        llm_status = "-"
 
-        is_skipped = 1 if self._has_keywords(title) else 0
+        if self._has_keywords(title):
+            is_skipped = 1
+        else:
+            is_skipped = 0
+            llm_status = "pending"
 
         return {
             "id": 0,
@@ -172,7 +177,7 @@ class GPWWorker(QObject):
             "published": full_published,
             "source_type": "ESPI",
             "ticker": self._extract_ticker(title),
-            "llm": "pending",
+            "llm": llm_status,
             "justification": "-",
             "skipped": is_skipped,
         }
