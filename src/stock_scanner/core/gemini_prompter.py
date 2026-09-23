@@ -100,8 +100,11 @@ class GeminiPrompter:
         if self.page is None:
             return
 
+        new_chat_btn = self.page.locator('button[aria-label*="Nowy czat"]')
+        new_chat_btn.click()
+
         logger.info("Otwieranie nowego chatu w Gemini...")
-        self.page.goto("https://gemini.google.com/", timeout=60000)
+        # self.page.goto("https://gemini.google.com/", timeout=60000)
 
         # Czekamy aż nowe pole tekstowe będzie gotowe do interakcji
         self.page.wait_for_selector("#prompt-textarea, div[contenteditable='true']", timeout=30000)

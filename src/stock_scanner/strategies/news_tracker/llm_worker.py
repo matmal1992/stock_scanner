@@ -191,7 +191,7 @@ class LLMQueueWorker(QObject):
                     break
 
                 # Nowy chat co 10 wpisów (omijamy pierwszy wpis gdy entry_count == 0)
-                if entry_count > 0 and entry_count % 10 == 0:
+                if entry_count > 0:
                     self.log.emit(f"Przetworzono {entry_count} wpisów. Otwieranie nowego chatu...")
                     prompter.new_chat()
 

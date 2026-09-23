@@ -56,14 +56,9 @@ class GPWWorker(QObject):
 
         self.playwright = sync_playwright().start()
 
-        self.context = self.playwright.chromium.launch_persistent_context(
-            user_data_dir="./browsers/pap_user_data",
-            headless=True,
-            viewport={
-                "width": 1280,
-                "height": 800,
-            },
-        )
+        self.browser = self.playwright.chromium.launch(headless=True)
+
+        self.context = self.browser.new_context()
 
         self.page = self.context.pages[0] if self.context.pages else self.context.new_page()
 
