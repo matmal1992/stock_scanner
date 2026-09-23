@@ -86,6 +86,8 @@ Przed zwróceniem odpowiedzi sprawdź:
 - Czy odpowiedź jest poprawnym JSON-em.
 - Czy JSON zawiera dokładnie pola "forecast" oraz "justification".
 - Czy poza obiektem JSON nie znajduje się żaden dodatkowy tekst.
+- Czy wartości tekstowe są prawidłowo escapowane zgodnie ze składnią JSON.
+- Jeśli w tekście występują cudzysłowy, użyj apostrofów ' albo escapuj je jako \".
 
 WAŻNE:
 
