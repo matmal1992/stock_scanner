@@ -179,7 +179,7 @@ class LLMQueueWorker(QObject):
 
         try:
             self.log.emit("Uruchamianie przeglądarki ChatGPT...")
-            prompter = GeminiPrompter(headless=True)
+            prompter = GeminiPrompter(headless=False)
             prompter.start()
 
             while self.running:
@@ -235,13 +235,18 @@ class LLMQueueWorker(QObject):
         if not response:
             raise ValueError("LLM zwrócił pustą odpowiedź")
 
-        parsed: Any = json.loads(response)
+        try:
+            parsed: Any = json.loads(response)
+        except json.JSONDecodeError as exc:
+            preview = response[:2000]
+
+            raise ValueError(f"LLM zwrócił niepoprawny JSON: {exc}. Odpowiedź: {preview!r}") from exc
 
         if not isinstance(parsed, dict):
             raise ValueError("Odpowiedź LLM nie jest obiektem JSON")
 
         required_fields = {"forecast", "justification"}
         if set(parsed) != required_fields:
-            raise ValueError("Odpowiedź LLM ma nieprawidłowe pola")
+            raise ValueError(f"Odpowiedź LLM ma nieprawidłowe pola: {set(parsed)}")
 
         return cast(LLMResponse, parsed)
