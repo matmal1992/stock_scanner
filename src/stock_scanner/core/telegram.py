@@ -29,7 +29,18 @@ def build_message(entry: NewsEntry) -> str | None:
 
     published = published[11:]
 
-    return f'{published} | <a href="{url}">{source}</a>\n{title}\n{forecast} - {justification}'
+    if forecast in {"Wzrost", "Silny wzrost"}:
+        forecast_display = f"🟩 {forecast}"
+    elif forecast in {"Spadek", "Silny spadek"}:
+        forecast_display = f"🟥 {forecast}"
+    elif forecast == "Neutralny":
+        forecast_display = f"⬜ {forecast}"
+    else:
+        forecast_display = forecast
+
+    return (
+        f'{published} | <a href="{url}">{source}</a>\n' f"{title}\n" f"{forecast_display} - {justification}"
+    )
 
 
 def send_telegram_message(entry: NewsEntry) -> bool:
