@@ -32,16 +32,7 @@ class GeminiPrompter:
         )
 
         self.page.wait_for_timeout(3_000)
-
-        # Sprawdzenie logowania przy pierwszym uruchomieniu
-        if (
-            "auth" in self.page.url
-            or "accounts.google" in self.page.url
-            or self.page.locator("text=Log in").count() > 0
-        ):
-            logger.error("Wykryto ekran logowania! Zaloguj się ręcznie w przeglądarce...")
-            self.page.wait_for_selector("#prompt-textarea, div[contenteditable='true']", timeout=120000)
-            logger.info("Zalogowano pomyślnie")
+        self._handle_cookie_banner()
 
     def send_prompt(self, prompt: str) -> str:
         if self.page is None:
@@ -88,8 +79,33 @@ class GeminiPrompter:
             return
 
         new_chat_btn = self.page.locator('gem-nav-list-item[data-test-id="new-chat-button"]')
-        new_chat_btn.click()
+        try:
+            new_chat_btn.wait_for(state="visible", timeout=5000)
 
-        logger.info("Otwieranie nowego chatu w Gemini...")
+            if not new_chat_btn.is_enabled():
+                logger.warning("Przycisk 'New chat' jest nieaktywny.")
+                return
+
+            new_chat_btn.click(timeout=5000)
+
+        except Exception as e:
+            logger.warning(
+                f"Nie można kliknąć przycisku 'New chat'. " f"Kontynuuję działanie programu. Powód: {e}"
+            )
+            return
 
         self.page.wait_for_selector("#prompt-textarea, div[contenteditable='true']", timeout=30000)
+
+    def _handle_cookie_banner(self) -> None:
+        if self.page is None:
+            return
+
+        accept_button = self.page.locator('button[data-test-id="accept-button"]')
+
+        try:
+            accept_button.wait_for(state="visible", timeout=5000)
+            accept_button.click()
+            accept_button.wait_for(state="hidden", timeout=5000)
+
+        except Exception:
+            logger.debug("Baner cookies nie został wykryty.")
