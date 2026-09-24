@@ -100,7 +100,7 @@ class GeminiPrompter:
         if self.page is None:
             return
 
-        new_chat_btn = self.page.locator('button[aria-label*="Nowy czat"]')
+        new_chat_btn = self.page.locator('gem-nav-list-item[data-test-id="new-chat-button"]')
         new_chat_btn.click()
 
         logger.info("Otwieranie nowego chatu w Gemini...")
