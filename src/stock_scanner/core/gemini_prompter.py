@@ -2,8 +2,6 @@ import logging
 
 from playwright.sync_api import BrowserContext, Page, Playwright, sync_playwright
 
-from src.stock_scanner.core.paths import get_browser_dir
-
 logger = logging.getLogger(__name__)
 
 
@@ -21,23 +19,19 @@ class GeminiPrompter:
     def start(self) -> None:
         """Uruchamia przeglądarkę i wchodzi na stronę Gemini."""
         self.playwright = sync_playwright().start()
-        chrome_args = ["--disable-blink-features=AutomationControlled"]
+        self.browser = self.playwright.chromium.launch(headless=False)
 
-        user_agent = (
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/125.0.0.0 Safari/537.36"
-        )
+        self.context = self.browser.new_context()
 
-        self.context = self.playwright.chromium.launch_persistent_context(
-            user_data_dir=get_browser_dir() / "browser_user_data",
-            headless=self.headless,
-            user_agent=user_agent,
-            args=chrome_args,
-            viewport={"width": 1280, "height": 800},
-        )
         self.page = self.context.pages[0] if self.context.pages else self.context.new_page()
-        self.page.goto("https://gemini.google.com/", timeout=60000)
+
+        self.page.goto(
+            "https://gemini.google.com/",
+            timeout=15_000,
+            wait_until="domcontentloaded",
+        )
+
+        self.page.wait_for_timeout(3_000)
 
         # Sprawdzenie logowania przy pierwszym uruchomieniu
         if (
