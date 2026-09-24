@@ -38,9 +38,7 @@ def build_message(entry: NewsEntry) -> str | None:
     else:
         forecast_display = forecast
 
-    return (
-        f'{published} | <a href="{url}">{source}</a>\n' f"{title}\n" f"{forecast_display} - {justification}"
-    )
+    return f'{published} | <a href="{url}">{source}</a>\n{title}\n{forecast_display} - {justification}'
 
 
 def send_telegram_message(entry: NewsEntry) -> bool:

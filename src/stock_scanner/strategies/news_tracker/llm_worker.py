@@ -176,11 +176,10 @@ class LLMQueueWorker(QObject):
     def run(self) -> None:
         self.log.emit("LLM queue started")
         prompter: GeminiPrompter | None = None
-        entry_count: int = 0
 
         try:
             self.log.emit("Uruchamianie przeglądarki ChatGPT...")
-            prompter = GeminiPrompter(headless=False)
+            prompter = GeminiPrompter(headless=True)
             prompter.start()
 
             while self.running:
@@ -190,10 +189,7 @@ class LLMQueueWorker(QObject):
                     self.log.emit("Brak wpisów pending")
                     break
 
-                # Nowy chat co 10 wpisów (omijamy pierwszy wpis gdy entry_count == 0)
-                if entry_count > 0:
-                    self.log.emit(f"Przetworzono {entry_count} wpisów. Otwieranie nowego chatu...")
-                    prompter.new_chat()
+                prompter.new_chat()
 
                 entry_id = pending["id"]
                 link = pending["link"]
@@ -217,13 +213,12 @@ class LLMQueueWorker(QObject):
                         self.error.emit(f"LLM: zapisano wynik, ale nie znaleziono wpisu {entry_id}")
                         break
 
-                    entry_count += 1
                     self.result.emit(updated_entry)
                     self.log.emit(f"LLM: zakończono wpis {entry_id}")
 
                 except Exception as exc:
                     self.error.emit(f"LLM worker error dla {entry_id}: {exc}")
-                    prompter.new_chat()
+                    prompter.new_chat()  # a może reset okna?
                     time.sleep(2)
                     continue
 
