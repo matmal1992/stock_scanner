@@ -77,6 +77,8 @@ class GeminiPrompter:
         except Exception:
             logger.error("Nie znaleziono elementu .markdown z odpowiedzią Gemini.")
 
+        self.page.wait_for_timeout(1000)
+
         return response.inner_text()
 
     def close(self) -> None:
