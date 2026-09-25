@@ -178,7 +178,7 @@ class LLMQueueWorker(QObject):
         prompter: GeminiPrompter | None = None
 
         try:
-            self.log.emit("Uruchamianie przeglądarki ChatGPT...")
+            self.log.emit("Uruchamianie przeglądarki...")
             prompter = GeminiPrompter(headless=False)
             prompter.start()
 
@@ -188,8 +188,6 @@ class LLMQueueWorker(QObject):
                 if pending is None:
                     self.log.emit("Brak wpisów pending")
                     break
-
-                prompter.new_chat()
 
                 entry_id = pending["id"]
                 link = pending["link"]
@@ -223,6 +221,8 @@ class LLMQueueWorker(QObject):
                     continue
 
                 time.sleep(0.2)
+
+                prompter.new_chat()
 
         finally:
             self.log.emit("LLM queue finished")

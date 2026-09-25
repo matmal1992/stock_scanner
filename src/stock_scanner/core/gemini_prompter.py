@@ -10,6 +10,8 @@ logger = logging.getLogger(__name__)
 # Przejrzeć lokatory i dać precyzyjne odniesienia, a nie jeden z kilku
 # Dodatkowo - optymalizacja i zabezpieczenie algorytmu - timeouty itp
 class GeminiPrompter:
+    URL = "https://gemini.google.com/"
+
     def __init__(self, headless: bool = False):
         self.headless = headless
         self.playwright: Playwright | None = None
@@ -25,11 +27,7 @@ class GeminiPrompter:
 
         self.page = self.context.pages[0] if self.context.pages else self.context.new_page()
 
-        self.page.goto(
-            "https://gemini.google.com/",
-            timeout=15_000,
-            wait_until="domcontentloaded",
-        )
+        self.page.goto(self.URL, timeout=15_000, wait_until="domcontentloaded")
 
         self.page.wait_for_timeout(3_000)
         self._handle_cookie_banner()
@@ -54,7 +52,6 @@ class GeminiPrompter:
         # Odczekanie chwili na dokończenie renderowania tekstu w DOM
         self.page.wait_for_timeout(5000)
 
-        # Pobieramy OSTATNIĄ wiadomość asystenta
         response = self.page.locator("message-content .markdown").last
 
         try:
@@ -74,25 +71,11 @@ class GeminiPrompter:
             self.playwright.stop()
 
     def new_chat(self) -> None:
-        """Otwiera nowy chat i czeka na załadowanie pola wpisywania."""
         if self.page is None:
             return
 
-        new_chat_btn = self.page.locator('gem-nav-list-item[data-test-id="new-chat-button"]')
-        try:
-            new_chat_btn.wait_for(state="visible", timeout=5000)
-
-            if not new_chat_btn.is_enabled():
-                logger.warning("Przycisk 'New chat' jest nieaktywny.")
-                return
-
-            new_chat_btn.click(timeout=5000)
-
-        except Exception as e:
-            logger.warning(
-                f"Nie można kliknąć przycisku 'New chat'. " f"Kontynuuję działanie programu. Powód: {e}"
-            )
-            return
+        self.page.locator('gem-nav-list-item[data-test-id="reset-button"]').click()
+        self._confirm_new_chat()
 
         self.page.wait_for_selector("#prompt-textarea, div[contenteditable='true']", timeout=30000)
 
@@ -109,3 +92,12 @@ class GeminiPrompter:
 
         except Exception:
             logger.debug("Baner cookies nie został wykryty.")
+
+    def _confirm_new_chat(self) -> None:
+        if self.page is None:
+            raise RuntimeError("Przeglądarka nie została uruchomiona.")
+
+        confirm_button = self.page.locator('gem-button[data-test-id="confirm-button"]')
+
+        confirm_button.wait_for(state="visible", timeout=10_000)
+        confirm_button.click(timeout=10_000)
