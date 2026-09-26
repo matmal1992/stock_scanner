@@ -2,14 +2,12 @@ import logging
 import re
 from typing import Optional
 
-from playwright.sync_api import BrowserContext, Locator, Page, Playwright, sync_playwright
+from playwright.sync_api import Locator
 from PySide6.QtCore import QObject, QThread, QTimer, Signal
 
-from config.app_config import FILTERED_TITLE_SUBSTRINGS
-from src.stock_scanner.strategies.news_tracker.entry_repo import (
-    EntryRepository,
-    NewsEntry,
-)
+from src.stock_scanner.scrapers.keywords import GPW_SUBSTRINGS, has_keywords
+from src.stock_scanner.scrapers.playwright import PlaywrightSession
+from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository, NewsEntry
 
 logger = logging.getLogger(__name__)
 
@@ -20,23 +18,21 @@ class GPWWorker(QObject):
     log = Signal(str)
     finished = Signal()
 
-    URL = "https://espiebi.pap.pl/"
+    # URL = "https://espiebi.pap.pl/"
     INTERVAL_MS = 5_000
 
     def __init__(self, entry_repo: EntryRepository) -> None:
         super().__init__()
         self.entry_repo = entry_repo
 
-        self.playwright: Playwright | None = None
-        self.context: BrowserContext | None = None
-        self.page: Page | None = None
+        self.session = PlaywrightSession()
         self._timer: QTimer | None = None
 
     def run(self) -> None:
         self.log.emit("Start scrapowania komunikatów giełdowych z PAP...")
 
         try:
-            self._start_browser()
+            self.session.start("https://espiebi.pap.pl/")
             self._timer = QTimer()
             self._timer.setInterval(self.INTERVAL_MS)
             self._timer.timeout.connect(self._on_timer)
@@ -48,29 +44,8 @@ class GPWWorker(QObject):
             self.error.emit(f"PAP error: {exc}")
 
         finally:
-            self._close_browser()
+            self.session.close()
             self.finished.emit()
-
-    def _start_browser(self) -> None:
-        self.log.emit("PAP: uruchamianie przeglądarki...")
-
-        self.playwright = sync_playwright().start()
-
-        self.browser = self.playwright.chromium.launch(headless=True)
-
-        self.context = self.browser.new_context()
-
-        self.page = self.context.pages[0] if self.context.pages else self.context.new_page()
-
-        self.page.goto(
-            self.URL,
-            timeout=15_000,
-            wait_until="domcontentloaded",
-        )
-
-        self.page.wait_for_timeout(3_000)
-
-        self.log.emit("PAP: przeglądarka uruchomiona")
 
     def _on_timer(self) -> None:
         try:
@@ -84,17 +59,14 @@ class GPWWorker(QObject):
             self.error.emit(f"PAP error podczas odświeżania: {exc}")
 
     def _refresh(self) -> None:
-        if self.page is None:
-            raise RuntimeError("Przeglądarka nie została uruchomiona.")
-
-        refresh_button = self.page.locator("#refreshHomeId a.refreshButton")
+        refresh_button = self.session.page.locator("#refreshHomeId a.refreshButton")
         refresh_button.wait_for(state="visible", timeout=10_000)
         refresh_button.click()
 
-        refresh_datetime = self.page.locator("#refreshHomeId .refreshDateTime").inner_text().strip()
+        refresh_datetime = self.session.page.locator("#refreshHomeId .refreshDateTime").inner_text().strip()
         self.log.emit(f"PAP: dane pobrano: {refresh_datetime}")
 
-        self.page.wait_for_timeout(1_000)
+        self.session.page.wait_for_timeout(1_000)
 
     def _scrape_and_save(self) -> None:
         entries = self._scrape()
@@ -106,10 +78,7 @@ class GPWWorker(QObject):
         self.result.emit(has_new)
 
     def _scrape(self) -> list[NewsEntry]:
-        if self.page is None:
-            raise RuntimeError("Przeglądarka nie została uruchomiona.")
-
-        day_blocks = self.page.locator(".view-report-listing div.day")
+        day_blocks = self.session.page.locator(".view-report-listing div.day")
         day_count = day_blocks.count()
 
         results: list[NewsEntry] = []
@@ -136,15 +105,6 @@ class GPWWorker(QObject):
         self.log.emit(f"PAP: znaleziono {len(results)} komunikatów")
         return results
 
-    def _has_keywords(self, title: str) -> bool:
-        title_lower = title.casefold()
-
-        for substring in FILTERED_TITLE_SUBSTRINGS:
-            if substring.casefold() in title_lower:
-                return True
-
-        return False
-
     def _parse_item(self, item: Locator, date_str: str) -> Optional[NewsEntry]:
         link_locator = item.locator("a.link")
 
@@ -159,7 +119,7 @@ class GPWWorker(QObject):
         full_published = f"{date_str} {hour_str}"
         llm_status = "-"
 
-        if self._has_keywords(title):
+        if has_keywords(title, GPW_SUBSTRINGS):
             is_skipped = 1
         else:
             is_skipped = 0
@@ -241,21 +201,6 @@ class GPWWorker(QObject):
 
         if thread is not None:
             thread.quit()
-
-    def _close_browser(self) -> None:
-        self.log.emit("PAP: zamykanie przeglądarki...")
-
-        if self.context is not None:
-            self.context.close()
-            self.context = None
-
-        if self.playwright is not None:
-            self.playwright.stop()
-            self.playwright = None
-
-        self.page = None
-
-        self.log.emit("PAP: przeglądarka zamknięta")
 
 
 class GPWService(QObject):
