@@ -1,11 +1,9 @@
 import logging
-import re
 from typing import Optional
 
-from playwright.sync_api import Locator
 from PySide6.QtCore import QObject, QThread, QTimer, Signal
 
-from src.stock_scanner.scrapers.keywords import GPW_SUBSTRINGS, has_keywords
+from src.stock_scanner.scrapers.pap_espi import PapEspiScraper
 from src.stock_scanner.scrapers.playwright import PlaywrightSession
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository, NewsEntry
 
@@ -18,7 +16,6 @@ class GPWWorker(QObject):
     log = Signal(str)
     finished = Signal()
 
-    # URL = "https://espiebi.pap.pl/"
     INTERVAL_MS = 5_000
 
     def __init__(self, entry_repo: EntryRepository) -> None:
@@ -26,13 +23,14 @@ class GPWWorker(QObject):
         self.entry_repo = entry_repo
 
         self.session = PlaywrightSession()
+        self.scraper = PapEspiScraper(self.session)
         self._timer: QTimer | None = None
 
     def run(self) -> None:
         self.log.emit("Start scrapowania komunikatów giełdowych z PAP...")
 
         try:
-            self.session.start("https://espiebi.pap.pl/")
+            self.scraper.start()
             self._timer = QTimer()
             self._timer.setInterval(self.INTERVAL_MS)
             self._timer.timeout.connect(self._on_timer)
@@ -44,135 +42,35 @@ class GPWWorker(QObject):
             self.error.emit(f"PAP error: {exc}")
 
         finally:
-            self.session.close()
+            self.scraper.close()
             self.finished.emit()
 
     def _on_timer(self) -> None:
         try:
             self.log.emit("PAP: czas na kolejne pobieranie")
 
-            self._refresh()
-
+            self.scraper.refresh()
             self._scrape_and_save()
 
         except Exception as exc:
             self.error.emit(f"PAP error podczas odświeżania: {exc}")
 
-    def _refresh(self) -> None:
-        refresh_button = self.session.page.locator("#refreshHomeId a.refreshButton")
-        refresh_button.wait_for(state="visible", timeout=10_000)
-        refresh_button.click()
-
-        refresh_datetime = self.session.page.locator("#refreshHomeId .refreshDateTime").inner_text().strip()
-        self.log.emit(f"PAP: dane pobrano: {refresh_datetime}")
-
-        self.session.page.wait_for_timeout(1_000)
-
     def _scrape_and_save(self) -> None:
-        entries = self._scrape()
+        entries = self.scraper.scrape()
 
         self.log.emit(f"PAP: znaleziono {len(entries)} komunikatów")
 
-        has_new = self._save_entries(entries)
+        has_new = False
+
+        for entry in entries:
+            try:
+                if self.entry_repo.save(entry):
+                    has_new = True
+
+            except Exception as exc:
+                self.log.emit(f"Błąd zapisu: {exc}")
 
         self.result.emit(has_new)
-
-    def _scrape(self) -> list[NewsEntry]:
-        day_blocks = self.session.page.locator(".view-report-listing div.day")
-        day_count = day_blocks.count()
-
-        results: list[NewsEntry] = []
-
-        for d in range(day_count):
-            day_block = day_blocks.nth(d)
-            date_str = day_block.locator("h3").first.inner_text().strip()
-
-            items = day_block.locator("ul.newsList li.news")
-            item_count = items.count()
-
-            for i in range(item_count):
-                try:
-                    item = items.nth(i)
-                    entry = self._parse_item(item, date_str)
-
-                    if entry is not None:
-                        results.append(entry)
-
-                except Exception as exc:
-                    logger.error(f"PAP: błąd parsowania wpisu {i} z dnia {date_str}: {exc}")
-                    self.log.emit(f"PAP: błąd parsowania wpisu {i}: {exc}")
-
-        self.log.emit(f"PAP: znaleziono {len(results)} komunikatów")
-        return results
-
-    def _parse_item(self, item: Locator, date_str: str) -> Optional[NewsEntry]:
-        link_locator = item.locator("a.link")
-
-        title = link_locator.inner_text().strip()
-        link = link_locator.get_attribute("href")
-
-        hour_str = item.locator("div.hour").first.inner_text().strip()
-
-        if not link:
-            return None
-
-        full_published = f"{date_str} {hour_str}"
-        llm_status = "-"
-
-        if has_keywords(title, GPW_SUBSTRINGS):
-            is_skipped = 1
-        else:
-            is_skipped = 0
-            llm_status = "pending"
-
-        return {
-            "id": 0,
-            "title": title,
-            "link": self._absolute_url(link),
-            "published": full_published,
-            "source_type": "ESPI",
-            "ticker": self._extract_ticker(title),
-            "llm": llm_status,
-            "justification": "-",
-            "skipped": is_skipped,
-        }
-
-    def _extract_ticker(self, title: str) -> Optional[str]:
-        if " - " not in title:
-            return None
-
-        ticker = title.split(" - ", 1)[0].strip()
-
-        if not ticker:
-            return None
-
-        return ticker
-
-    def _absolute_url(self, link: str) -> str:
-        if link.startswith("http://"):
-            return link
-
-        if link.startswith("https://"):
-            return link
-
-        if link.startswith("//"):
-            return "https:" + link
-
-        if link.startswith("/"):
-            return "https://espiebi.pap.pl" + link
-
-        return link
-
-    def _extract_date(self, text: str) -> str:
-        match = re.search(
-            r"\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}",
-            text,
-        )
-
-        if match:
-            return match.group(0)
-
-        return ""
 
     def _save_entries(self, entries: list[NewsEntry]) -> bool:
         found_new = False
