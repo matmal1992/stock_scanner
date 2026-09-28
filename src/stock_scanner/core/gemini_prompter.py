@@ -14,6 +14,14 @@ logger = logging.getLogger(__name__)
 class GeminiPrompter:
     URL = "https://gemini.google.com/"
 
+    VALID_FORECASTS = {
+        "Silny spadek",
+        "Spadek",
+        "Neutralny",
+        "Wzrost",
+        "Silny wzrost",
+    }
+
     def __init__(self, headless: bool = False):
         self.headless = headless
         self.playwright: Playwright | None = None
@@ -23,7 +31,7 @@ class GeminiPrompter:
     def start(self) -> None:
         """Uruchamia przeglądarkę i wchodzi na stronę Gemini."""
         self.playwright = sync_playwright().start()
-        self.browser = self.playwright.chromium.launch(headless=False)
+        self.browser = self.playwright.chromium.launch(headless=self.headless)
 
         self.context = self.browser.new_context()
 
@@ -44,28 +52,9 @@ class GeminiPrompter:
         prompt_input.fill(prompt)
         prompt_input.press("Enter")
 
-        # Oczekiwanie na zakończenie generowania (zniknięcie przycisku Stop)
-        # stop_button = self.page.locator('button[data-testid="stop-button"], button[aria-label*="Stop"]')
-        # try:
-        #     stop_button.wait_for(state="hidden", timeout=15000)
-        # except Exception:
-        #     logger.warning("Przekroczono czas oczekiwania na zniknięcie przycisku Stop")
-
-        # # Odczekanie chwili na dokończenie renderowania tekstu w DOM
-        # self.page.wait_for_timeout(5000)
-
         response = self.page.locator("message-content .markdown").last
         response.wait_for(state="visible", timeout=30_000)
 
-        # try:
-        #     response.wait_for(state="visible", timeout=15000)
-        # except Exception:
-        #     logger.error("Nie znaleziono elementu .markdown z odpowiedzią Gemini.")
-        #     raise
-
-        # self.page.wait_for_timeout(1000)
-
-        # return response.inner_text()
         return self._wait_for_stable_response(response)
 
     def close(self) -> None:
@@ -111,33 +100,38 @@ class GeminiPrompter:
         if self.page is None:
             raise RuntimeError("Przeglądarka nie została uruchomiona.")
         deadline = time.monotonic() + timeout
-
-        previous_text = ""
-        stable_count = 0
+        last_text = ""
 
         while time.monotonic() < deadline:
-            current_text = response.inner_text().strip()
+            last_text = response.inner_text().strip()
 
-            if current_text == previous_text and current_text:
-                stable_count += 1
-            else:
-                stable_count = 0
-
-            previous_text = current_text
-
-            if stable_count >= 2:
-                try:
-                    parsed = json.loads(current_text)
-
-                    if isinstance(parsed, dict) and set(parsed) == {"forecast", "justification"}:
-                        return current_text
-
-                except json.JSONDecodeError:
-                    pass
+            if self._is_valid_response(last_text):
+                return last_text
 
             self.page.wait_for_timeout(500)
 
         raise TimeoutError(
-            f"Odpowiedź Gemini nie ustabilizowała się jako poprawny JSON. "
-            f"Ostatnia odpowiedź: {previous_text[:1000]!r}"
+            "Gemini nie zwrócił poprawnego JSON w wyznaczonym czasie. "
+            f"Ostatnia odpowiedź: {last_text[:1000]!r}"
         )
+
+    @classmethod
+    def _is_valid_response(cls, response: str) -> bool:
+        try:
+            parsed = json.loads(response)
+        except json.JSONDecodeError:
+            return False
+
+        if not isinstance(parsed, dict):
+            return False
+
+        if set(parsed) != {"forecast", "justification"}:
+            return False
+
+        if parsed["forecast"] not in cls.VALID_FORECASTS:
+            return False
+
+        if not isinstance(parsed["justification"], str):
+            return False
+
+        return True
