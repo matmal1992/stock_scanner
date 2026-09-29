@@ -66,6 +66,7 @@ class PlaywrightSession:
 
     def refresh_page(self) -> bool:
         if self._page is None:
+            logger.warning("Refresh pominięty: strona Playwright nie istnieje.")
             return False
 
         try:

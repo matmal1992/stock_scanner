@@ -2,8 +2,6 @@ import json
 import logging
 import time
 
-from playwright.sync_api import Locator
-
 from src.stock_scanner.scrapers.playwright import PlaywrightSession
 from src.stock_scanner.strategies.news_tracker.entry_repo import LLMResponse
 
@@ -45,8 +43,7 @@ class GeminiPrompter:
         prompt_input.fill(prompt)
         prompt_input.press("Enter")
 
-        response = self.session.page.locator("message-content .markdown").last
-        stable_response = self._wait_for_stable_response(response)
+        stable_response = self._wait_for_stable_response()
         parsed_response = self._parse_response(stable_response)
 
         return parsed_response
@@ -82,8 +79,16 @@ class GeminiPrompter:
         except Exception:
             logger.debug("Baner cookies nie został wykryty.")
 
-    def _wait_for_stable_response(self, response: Locator, timeout: int = 30000) -> str:
+    def _wait_for_stable_response(self, timeout: int = 30000) -> str:
         deadline = time.monotonic() + timeout
+
+        response = self.session.page.locator("message-content .markdown").last
+
+        try:
+            response.wait_for(state="visible", timeout=self.PROMPT_TIMEOUT)
+        except TimeoutError as exc:
+            raise TimeoutError("Gemini nie utworzył elementu odpowiedzi w wyznaczonym czasie.") from exc
+
         last_text = ""
 
         while time.monotonic() < deadline:
