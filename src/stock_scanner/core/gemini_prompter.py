@@ -2,17 +2,25 @@ import json
 import logging
 import time
 
-from playwright.sync_api import BrowserContext, Locator, Page, Playwright, sync_playwright
+from playwright.sync_api import Locator
+
+from src.stock_scanner.scrapers.playwright import PlaywrightSession
+from src.stock_scanner.strategies.news_tracker.entry_repo import LLMResponse
 
 logger = logging.getLogger(__name__)
 
 
-# zdefiniować locatory jako zmienne, oraz dodać do nich diagnostykę,
+# zdefiniować locatory jako zmienne, oraz dodać do nich diagnostykę - screenshoty,
 # aby w razie zmiany gemini, szybko zidentyfikować, który z nich jest nieaktualny
 # Przejrzeć lokatory i dać precyzyjne odniesienia, a nie jeden z kilku
 # Dodatkowo - optymalizacja i zabezpieczenie algorytmu - timeouty itp
 class GeminiPrompter:
     URL = "https://gemini.google.com/"
+
+    PAGE_LOAD_TIMEOUT = 15_000
+    PROMPT_TIMEOUT = 30_000
+    RESPONSE_TIMEOUT = 60
+    RECOVERY_TIMEOUT = 15_000
 
     VALID_FORECASTS = {
         "Silny spadek",
@@ -22,62 +30,49 @@ class GeminiPrompter:
         "Silny wzrost",
     }
 
-    def __init__(self, headless: bool = False):
-        self.headless = headless
-        self.playwright: Playwright | None = None
-        self.context: BrowserContext | None = None
-        self.page: Page | None = None
+    def __init__(self) -> None:
+        self.session = PlaywrightSession()
 
     def start(self) -> None:
-        """Uruchamia przeglądarkę i wchodzi na stronę Gemini."""
-        self.playwright = sync_playwright().start()
-        self.browser = self.playwright.chromium.launch(headless=self.headless)
-
-        self.context = self.browser.new_context()
-
-        self.page = self.context.pages[0] if self.context.pages else self.context.new_page()
-
-        self.page.goto(self.URL, timeout=15_000, wait_until="domcontentloaded")
-
-        self.page.wait_for_timeout(3_000)
+        self.session.start(self.URL, hidden=False)
         self._handle_cookie_banner()
+        self._wait_for_prompt_input()
 
-    def send_prompt(self, prompt: str) -> str:
-        if self.page is None:
-            raise RuntimeError("Przeglądarka nie została uruchomiona. Wywołaj najpierw metodę .start()")
-
-        prompt_input = self.page.locator("#prompt-textarea, div[contenteditable='true']").first
-        prompt_input.wait_for(state="visible", timeout=30000)
+    def send_prompt(self, prompt: str) -> LLMResponse:
+        prompt_input = self.session.page.locator("#prompt-textarea, div[contenteditable='true']").first
+        prompt_input.wait_for(state="visible", timeout=self.PROMPT_TIMEOUT)
         prompt_input.click()
         prompt_input.fill(prompt)
         prompt_input.press("Enter")
 
-        response = self.page.locator("message-content .markdown").last
-        response.wait_for(state="visible", timeout=30_000)
+        response = self.session.page.locator("message-content .markdown").last
+        stable_response = self._wait_for_stable_response(response)
+        parsed_response = self._parse_response(stable_response)
 
-        return self._wait_for_stable_response(response)
+        return parsed_response
 
-    def close(self) -> None:
-        """Zamyka przeglądarkę."""
-        if self.context:
-            self.context.close()
-        if self.playwright:
-            self.playwright.stop()
+    def _wait_for_prompt_input(self) -> None:
+        prompt_input = self.session.page.locator("#prompt-textarea, div[contenteditable='true']").first
+        prompt_input.wait_for(state="visible", timeout=self.RECOVERY_TIMEOUT)
 
-    def new_chat(self) -> None:
-        if self.page is None:
-            return
+    def refresh(self) -> bool:
+        if not self.session.refresh_page():
+            return False
 
-        self.page.locator('gem-nav-list-item[data-test-id="reset-button"]').click()
-        self._confirm_new_chat()
+        try:
+            self._handle_cookie_banner()
+            self._wait_for_prompt_input()
+            return True
 
-        self.page.wait_for_selector("#prompt-textarea, div[contenteditable='true']", timeout=30000)
+        except Exception as exc:
+            logger.warning(
+                "Gemini: strona została odświeżona, ale interfejs nie jest gotowy: %s",
+                exc,
+            )
+            return False
 
     def _handle_cookie_banner(self) -> None:
-        if self.page is None:
-            return
-
-        accept_button = self.page.locator('button[data-test-id="accept-button"]')
+        accept_button = self.session.page.locator('button[data-test-id="accept-button"]')
 
         try:
             accept_button.wait_for(state="visible", timeout=5000)
@@ -87,18 +82,7 @@ class GeminiPrompter:
         except Exception:
             logger.debug("Baner cookies nie został wykryty.")
 
-    def _confirm_new_chat(self) -> None:
-        if self.page is None:
-            raise RuntimeError("Przeglądarka nie została uruchomiona.")
-
-        confirm_button = self.page.locator('gem-button[data-test-id="confirm-button"]')
-
-        confirm_button.wait_for(state="visible", timeout=10_000)
-        confirm_button.click(timeout=10_000)
-
-    def _wait_for_stable_response(self, response: Locator, timeout: int = 60) -> str:
-        if self.page is None:
-            raise RuntimeError("Przeglądarka nie została uruchomiona.")
+    def _wait_for_stable_response(self, response: Locator, timeout: int = 30000) -> str:
         deadline = time.monotonic() + timeout
         last_text = ""
 
@@ -108,7 +92,7 @@ class GeminiPrompter:
             if self._is_valid_response(last_text):
                 return last_text
 
-            self.page.wait_for_timeout(500)
+            self.session.page.wait_for_timeout(500)
 
         raise TimeoutError(
             "Gemini nie zwrócił poprawnego JSON w wyznaczonym czasie. "
@@ -135,3 +119,17 @@ class GeminiPrompter:
             return False
 
         return True
+
+    def _parse_response(self, response: str) -> LLMResponse:
+        try:
+            parsed = json.loads(response)
+        except json.JSONDecodeError as exc:
+            raise ValueError("Gemini zwrócił niepoprawny JSON.") from exc
+
+        forecast = parsed["forecast"]
+        justification = parsed["justification"]
+
+        return {
+            "forecast": forecast,
+            "justification": justification,
+        }

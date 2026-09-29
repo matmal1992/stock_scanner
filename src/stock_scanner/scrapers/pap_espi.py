@@ -32,9 +32,8 @@ class PapEspiScraper(BaseScraper):
         refresh_button.wait_for(state="visible", timeout=10_000)
         refresh_button.click()
 
-        refresh_datetime = self.session.page.locator("#refreshHomeId .refreshDateTime").inner_text().strip()
-
-        logger.info("PAP: dane pobrano: %s", refresh_datetime)
+        # refresh_datetime = self.session.page.locator("#refreshHomeId .refreshDateTime").inner_text().strip()
+        # logger.info("PAP: dane pobrano: %s", refresh_datetime)
 
         self.session.page.wait_for_timeout(1_000)
 

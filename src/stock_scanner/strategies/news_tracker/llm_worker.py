@@ -1,12 +1,10 @@
-import json
 import logging
 import time
-from typing import Any, cast
 
 from PySide6.QtCore import QObject, QThread, Signal
 
 from src.stock_scanner.core.gemini_prompter import GeminiPrompter
-from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository, LLMResponse, NewsEntry
+from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository, NewsEntry
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +47,7 @@ KROK 3 — PROGNOZA
 
 Oceń prawdopodobny wpływ analizowanej informacji na kurs akcji spółki.
 
-Prognoza dotyczy reakcji kursu w ciągu 1–2 sesji giełdowych od momentu publikacji informacji.
+Prognoza dotyczy reakcji kursu w ciągu 1-2 sesji giełdowych od momentu publikacji informacji.
 
 Prognoza może przyjąć wyłącznie jedną z następujących wartości:
 
@@ -162,13 +160,14 @@ class LLMQueueWorker(QObject):
     finished = Signal()
     error = Signal(str)
     log = Signal(str)
-    result = Signal(object)
+    result = Signal(NewsEntry)
 
     def __init__(self, entry_repo: EntryRepository) -> None:
         super().__init__()
 
         self.entry_repo = entry_repo
         self.running = True
+        # self.max_attempts_per_entry = 3 - odpuść po trzech nieudanych promptach
 
     def stop(self) -> None:
         self.running = False
@@ -179,7 +178,7 @@ class LLMQueueWorker(QObject):
 
         try:
             self.log.emit("Uruchamianie przeglądarki...")
-            prompter = GeminiPrompter(headless=False)
+            prompter = GeminiPrompter()
             prompter.start()
 
             while self.running:
@@ -190,63 +189,40 @@ class LLMQueueWorker(QObject):
                     break
 
                 entry_id = pending["id"]
-                link = pending["link"]
-
-                self.log.emit(f"LLM: przetwarzanie wpisu {entry_id}")
 
                 try:
-                    full_prompt = f"{my_prompt} Link: {link}"
-                    raw_response = prompter.send_prompt(full_prompt)
-                    parsed_response = self._parse_response(raw_response)
-
-                    success = self.entry_repo.update_llm(entry_id, parsed_response)
-
-                    if not success:
-                        self.error.emit(f"LLM: nie udało się zapisać wyniku dla {entry_id}")
-                        break
-
-                    updated_entry = self.entry_repo.get_by_id(entry_id)
-
-                    if updated_entry is None:
-                        self.error.emit(f"LLM: zapisano wynik, ale nie znaleziono wpisu {entry_id}")
-                        break
-
-                    self.result.emit(updated_entry)
-                    self.log.emit(f"LLM: zakończono wpis {entry_id}")
-
+                    self._process_entry(prompter=prompter, entry=pending)
                 except Exception as exc:
                     self.error.emit(f"LLM worker error dla {entry_id}: {exc}")
-                    prompter.new_chat()  # a może reset okna?
+                    prompter.refresh()
                     time.sleep(2)
                     continue
 
                 time.sleep(0.2)
 
-                prompter.new_chat()
+                prompter.refresh()
 
         finally:
             self.log.emit("LLM queue finished")
             self.finished.emit()
 
-    @staticmethod
-    def _parse_response(response: str) -> LLMResponse:
-        response = response.strip()
+    def _process_entry(self, prompter: GeminiPrompter, entry: NewsEntry) -> None:
+        entry_id = entry["id"]
+        link = entry["link"]
 
-        if not response:
-            raise ValueError("LLM zwrócił pustą odpowiedź")
+        self.log.emit(f"LLM: przetwarzanie wpisu {entry_id}")
 
-        try:
-            parsed: Any = json.loads(response)
-        except json.JSONDecodeError as exc:
-            preview = response[:2000]
+        full_prompt = f"{my_prompt} Link: {link}"
 
-            raise ValueError(f"LLM zwrócił niepoprawny JSON: {exc}. Odpowiedź: {preview!r}") from exc
+        response = prompter.send_prompt(full_prompt)
 
-        if not isinstance(parsed, dict):
-            raise ValueError("Odpowiedź LLM nie jest obiektem JSON")
+        success = self.entry_repo.update_llm(entry_id, response)
+        if not success:
+            raise RuntimeError(f"Nie udało się zapisać wyniku dla {entry_id}")
 
-        required_fields = {"forecast", "justification"}
-        if set(parsed) != required_fields:
-            raise ValueError(f"Odpowiedź LLM ma nieprawidłowe pola: {set(parsed)}")
+        updated_entry = self.entry_repo.get_by_id(entry_id)
+        if updated_entry is None:
+            raise RuntimeError(f"Zapisano wynik, ale nie znaleziono wpisu {entry_id}")
 
-        return cast(LLMResponse, parsed)
+        self.result.emit(updated_entry)
+        self.log.emit(f"LLM: zakończono wpis {entry_id}")

@@ -7,6 +7,8 @@ logger = logging.getLogger(__name__)
 
 # Dodać osobny logger dla playwright i zrobić okno w gui tylko dla logów
 class PlaywrightSession:
+    PAGE_LOAD_TIMEOUT = 15_000
+
     def __init__(self) -> None:
         self._playwright: Playwright | None = None
         self._browser: Browser | None = None
@@ -24,13 +26,7 @@ class PlaywrightSession:
     def is_running(self) -> bool:
         return self._playwright is not None
 
-    def start(
-        self,
-        url: str,
-        hidden: bool = False,
-        timeout: int = 15_000,
-        wait_after_load: int = 3_000,
-    ) -> Page:
+    def start(self, url: str, hidden: bool = False) -> Page:
         if self.is_running:
             raise RuntimeError("Sesja Playwright jest już uruchomiona.")
 
@@ -43,10 +39,9 @@ class PlaywrightSession:
 
             self._page = self._context.new_page()
 
-            self._page.goto(url, timeout=timeout, wait_until="domcontentloaded")
+            self._page.goto(url, timeout=self.PAGE_LOAD_TIMEOUT, wait_until="domcontentloaded")
 
-            if wait_after_load > 0:
-                self._page.wait_for_timeout(wait_after_load)
+            self._page.wait_for_timeout(3_000)
 
             return self._page
 
@@ -68,3 +63,15 @@ class PlaywrightSession:
             self._playwright = None
 
         self._page = None
+
+    def refresh_page(self) -> bool:
+        if self._page is None:
+            return False
+
+        try:
+            self._page.reload(timeout=self.PAGE_LOAD_TIMEOUT, wait_until="domcontentloaded")
+            return True
+
+        except Exception as exc:
+            logger.error("Refresh nie powiódł się: %s", exc)
+            return False

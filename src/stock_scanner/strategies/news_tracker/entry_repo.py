@@ -19,8 +19,8 @@ class NewsEntry(TypedDict):
 
 
 class LLMResponse(TypedDict):
-    forecast: str | None
-    justification: str | None
+    forecast: str
+    justification: str
 
 
 class EntryRepository:
@@ -92,8 +92,6 @@ class EntryRepository:
         forecast = response["forecast"]
         justification = response["justification"]
 
-        if not forecast:
-            logger.warning("Nie znaleziono prognozy w odpowiedzi LLM dla entry %s", entry_id)
         try:
             with self.db.connect() as conn:
                 cur = conn.execute(
@@ -113,8 +111,8 @@ class EntryRepository:
 
             return cur.rowcount > 0
 
-        except Exception as e:
-            logger.exception("DB ERROR:", e)
+        except Exception:
+            logger.exception("DB ERROR podczas aktualizacji LLM dla entry %s", entry_id)
             return False
 
     def _to_dict(self, row: list[Any]) -> NewsEntry:
