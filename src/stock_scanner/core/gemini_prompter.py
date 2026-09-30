@@ -31,6 +31,13 @@ class GeminiPrompter:
     def __init__(self) -> None:
         self.session = PlaywrightSession()
 
+    def restart(self) -> None:
+        logger.info("Restartowanie sesji Gemini...")
+        self.session.close()
+        self.session.start(self.URL, hidden=False)
+        self._handle_cookie_banner()
+        self._wait_for_prompt_input()
+
     def start(self) -> None:
         self.session.start(self.URL, hidden=False)
         self._handle_cookie_banner()
@@ -52,21 +59,21 @@ class GeminiPrompter:
         prompt_input = self.session.page.locator("#prompt-textarea, div[contenteditable='true']").first
         prompt_input.wait_for(state="visible", timeout=self.RECOVERY_TIMEOUT)
 
-    def refresh(self) -> bool:
-        if not self.session.refresh_page():
-            return False
+    def refresh(self) -> None:
+        self.session.page.goto(self.URL)
 
         try:
             self._handle_cookie_banner()
             self._wait_for_prompt_input()
-            return True
 
         except Exception as exc:
             logger.warning(
                 "Gemini: strona została odświeżona, ale interfejs nie jest gotowy: %s",
                 exc,
             )
-            return False
+
+    def screenshot(self, name: str) -> None:
+        self.session.screenshot(name)
 
     def _handle_cookie_banner(self) -> None:
         accept_button = self.session.page.locator('button[data-test-id="accept-button"]')
@@ -98,8 +105,6 @@ class GeminiPrompter:
                 return last_text
 
             self.session.page.wait_for_timeout(500)
-
-        self.session.refresh_page()
 
         raise TimeoutError(
             "Gemini nie zwrócił poprawnego JSON w wyznaczonym czasie. "

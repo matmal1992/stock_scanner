@@ -1,6 +1,10 @@
 import logging
+from datetime import datetime
+from pathlib import Path
 
 from playwright.sync_api import Browser, BrowserContext, Page, Playwright, sync_playwright
+
+from src.stock_scanner.core.paths import application_dir
 
 logger = logging.getLogger(__name__)
 
@@ -8,6 +12,7 @@ logger = logging.getLogger(__name__)
 # Dodać osobny logger dla playwright i zrobić okno w gui tylko dla logów
 class PlaywrightSession:
     PAGE_LOAD_TIMEOUT = 15_000
+    SCREENSHOTS_DIR = Path(application_dir() / "screens")
 
     def __init__(self) -> None:
         self._playwright: Playwright | None = None
@@ -33,7 +38,7 @@ class PlaywrightSession:
         try:
             self._playwright = sync_playwright().start()
 
-            self._browser = self._playwright.chromium.launch(headless=hidden)
+            self._browser = self._playwright.chromium.launch(headless=hidden, args="--start-minimized")
 
             self._context = self._browser.new_context()
 
@@ -76,3 +81,25 @@ class PlaywrightSession:
         except Exception as exc:
             logger.error("Refresh nie powiódł się: %s", exc)
             return False
+
+    def screenshot(self, name: str) -> Path | None:
+        if self._page is None:
+            logger.warning("Screenshot pominięty: strona Playwright nie istnieje.")
+            return None
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+
+        self.SCREENSHOTS_DIR.mkdir(parents=True, exist_ok=True)
+
+        path = self.SCREENSHOTS_DIR / f"{timestamp}_{name}.png"
+
+        try:
+            self._page.screenshot(path=str(path), full_page=True)
+
+            logger.info("Screenshot zapisany: %s", path)
+
+            return path
+
+        except Exception:
+            logger.exception("Nie udało się wykonać screenshotu: %s", path)
+            return None
