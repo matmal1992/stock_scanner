@@ -99,6 +99,8 @@ class GeminiPrompter:
 
             self.session.page.wait_for_timeout(500)
 
+        self.session.refresh_page()
+
         raise TimeoutError(
             "Gemini nie zwrócił poprawnego JSON w wyznaczonym czasie. "
             f"Ostatnia odpowiedź: {last_text[:1000]!r}"
