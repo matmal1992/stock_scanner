@@ -22,7 +22,7 @@ class PapEspiScraper(BaseScraper):
         self.session = session
 
     def start(self) -> None:
-        self.session.start(self.BASE_URL, hidden=True)
+        self.session.start(self.BASE_URL, headless=True)
 
     def close(self) -> None:
         self.session.close()

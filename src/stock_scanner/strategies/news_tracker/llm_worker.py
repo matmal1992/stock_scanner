@@ -193,9 +193,9 @@ class LLMQueueWorker(QObject):
                 try:
                     self._process_entry(prompter=prompter, entry=pending)
                 except Exception as exc:
-                    logger.exception(f"LLM worker error dla {entry_id}: {exc}")
-                    prompter.screenshot(name="llm_worker_exc")
+                    self.error.emit(f"LLM worker error dla {entry_id}: {exc}")
                     prompter.restart()
+                    time.sleep(2)
                     continue
 
                 time.sleep(0.2)

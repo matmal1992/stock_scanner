@@ -4,7 +4,7 @@ from pathlib import Path
 
 from playwright.sync_api import Browser, BrowserContext, Page, Playwright, sync_playwright
 
-from src.stock_scanner.core.paths import application_dir
+from src.stock_scanner.core.paths import application_dir, get_browser_dir
 
 logger = logging.getLogger(__name__)
 
@@ -13,6 +13,14 @@ logger = logging.getLogger(__name__)
 class PlaywrightSession:
     PAGE_LOAD_TIMEOUT = 15_000
     SCREENSHOTS_DIR = Path(application_dir() / "screens")
+
+    user_agent = (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/125.0.0.0 Safari/537.36"
+    )
+
+    chrome_args = ["--disable-blink-features=AutomationControlled"]
 
     def __init__(self) -> None:
         self._playwright: Playwright | None = None
@@ -31,17 +39,23 @@ class PlaywrightSession:
     def is_running(self) -> bool:
         return self._playwright is not None
 
-    def start(self, url: str, hidden: bool = False) -> Page:
+    def start(self, url: str, headless: bool = False, context: bool = False) -> Page:
         if self.is_running:
             raise RuntimeError("Sesja Playwright jest już uruchomiona.")
 
         try:
             self._playwright = sync_playwright().start()
 
-            # self._browser = self._playwright.chromium.launch(headless=hidden, args="--start-minimized")
-            self._browser = self._playwright.chromium.launch(headless=hidden)
-
-            self._context = self._browser.new_context()
+            if context:
+                self._context = self._playwright.chromium.launch_persistent_context(
+                    user_data_dir=get_browser_dir() / "browser_user_data",
+                    headless=headless,
+                    user_agent=self.user_agent,
+                    args=self.chrome_args,
+                    viewport={"width": 1280, "height": 800},
+                )
+            else:
+                self._context = self._playwright.chromium.launch(headless=headless).new_context()
 
             self._page = self._context.new_page()
 
