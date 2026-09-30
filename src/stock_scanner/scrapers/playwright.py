@@ -38,7 +38,8 @@ class PlaywrightSession:
         try:
             self._playwright = sync_playwright().start()
 
-            self._browser = self._playwright.chromium.launch(headless=hidden, args="--start-minimized")
+            # self._browser = self._playwright.chromium.launch(headless=hidden, args="--start-minimized")
+            self._browser = self._playwright.chromium.launch(headless=hidden)
 
             self._context = self._browser.new_context()
 
