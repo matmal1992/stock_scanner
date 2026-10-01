@@ -138,7 +138,8 @@ class MainWindow(QMainWindow):
         self.show_main_menu()
 
     def start_news_strategy(self) -> None:
-        self.news_tracker_window.news_feed.on_start_scraping_clicked()
+        self.news_tracker_window.news_feed.gpw.start()
+        self.news_tracker_window.news_feed.llm.start()
 
     def switch_window(self, window: QWidget, button: QPushButton) -> None:
         self.show_window(window)

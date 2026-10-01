@@ -141,7 +141,7 @@ class EntryRepository:
                 SELECT id, title, link, published, source_type, ticker, llm, justification, skipped
                 FROM entries
                 WHERE llm = ?
-                ORDER BY id DESC
+                ORDER BY id ASC
                 LIMIT 1
                 """,
                 ("pending",),
@@ -153,3 +153,16 @@ class EntryRepository:
             return None
 
         return self._to_dict(row)
+
+    def has_pending(self) -> bool:
+        with self.db.connect() as conn:
+            cursor = conn.execute(
+                """
+                SELECT 1
+                FROM entries
+                WHERE llm = ?
+                LIMIT 1
+                """,
+                ("pending",),
+            )
+            return cursor.fetchone() is not None

@@ -22,6 +22,8 @@ from src.stock_scanner.strategies.news_tracker.tracked_ticker_repo import Tracke
 logger = logging.getLogger(__name__)
 
 # dodać listę spółek z perspektywicznych sektorów: medyczny, obronny, dronowy hitech, kosmiczny...
+# scrapers status: runtimowo coś jak notifications, tylko dla każdego workera
+# runtimowe logi dla każdego workera, może w osobnej zakładce/oknie
 
 
 class NewsFeedList(QWidget):
@@ -77,19 +79,13 @@ class NewsFeedList(QWidget):
         self.feed_list.setColumnWidth(3, 90)
         self.feed_list.setColumnWidth(4, 90)
 
-        start_scraping_btn = QPushButton("Start scraping")
         self.load_data_btn = QPushButton("Load data")
-        self.run_llm_btn = QPushButton("Run LLM")
         self.clear_database_btn = QPushButton("Clear database")
 
-        start_scraping_btn.clicked.connect(self.on_start_scraping_clicked)
         self.load_data_btn.clicked.connect(self._update_list)
-        self.run_llm_btn.clicked.connect(self.on_run_llm_clicked)
 
         test_buttons_box = QHBoxLayout()
-        test_buttons_box.addWidget(start_scraping_btn)
         test_buttons_box.addWidget(self.load_data_btn)
-        test_buttons_box.addWidget(self.run_llm_btn)
 
         layout = QVBoxLayout()
         layout.addLayout(test_buttons_box)
@@ -141,48 +137,16 @@ class NewsFeedList(QWidget):
         logger.info(f"{get_actual_time()} - Kolejka LLM zakończona")
         self.notify.emit("Kolejka LLM zakończona", "ok")
 
-    def on_run_llm_clicked(self) -> None:
-        if self.llm.is_running():
-            self.notify.emit("LLM już działa", "error")
-            return
-
-        self.notify.emit("Uruchamiam kolejkę LLM...", "neutral")
-        started = self.llm.start()
-
-        if not started:
-            logger.error(f"{get_actual_time()} - LLM ERROR: Nie udało się uruchomić LLM")
-            self.notify.emit("Nie udało się uruchomić LLM", "error")
-
     def on_llm_result(self, entry: NewsEntry) -> None:
-        # self.notify.emit(f"LLM zakończony dla wpisu {entry['id']}", "ok")
         self._update_list()
-
-        # forecast_value = entry["llm"]
-        # self.notify.emit(f"LLM forecast: '{forecast_value}'", "neutral")
-
-        # if forecast_value not in ("Wzrost", "Silny wzrost"):
-        #     msg = f"Forecast '{forecast_value}' — alert niespełniony"
-        #     self.notify.emit(msg, "neutral")
-        #     return
-
-        # self.notify.emit(f"Wysyłam alert Telegrama dla '{forecast_value}'", "ok")
         send_telegram_message(entry)
-
-    def on_start_scraping_clicked(self) -> None:
-        if self.gpw.is_running():
-            self.notify.emit("Scraping już trwa", "error")
-            return
-
-        self.notify.emit("Start scraping", "neutral")
-        self.gpw.start()
 
     def on_gpw_result(self, has_new_entries: bool) -> None:
         self._update_list()
 
         if has_new_entries:
-            if not self.llm.is_running():
-                self.llm.start()
             self.notify.emit("Pobrano nowe komunikaty gpw", "ok")
+            self.llm.wake()
         else:
             self.notify.emit("Brak nowych komunikatów gpw", "neutral")
 

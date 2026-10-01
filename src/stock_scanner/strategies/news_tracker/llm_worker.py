@@ -1,6 +1,6 @@
 import logging
 
-from PySide6.QtCore import QObject, QThread, Signal
+from PySide6.QtCore import QMutex, QObject, QThread, QWaitCondition, Signal
 
 from src.stock_scanner.core.gemini_prompter import GeminiPrompter
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository, NewsEntry
@@ -120,7 +120,6 @@ class LLMService(QObject):
 
     def start(self) -> bool:
         if self._thread is not None and self._thread.isRunning():
-            self.log.emit("LLM już działa")
             return False
 
         self._thread = QThread()
@@ -145,6 +144,10 @@ class LLMService(QObject):
         if self.worker is not None:
             self.worker.stop()
 
+    def wake(self) -> None:
+        if self.worker is not None and self.is_running():
+            self.worker.wake()
+
     def is_running(self) -> bool:
         return self._thread is not None and self._thread.isRunning()
 
@@ -166,17 +169,30 @@ class LLMQueueWorker(QObject):
 
         self.entry_repo = entry_repo
         self.running = True
+        self._mutex = QMutex()
+        self._condition = QWaitCondition()
         # self.max_attempts_per_entry = 3 - odpuść po trzech nieudanych promptach
 
     def stop(self) -> None:
-        self.running = False
+        self._mutex.lock()
+        try:
+            self.running = False
+            self._condition.wakeAll()
+        finally:
+            self._mutex.unlock()
+
+    def wake(self) -> None:
+        self._mutex.lock()
+        try:
+            self._condition.wakeAll()
+        finally:
+            self._mutex.unlock()
 
     def run(self) -> None:
-        self.log.emit("LLM queue started")
+        logger.info("LLM queue started")
         prompter: GeminiPrompter | None = None
 
         try:
-            self.log.emit("Uruchamianie przeglądarki...")
             prompter = GeminiPrompter()
             prompter.start()
 
@@ -184,17 +200,21 @@ class LLMQueueWorker(QObject):
                 pending = self.entry_repo.get_last_pending()
 
                 if pending is None:
-                    self.log.emit("Brak wpisów pending")
-                    break
+                    self._mutex.lock()
+                    try:
+                        self.log.emit("Brak oczekujących wpisów LLM, oczekiwanie...")
+                        self._condition.wait(self._mutex)
+                    finally:
+                        self._mutex.unlock()
 
-                entry_id = pending["id"]
+                    continue
 
                 try:
                     self._process_entry(prompter=prompter, entry=pending)
                 except Exception as exc:
-                    logger.exception("LLM worker error dla %s", entry_id)
-                    self.error.emit(f"LLM worker error dla {entry_id}: {exc}")
-                    prompter.screenshot(name=f"llm_worker_exc_{entry_id}")
+                    logger.exception("LLM worker error dla %s", pending["id"])
+                    self.error.emit(f"LLM worker error dla {pending['id']}: {exc}")
+                    prompter.screenshot(name=f"llm_worker_exc_{pending['id']}")
                     prompter.restart()
                     continue
 
@@ -207,7 +227,6 @@ class LLMQueueWorker(QObject):
                 except Exception:
                     logger.exception("Błąd podczas zamykania sesji Gemini.")
 
-            self.log.emit("LLM queue finished")
             self.finished.emit()
 
     def _process_entry(self, prompter: GeminiPrompter, entry: NewsEntry) -> None:

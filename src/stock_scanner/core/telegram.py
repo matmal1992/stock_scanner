@@ -15,6 +15,15 @@ telegram_chat_id = config.get("telegram_chat_id")
 
 ALERT_FORECASTS = {"Wzrost", "Silny wzrost"}
 
+# diagnostyka: stan aplikacji: ilosc pending, finished, skipped, wszystkich, errorow
+# screeny z exceptionow
+# stan workerow
+# data i godzina ostatniego scrapowania espi, ostatniego przetworzenia LLM
+# exception w formie traceback
+# osobny kanał dla alertów, osobny dla logów, osobny dla debugowania
+# sterowanie aplikacją przez telegram: start/stop scrapowania, start/stop LLM, restart Gemini, aplikacji
+# zostawić tylko wzrost i silny wzrost. Wyjatek to tracked_tickers
+
 
 def build_message(entry: NewsEntry) -> str | None:
     forecast = entry["llm"]
