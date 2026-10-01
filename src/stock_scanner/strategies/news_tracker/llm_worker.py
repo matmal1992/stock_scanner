@@ -1,5 +1,4 @@
 import logging
-import time
 
 from PySide6.QtCore import QObject, QThread, Signal
 
@@ -193,16 +192,21 @@ class LLMQueueWorker(QObject):
                 try:
                     self._process_entry(prompter=prompter, entry=pending)
                 except Exception as exc:
+                    logger.exception("LLM worker error dla %s", entry_id)
                     self.error.emit(f"LLM worker error dla {entry_id}: {exc}")
+                    prompter.screenshot(name=f"llm_worker_exc_{entry_id}")
                     prompter.restart()
-                    time.sleep(2)
                     continue
-
-                time.sleep(0.2)
 
                 prompter.refresh()
 
         finally:
+            if prompter is not None:
+                try:
+                    prompter.close()
+                except Exception:
+                    logger.exception("Błąd podczas zamykania sesji Gemini.")
+
             self.log.emit("LLM queue finished")
             self.finished.emit()
 

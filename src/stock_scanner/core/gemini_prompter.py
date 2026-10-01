@@ -17,8 +17,6 @@ class GeminiPrompter:
 
     PAGE_LOAD_TIMEOUT = 15_000
     PROMPT_TIMEOUT = 30_000
-    RESPONSE_TIMEOUT = 60
-    RECOVERY_TIMEOUT = 15_000
 
     VALID_FORECASTS = {
         "Silny spadek",
@@ -57,7 +55,7 @@ class GeminiPrompter:
 
     def _wait_for_prompt_input(self) -> None:
         prompt_input = self.session.page.locator("#prompt-textarea, div[contenteditable='true']").first
-        prompt_input.wait_for(state="visible", timeout=self.RECOVERY_TIMEOUT)
+        prompt_input.wait_for(state="visible", timeout=self.PAGE_LOAD_TIMEOUT)
 
     def refresh(self) -> None:
         self.session.page.goto(self.URL)
@@ -75,6 +73,9 @@ class GeminiPrompter:
     def screenshot(self, name: str) -> None:
         self.session.screenshot(name)
 
+    def close(self) -> None:
+        self.session.close()
+
     def _handle_cookie_banner(self) -> None:
         accept_button = self.session.page.locator('button[data-test-id="accept-button"]')
 
@@ -86,8 +87,8 @@ class GeminiPrompter:
         except Exception:
             logger.debug("Baner cookies nie został wykryty.")
 
-    def _wait_for_stable_response(self, timeout: int = 30000) -> str:
-        deadline = time.monotonic() + timeout
+    def _wait_for_stable_response(self) -> str:
+        deadline = time.monotonic() + self.PROMPT_TIMEOUT
 
         response = self.session.page.locator("message-content .markdown").last
 
@@ -97,14 +98,21 @@ class GeminiPrompter:
             raise TimeoutError("Gemini nie utworzył elementu odpowiedzi w wyznaczonym czasie.") from exc
 
         last_text = ""
+        last_validation_error = ""
 
         while time.monotonic() < deadline:
             last_text = response.inner_text().strip()
+            is_valid, validation_error = self._validate_response(last_text)
 
-            if self._is_valid_response(last_text):
+            if is_valid:
                 return last_text
 
+            last_validation_error = validation_error
+
             self.session.page.wait_for_timeout(500)
+
+        logger.error("Gemini timeout. Ostatnia odpowiedź: %r", last_text[:2000])
+        logger.error("Gemini timeout. Powód odrzucenia odpowiedzi: %s", last_validation_error)
 
         raise TimeoutError(
             "Gemini nie zwrócił poprawnego JSON w wyznaczonym czasie. "
@@ -112,25 +120,25 @@ class GeminiPrompter:
         )
 
     @classmethod
-    def _is_valid_response(cls, response: str) -> bool:
+    def _validate_response(cls, response: str) -> tuple[bool, str]:
         try:
             parsed = json.loads(response)
         except json.JSONDecodeError:
-            return False
+            return False, "odpowiedź nie jest poprawnym JSON-em"
 
         if not isinstance(parsed, dict):
-            return False
+            return False, "JSON nie jest obiektem"
 
         if set(parsed) != {"forecast", "justification"}:
-            return False
+            return False, "JSON ma nieprawidłowy zestaw pól"
 
         if parsed["forecast"] not in cls.VALID_FORECASTS:
-            return False
+            return False, "nieprawidłowa wartość forecast"
 
         if not isinstance(parsed["justification"], str):
-            return False
+            return False, "justification nie jest tekstem"
 
-        return True
+        return True, "OK"
 
     def _parse_response(self, response: str) -> LLMResponse:
         try:
