@@ -29,7 +29,10 @@ dependencies = [
     "mss",
     "opencv-python",
     "playwright",
-    "mypy"
+    "mypy",
+    "types-requests",
+    "minidump",
+    "chromium",
 ]
 
 [project.optional-dependencies]

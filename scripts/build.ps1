@@ -23,12 +23,11 @@ if (-Not (Test-Path "browsers")) {
     exit 1
 }
 
-# Build PyInstaller
-Write-Host "Running PyInstaller..." -ForegroundColor Cyan
+Write-Host "Building Stock Scanner..." -ForegroundColor Cyan
 
 python -m uv run pyinstaller `
-    --clean `
     --onedir `
+    --noconsole `
     --name stock_scanner `
     --add-data "$browserPath;browsers" `
     --add-data "$projectRoot/assets;assets" `
@@ -37,10 +36,16 @@ python -m uv run pyinstaller `
     --specpath build/spec `
     src/main.py
 
-# if (Test-Path "src/assets") {
-#     Write-Host "Copying assets..." -ForegroundColor Yellow
-#     Copy-Item -Recurse -Force src/assets build/dist/assets
-# }
+Write-Host "Building Watchdog..." -ForegroundColor Cyan
+
+python -m uv run pyinstaller `
+    --onedir `
+    --name watchdog `
+    --paths "$projectRoot/src" `
+    --distpath build/dist `
+    --workpath build/work `
+    --specpath build/spec `
+    src/stock_scanner/core/watchdog.py
 
 $timer.Stop()
 
