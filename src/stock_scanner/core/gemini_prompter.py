@@ -58,7 +58,11 @@ class GeminiPrompter:
         prompt_input.wait_for(state="visible", timeout=self.PAGE_LOAD_TIMEOUT)
 
     def refresh(self) -> None:
-        self.session.page.goto(self.URL)
+        self.session.page.goto(
+            self.URL,
+            timeout=self.PAGE_LOAD_TIMEOUT,
+            wait_until="domcontentloaded",
+        )
 
         try:
             self._handle_cookie_banner()

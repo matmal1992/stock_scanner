@@ -28,6 +28,9 @@ ALERT_FORECASTS = {"Wzrost", "Silny wzrost"}
 # osobny kanał dla alertów, osobny dla logów, osobny dla debugowania
 # sterowanie aplikacją przez telegram: start/stop scrapowania, start/stop LLM, restart Gemini, aplikacji
 # zostawić tylko wzrost i silny wzrost. Wyjatek to tracked_tickers
+# add to tracked tickers - wpisz ticker, a będzie on dodany do bazy
+# alert, że jeśli jest pending, a llm nie running.
+# detekcja braku internetu - info po przywróceniu połączenia
 
 
 class TelegramBotListener(QThread):

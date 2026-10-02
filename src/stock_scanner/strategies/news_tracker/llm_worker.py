@@ -190,44 +190,34 @@ class LLMQueueWorker(QObject):
 
     def run(self) -> None:
         logger.info("LLM queue started")
-        prompter: GeminiPrompter | None = None
+        prompter = GeminiPrompter()
+        prompter.start()
 
-        try:
-            prompter = GeminiPrompter()
-            prompter.start()
+        while self.running:
+            pending = self.entry_repo.get_last_pending()
 
-            while self.running:
-                pending = self.entry_repo.get_last_pending()
-
-                if pending is None:
-                    self._mutex.lock()
-                    try:
-                        self.log.emit("Brak oczekujących wpisów LLM, oczekiwanie...")
-                        self._condition.wait(self._mutex)
-                    finally:
-                        self._mutex.unlock()
-
-                    continue
-
+            if pending is None:
+                self._mutex.lock()
                 try:
-                    self._process_entry(prompter=prompter, entry=pending)
-                except Exception as exc:
-                    logger.exception("LLM worker error dla %s", pending["id"])
-                    self.error.emit(f"LLM worker error dla {pending['id']}: {exc}")
-                    prompter.screenshot(name=f"llm_worker_exc_{pending['id']}")
-                    prompter.restart()
-                    continue
+                    self.log.emit("Brak oczekujących wpisów LLM, oczekiwanie...")
+                    self._condition.wait(self._mutex)
+                finally:
+                    self._mutex.unlock()
 
-                prompter.refresh()
+                continue
 
-        finally:
-            if prompter is not None:
+            try:
+                self._process_entry(prompter=prompter, entry=pending)
+            except Exception as exc:
+                logger.exception("LLM worker error dla %s", pending["id"])
+                self.error.emit(f"LLM worker error dla {pending['id']}: {exc}")
+                prompter.screenshot(name=f"llm_worker_exc_{pending['id']}")
+
+            finally:
                 try:
-                    prompter.close()
+                    prompter.refresh()
                 except Exception:
-                    logger.exception("Błąd podczas zamykania sesji Gemini.")
-
-            self.finished.emit()
+                    logger.exception("Nie udało się odświeżyć Gemini po wpisie %s", pending["id"])
 
     def _process_entry(self, prompter: GeminiPrompter, entry: NewsEntry) -> None:
         entry_id = entry["id"]
