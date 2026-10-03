@@ -4,7 +4,7 @@ import time
 import urllib.parse
 import urllib.request
 
-from PySide6.QtCore import QThread, Signal
+from PySide6.QtCore import QObject, QThread, Signal
 
 from config.app_config import load_config
 from src.stock_scanner.core.utils import get_actual_time
@@ -33,24 +33,51 @@ ALERT_FORECASTS = {"Wzrost", "Silny wzrost"}
 # detekcja braku internetu - info po przywróceniu połączenia
 
 
-class TelegramBotListener(QThread):
-    # Sygnały do komunikacji z głównym wątkiem/aplikacją jeśli chcesz wykonywać akcje
-    command_received = Signal(str)
+class ApplicationController(QObject):
+    response_ready = Signal(str)
 
     def __init__(
         self,
-        token: str,
-        allowed_chat_id: str,
         entry_repo: EntryRepository,
         gpw_service: GPWService,
         llm_service: LLMService,
     ) -> None:
         super().__init__()
-        self.token = token
-        self.allowed_chat_id = str(allowed_chat_id)
+
         self.entry_repo = entry_repo
         self.gpw_service = gpw_service
         self.llm_service = llm_service
+
+    def handle_command(self, command: str) -> None:
+        logger.info("Telegram command: %s", command)
+
+        if command == "status":
+            self.response_ready.emit(self.get_status())
+        else:
+            logger.warning("Nieznana komenda: %s", command)
+
+    def get_status(self) -> str:
+        gpw = self.gpw_service.is_running()
+        llm = self.llm_service.is_running()
+        pending = self.entry_repo.get_pending_number()
+
+        return (
+            "Status aplikacji\n\n"
+            f"GPW: {'🟢 aktywny' if gpw else '🔴 zatrzymany'}\n"
+            f"LLM: {'🟢 aktywny' if llm else '🔴 zatrzymany'}\n"
+            f"Pending: {pending}\n"
+        )
+
+
+class TelegramBotListener(QThread):
+    # Sygnały do komunikacji z głównym wątkiem/aplikacją jeśli chcesz wykonywać akcje
+    command_received = Signal(str)
+
+    def __init__(self, controller: ApplicationController) -> None:
+        super().__init__()
+        self.token = telegram_token
+        self.allowed_chat_id = str(telegram_chat_id)
+        self.controller = controller
         self._running = True
         self._last_update_id = 0
 
@@ -99,37 +126,10 @@ class TelegramBotListener(QThread):
             logger.warning("Odrzucono wiadomość od nieznanego czatu: %s", chat_id)
             return
 
-        self._handle_command(text)
+        self.command_received.emit(text)
 
-    def _handle_command(self, cmd: str) -> None:
-        if cmd in ["state", "/state", "stan"]:
-            self._reply_state()
-        elif cmd in ["restart_llm", "/restart_llm"]:
-            self._reply("Restartowanie usługi LLM...")
-            # np. self.llm_service.wake() lub reset
-        elif cmd in ["help", "/start", "/help"]:
-            self._reply("Dostępne komendy:\n- state\n- restart_llm")
-        else:
-            self._reply(f"Nieznana komenda: {cmd}")
-
-    def _reply_state(self) -> None:
-        # Pobieramy statystyki z bazy danych
-        # has_pending = self.entry_repo.has_pending()
-
-        # Przykład pobrania z bazy zliczeń (warto dodać taką metodę do EntryRepository)
-        # np. stats = self.entry_repo.get_stats()
-
-        # Wpisy w stanie 'pending'
-        pending_entry = self.entry_repo.get_last_pending()
-        pending_status = "Tak (są w kolejce)" if pending_entry else "Brak (0)"
-
-        msg = (
-            "📊 **Stan aplikacji:**\n\n"
-            f"• Czy są oczekujące LLM: **{pending_status}**\n"
-            f"• Wątek GPW: **{'Aktywny' if self.gpw_service.is_running() else 'Bezczynny'}**\n"
-            f"• Wątek LLM: **{'Aktywny' if self.llm_service.is_running() else 'Bezczynny'}**\n"
-        )
-        self._reply(msg)
+    def send_response(self, text: str) -> None:
+        self._reply(text)
 
     def _reply(self, text: str) -> None:
         url = f"https://api.telegram.org/bot{self.token}/sendMessage"
@@ -141,7 +141,7 @@ class TelegramBotListener(QThread):
         data = urllib.parse.urlencode(payload).encode("utf-8")
         req = urllib.request.Request(url, data=data, method="POST")
         try:
-            urllib.request.urlopen(req, timeout=10)
+            urllib.request.urlopen(req, timeout=30)
         except Exception as e:
             logger.error("Błąd wysyłania odpowiedzi na Telegram: %s", e)
 

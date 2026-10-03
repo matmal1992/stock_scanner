@@ -166,3 +166,15 @@ class EntryRepository:
                 ("pending",),
             )
             return cursor.fetchone() is not None
+
+    def get_pending_number(self) -> int:
+        with self.db.connect() as conn:
+            cursor = conn.execute(
+                """
+                SELECT COUNT(*)
+                FROM entries
+                WHERE llm = ?
+                """,
+                ("pending",),
+            )
+            return cursor.fetchone()[0]

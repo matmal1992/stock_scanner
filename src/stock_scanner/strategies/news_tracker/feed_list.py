@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.stock_scanner.core.telegram import send_telegram_message
+from src.stock_scanner.core.telegram import ApplicationController, TelegramBotListener, send_telegram_message
 from src.stock_scanner.core.utils import get_actual_time
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository, NewsEntry
 from src.stock_scanner.strategies.news_tracker.gpw_worker import GPWService
@@ -46,6 +46,12 @@ class NewsFeedList(QWidget):
         self.llm.finished.connect(self.on_llm_finished)
         self.llm.result.connect(self.on_llm_result)
 
+        self.controller = ApplicationController(entry_repo, self.gpw, self.llm)
+        self.telegram = TelegramBotListener(controller=self.controller)
+        self.telegram.command_received.connect(self.controller.handle_command)
+        self.controller.response_ready.connect(self.telegram.send_response)
+        self.telegram.start()
+
         self._ids: list[int | None] = []
         self.selected_entry_id: int | None = None
 
@@ -73,11 +79,10 @@ class NewsFeedList(QWidget):
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.Fixed)
         header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
         header.setSectionResizeMode(3, QHeaderView.ResizeMode.Fixed)
-        header.setSectionResizeMode(4, QHeaderView.ResizeMode.Fixed)
         self.feed_list.setColumnWidth(0, 120)
         self.feed_list.setColumnWidth(1, 80)
+        self.feed_list.setColumnWidth(2, 90)
         self.feed_list.setColumnWidth(3, 90)
-        self.feed_list.setColumnWidth(4, 90)
 
         self.load_data_btn = QPushButton("Load data")
         self.clear_database_btn = QPushButton("Clear database")
