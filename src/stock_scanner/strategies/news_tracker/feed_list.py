@@ -12,12 +12,12 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.stock_scanner.core.telegram import ApplicationController, TelegramBotListener, send_telegram_message
 from src.stock_scanner.core.utils import get_actual_time
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository, NewsEntry
 from src.stock_scanner.strategies.news_tracker.gpw_worker import GPWService
 from src.stock_scanner.strategies.news_tracker.llm_worker import LLMService
 from src.stock_scanner.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
+from src.stock_scanner.telegram import TelegramService
 
 logger = logging.getLogger(__name__)
 
@@ -45,12 +45,6 @@ class NewsFeedList(QWidget):
         self.llm.error.connect(self.on_llm_error)
         self.llm.finished.connect(self.on_llm_finished)
         self.llm.result.connect(self.on_llm_result)
-
-        self.controller = ApplicationController(entry_repo, self.gpw, self.llm)
-        self.telegram = TelegramBotListener(controller=self.controller)
-        self.telegram.command_received.connect(self.controller.handle_command)
-        self.controller.response_ready.connect(self.telegram.send_response)
-        self.telegram.start()
 
         self._ids: list[int | None] = []
         self.selected_entry_id: int | None = None
@@ -144,7 +138,7 @@ class NewsFeedList(QWidget):
 
     def on_llm_result(self, entry: NewsEntry) -> None:
         self._update_list()
-        send_telegram_message(entry)
+        TelegramService.send_message(entry)
 
     def on_gpw_result(self, has_new_entries: bool) -> None:
         self._update_list()

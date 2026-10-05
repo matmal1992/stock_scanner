@@ -8,7 +8,7 @@ BASE_DIR = get_root_dir()
 CONFIG_PATH = BASE_DIR / "config" / "config.json"
 
 
-def load_config() -> dict:
+def load_config() -> dict[str, str]:
     if not CONFIG_PATH.exists():
         print(f"CONFIG NOT FOUND: {CONFIG_PATH}")
         return {"path_error": " "}
