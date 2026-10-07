@@ -29,7 +29,8 @@ class Database:
                 published TEXT,
                 llm TEXT DEFAULT 'pending',
                 justification TEXT DEFAULT '-',
-                skipped INTEGER NOT NULL DEFAULT 0 CHECK (skipped IN (0, 1))
+                skipped INTEGER NOT NULL DEFAULT 0 CHECK (skipped IN (0, 1)),
+                content TEXT UNIQUE
             )
             """)
 

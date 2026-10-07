@@ -69,6 +69,12 @@ class PlaywrightSession:
             self.close()
             raise
 
+    def new_page(self) -> Page:
+        if self._context is None:
+            raise RuntimeError("Sesja Playwright nie została uruchomiona.")
+
+        return self._context.new_page()
+
     def close(self) -> None:
         if self._context is not None:
             self._context.close()

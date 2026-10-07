@@ -3,6 +3,7 @@ from typing import Optional
 
 from PySide6.QtCore import QObject, QThread, QTimer, Signal
 
+from src.stock_scanner.scrapers.entry_content import PageContentScraper
 from src.stock_scanner.scrapers.pap_espi import PapEspiScraper
 from src.stock_scanner.scrapers.playwright import PlaywrightSession
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository, NewsEntry
@@ -23,14 +24,15 @@ class GPWWorker(QObject):
         self.entry_repo = entry_repo
 
         self.session = PlaywrightSession()
-        self.scraper = PapEspiScraper(self.session)
+        self.entry_scraper = PapEspiScraper(self.session)
+        self.content_scraper = PageContentScraper(self.entry_repo, self.session)
         self._timer: QTimer | None = None
 
     def run(self) -> None:
         self.log.emit("Start scrapowania komunikatów giełdowych z PAP...")
 
         try:
-            self.scraper.start()
+            self.entry_scraper.start()
             self._timer = QTimer()
             self._timer.setInterval(self.INTERVAL_MS)
             self._timer.timeout.connect(self._on_timer)
@@ -42,35 +44,36 @@ class GPWWorker(QObject):
             self.error.emit(f"PAP error: {exc}")
 
         finally:
-            self.scraper.close()
+            self.entry_scraper.close()
             self.finished.emit()
 
     def _on_timer(self) -> None:
         try:
             self.log.emit("PAP: czas na kolejne pobieranie")
 
-            self.scraper.refresh()
+            self.entry_scraper.refresh()
             self._scrape_and_save()
 
         except Exception as exc:
             self.error.emit(f"PAP error podczas odświeżania: {exc}")
 
     def _scrape_and_save(self) -> None:
-        entries = self.scraper.scrape()
-
-        self.log.emit(f"PAP: znaleziono {len(entries)} komunikatów")
-
-        has_new = False
+        entries = self.entry_scraper.scrape()
+        new_entries = 0
 
         for entry in entries:
             try:
                 if self.entry_repo.save(entry):
-                    has_new = True
+                    new_entries += 1
 
             except Exception as exc:
                 self.log.emit(f"Błąd zapisu: {exc}")
 
-        self.result.emit(has_new)
+        if new_entries > 0:
+            self.log.emit(f"PAP: znaleziono {new_entries} komunikatów")
+            self.content_scraper.run()
+
+        self.result.emit(new_entries)
 
     def _save_entries(self, entries: list[NewsEntry]) -> bool:
         found_new = False
