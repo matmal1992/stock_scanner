@@ -22,10 +22,8 @@ class GPWWorker(QObject):
     def __init__(self, entry_repo: EntryRepository) -> None:
         super().__init__()
         self.entry_repo = entry_repo
-
-        self.session = PlaywrightSession()
-        self.entry_scraper = PapEspiScraper(self.session)
-        self.content_scraper = PageContentScraper(self.entry_repo, self.session)
+        self.entry_scraper = PapEspiScraper(PlaywrightSession())
+        self.content_scraper = PageContentScraper(self.entry_repo, PlaywrightSession())
         self._timer: QTimer | None = None
 
     def run(self) -> None:

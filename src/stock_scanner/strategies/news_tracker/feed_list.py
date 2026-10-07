@@ -16,6 +16,7 @@ from src.stock_scanner.core.utils import get_actual_time
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository, NewsEntry
 from src.stock_scanner.strategies.news_tracker.gpw_worker import GPWService
 from src.stock_scanner.strategies.news_tracker.llm_worker import LLMService
+from src.stock_scanner.strategies.news_tracker.scrape_content_worker import ContentService
 from src.stock_scanner.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
 from src.stock_scanner.telegram import TelegramService
 
@@ -45,6 +46,12 @@ class NewsFeedList(QWidget):
         self.llm.error.connect(self.on_llm_error)
         self.llm.finished.connect(self.on_llm_finished)
         self.llm.result.connect(self.on_llm_result)
+        
+        self.content = ContentService(entry_repo)
+        self.content.log.connect(self.on_content_log)
+        self.content.error.connect(self.on_content_error)
+        self.content.finished.connect(self.on_content_finished)
+        self.content.result.connect(self.on_content_result)
 
         self._ids: list[int | None] = []
         self.selected_entry_id: int | None = None

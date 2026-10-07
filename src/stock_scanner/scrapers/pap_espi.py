@@ -3,22 +3,17 @@ import re
 from typing import Optional
 
 from playwright.sync_api import Locator
+from PySide6.QtCore import QObject
 
-from src.stock_scanner.scrapers.base import BaseScraper
-from src.stock_scanner.scrapers.keywords import (
-    GPW_SUBSTRINGS,
-    has_keywords,
-)
+from src.stock_scanner.scrapers.keywords import GPW_SUBSTRINGS, has_keywords
 from src.stock_scanner.scrapers.playwright import PlaywrightSession
 from src.stock_scanner.strategies.news_tracker.entry_repo import NewsEntry
 
 logger = logging.getLogger(__name__)
 
 
-class PapEspiScraper(BaseScraper):
+class PapEspiScraper(QObject):
     BASE_URL = "https://espiebi.pap.pl/"
-    CONTENT_SELECTOR = "div.field-body-xml-content"
-    PAGE_LOAD_TIMEOUT = 10_000
 
     def __init__(self, session: PlaywrightSession) -> None:
         self.session = session

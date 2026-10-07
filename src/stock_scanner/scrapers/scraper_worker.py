@@ -2,10 +2,8 @@ import logging
 
 from PySide6.QtCore import QObject, QThread, QTimer, Signal
 
-from src.stock_scanner.scrapers.base import BaseScraper
-from src.stock_scanner.strategies.news_tracker.entry_repo import (
-    EntryRepository,
-)
+from src.stock_scanner.scrapers.playwright import PlaywrightSession
+from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository
 
 logger = logging.getLogger(__name__)
 
@@ -16,8 +14,12 @@ class ScraperWorker(QObject):
     log = Signal(str)
     finished = Signal()
 
-    def __init__(self, scraper: BaseScraper, entry_repo: EntryRepository, interval_ms: int = 5_000) -> None:
-        super().__init__()
+    def __init__(self, session: PlaywrightSession) -> None:
+        self.session = session
+        
+    def start(self) -> None:
+        self.session.start(self.BASE_URL, headless=True)
+        self._content_page = self.session.new_page()
 
         self.scraper = scraper
         self.entry_repo = entry_repo
