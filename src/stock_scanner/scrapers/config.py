@@ -42,16 +42,16 @@ class Config:
 
     gpw_prompt = """WYKONAJ PONIŻSZE POLECENIE DOSŁOWNIE.
 
-    Otwórz i przeanalizuj rzeczywistą treść artykułu znajdującego się pod podanym linkiem.
+    Przeanalizuj zawartość html, który załączam poniżej.
 
-    Nie zgaduj treści na podstawie tytułu, adresu URL ani innych metadanych. 
-    Jeżeli nie możesz uzyskać rzeczywistej treści artykułu, nie wymyślaj jej.
+    Jeżeli nie otrzymałeś fragmentu html, odpowiedz: "Nie otrzymałem fragmentu html".
 
-    Artykuł zawsze będzie dotyczył konkretnej spółki giełdowej, notowanej na GPW lub na New Connect.
+    Tekst zawarty w html, zawsze będzie dotyczył konkretnej spółki giełdowej, 
+    notowanej na GPW lub na New Connect.
 
     KROK 1 — ANALIZA INFORMACJI
 
-    Ustal na podstawie rzeczywistej treści artykułu:
+    Ustal na podstawie rzeczywistej treści html:
 
     Co dokładnie wydarzyło się według komunikatu?
     Czy informacja jest potencjalnie pozytywna, negatywna czy neutralna dla spółki?
@@ -62,7 +62,7 @@ class Config:
 
     KROK 2 — DANE DODATKOWE
 
-    Jeżeli są dostępne, uwzględnij najnowsze informacje dotyczące spółki, w szczególności:
+    Jeżeli są dostępne w internecie, uwzględnij najnowsze informacje dotyczące spółki, w szczególności:
 
     - wyniki finansowe,
     - prognozy,
@@ -109,7 +109,7 @@ class Config:
 
     Przed zwróceniem odpowiedzi sprawdź:
 
-    - Czy rzeczywiście uzyskałeś i przeanalizowałeś treść wskazanego linku.
+    - Czy rzeczywiście uzyskałeś i przeanalizowałeś treść wskazanego fragmentu html.
     - Czy nie wykorzystałeś informacji, których nie można zweryfikować.
     - Czy prognoza jest dokładnie jedną z pięciu dozwolonych wartości.
     - Czy uzasadnienie zawiera dokładnie dwa zdania.

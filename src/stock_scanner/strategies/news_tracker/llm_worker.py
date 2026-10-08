@@ -20,7 +20,7 @@ class LLMWorker(QObject):
         super().__init__()
         self.entry_repo = entry_repo
         self.prompter = GeminiPrompter()
-        self._timer: QTimer = QTimer(interval=self.INTERVAL_MS)
+        self._timer: QTimer = QTimer(self, interval=self.INTERVAL_MS)
 
     def run(self) -> None:
         logger.info("LLM worker started")
@@ -29,56 +29,61 @@ class LLMWorker(QObject):
             self.prompter.start()
             self._timer.timeout.connect(self._on_timer)
             self._timer.start()
-            QThread.currentThread().exec()
+            logger.info("LLM timer uruchomiony")
 
         except Exception as exc:
+            logger.exception("Nie udało się uruchomić LLM workera")
             self.error.emit(f"LLM error: {exc}")
-
-        finally:
-            self.prompter.close()
-            self.finished.emit()
+            self._finish()
 
     def _on_timer(self) -> None:
-        pending = self.entry_repo.get_no_content_pending(limit=1)
-
-        if not pending:
-            return
-
-        entry = pending[0]
+        entry: NewsEntry | None = None
 
         try:
-            self.prompter._process_entry(entry)
+            pending = self.entry_repo.get_no_content_pending(limit=1)
+
+            if not pending:
+                return
+
+            entry = pending[0]
+            response = self.prompter.process_entry(entry)
+            self.entry_repo.update_llm(entry["id"], response)
+            self.log.emit(f"LLM: zakończono wpis {entry['id']}")
         except Exception as exc:
-            logger.exception("LLM worker error dla %s", entry["id"])
-            self.error.emit(f"LLM worker error dla {entry['id']}: {exc}")
-            self.prompter.screenshot(name=f"llm_worker_exc_{entry['id']}")
+            entry_id = entry["id"] if entry is not None else "pending entries"
+            logger.exception("LLM worker error dla %s", entry_id)
+            self.error.emit(f"LLM worker error dla {entry_id}: {exc}")
+
+            if entry is not None:
+                try:
+                    self.prompter.screenshot(name=f"llm_worker_exc_{entry['id']}")
+                except Exception:
+                    logger.exception("Nie udało się wykonać screenshotu dla wpisu %s", entry["id"])
 
         finally:
-            try:
-                self.prompter.refresh()
-            except Exception:
-                logger.exception("Nie udało się odświeżyć LLM po wpisie %s", entry["id"])
+            if entry is not None:
+                try:
+                    self.prompter.refresh()
+                except Exception:
+                    logger.exception("Nie udało się odświeżyć LLM po wpisie %s", entry["id"])
 
-    # def _process_entry(self, entry: NewsEntry) -> None:
-    #     entry_id = entry["id"]
-    #     content = entry["content"]
+    def stop(self) -> None:
+        self.log.emit("Zatrzymywanie LLM workera...")
+        self._finish()
 
-    #     self.log.emit(f"LLM: przetwarzanie wpisu {entry_id}")
+    def _finish(self) -> None:
+        if self._is_finished:
+            return
 
-    #     full_prompt = f"{gpw_prompt} Content: {content}"
+        self._is_finished = True
+        self._timer.stop()
 
-    #     response = self.prompter.send_prompt(full_prompt)
+        try:
+            self.prompter.close()
+        except Exception:
+            logger.exception("Błąd podczas zamykania LLM promptera")
 
-    #     success = self.entry_repo.update_llm(entry_id, response)
-    #     if not success:
-    #         raise RuntimeError(f"Nie udało się zapisać wyniku dla {entry_id}")
-
-    #     updated_entry = self.entry_repo.get_by_id(entry_id)
-    #     if updated_entry is None:
-    #         raise RuntimeError(f"Zapisano wynik, ale nie znaleziono wpisu {entry_id}")
-
-    #     self.result.emit(updated_entry)
-    #     self.log.emit(f"LLM: zakończono wpis {entry_id}")
+        self.finished.emit()
 
 
 class LLMService(QObject):
@@ -103,19 +108,26 @@ class LLMService(QObject):
 
         self.worker = LLMWorker(self.entry_repo)
         self.worker.moveToThread(self._thread)
+        self.worker.stop_requested.connect(self.worker.stop)
         self.worker.log.connect(self.log)
         self.worker.error.connect(self.error)
         self.worker.finished.connect(self._thread.quit)
-        self.worker.finished.connect(self.worker.deleteLater)
         self.worker.result.connect(self.result)
 
         self._thread.started.connect(self.worker.run)
+        self._thread.finished.connect(self.worker.deleteLater)
         self._thread.finished.connect(self._thread.deleteLater)
         self._thread.finished.connect(self._on_thread_finished)
 
         self._thread.start()
 
         return True
+
+    def stop(self) -> None:
+        if self.worker is None or not self.is_running():
+            return
+
+        self.worker.stop_requested.emit()
 
     def is_running(self) -> bool:
         return self._thread is not None and self._thread.isRunning()

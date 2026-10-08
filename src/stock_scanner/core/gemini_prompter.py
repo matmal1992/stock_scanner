@@ -31,17 +31,12 @@ class GeminiPrompter:
         self._handle_cookie_banner()
         self._wait_for_prompt_input()
 
-    def send_prompt(self, prompt: str) -> LLMResponse:
+    def send_prompt(self, prompt: str) -> None:
         prompt_input = self.session.page.locator("#prompt-textarea, div[contenteditable='true']").first
         prompt_input.wait_for(state="visible", timeout=Config.prompt_timeout)
         prompt_input.click()
         prompt_input.fill(prompt)
         prompt_input.press("Enter")
-
-        stable_response = self._wait_for_stable_response()
-        parsed_response = self._parse_response(stable_response)
-
-        return parsed_response
 
     def _wait_for_prompt_input(self) -> None:
         prompt_input = self.session.page.locator("#prompt-textarea, div[contenteditable='true']").first
@@ -148,25 +143,13 @@ class GeminiPrompter:
             "justification": justification,
         }
 
-    def _process_entry(self, entry: NewsEntry) -> LLMResponse:
-        entry_id = entry["id"]
+    def process_entry(self, entry: NewsEntry) -> LLMResponse:
         content = entry["content"]
 
-        # self.log.emit(f"LLM: przetwarzanie wpisu {entry_id}")
+        full_prompt = f"{Config.gpw_prompt} \nFragment html do analizy: {content}"
+        self.send_prompt(full_prompt)
 
-        full_prompt = f"{Config.gpw_prompt} Content: {content}"
+        stable_response = self._wait_for_stable_response()
+        parsed_response = self._parse_response(stable_response)
 
-        response = self.send_prompt(full_prompt)
-
-        return response
-
-        success = self.entry_repo.update_llm(entry_id, response)
-        if not success:
-            raise RuntimeError(f"Nie udało się zapisać wyniku dla {entry_id}")
-
-        updated_entry = self.entry_repo.get_by_id(entry_id)
-        if updated_entry is None:
-            raise RuntimeError(f"Zapisano wynik, ale nie znaleziono wpisu {entry_id}")
-
-        self.result.emit(updated_entry)
-        self.log.emit(f"LLM: zakończono wpis {entry_id}")
+        return parsed_response

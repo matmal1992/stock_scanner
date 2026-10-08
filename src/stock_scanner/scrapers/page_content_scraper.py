@@ -13,7 +13,8 @@ class PageContentScraper:
         self.session = session
 
     def start(self) -> None:
-        self.session.start(self.BASE_URL, headless=True)
+        logger.info("Start wywołany")
+        self.session.start(self.BASE_URL, headless=False)
 
     def close(self) -> None:
         self.session.close()
@@ -22,12 +23,18 @@ class PageContentScraper:
         content: str = "invalid content"
         page = self.session.page
 
-        page.goto(url, timeout=Config.page_load_timeout, wait_until="domcontentloaded")
+        logger.info(f"scrape content entered with url: {url}")
+
+        logger.info("Rozpoczynam nawigację do komunikatu")
+        response = page.goto(url, timeout=Config.page_load_timeout, wait_until="domcontentloaded")
+        logger.info("Nawigacja zakończona, status HTTP: %s", response.status if response else "brak")
 
         container = page.locator("div.field-body-xml-content")
+        logger.info("Oczekiwanie na kontener treści komunikatu")
         container.wait_for(state="attached", timeout=Config.page_load_timeout)
 
-        if container.count == 1:
+        if container.count() > 0:
+            logger.info("Container znaleziony")
             content = container.evaluate("(element) => element.outerHTML")
 
         return content

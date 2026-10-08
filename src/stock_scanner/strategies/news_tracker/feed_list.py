@@ -17,6 +17,7 @@ from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository
 from src.stock_scanner.strategies.news_tracker.gpw_worker import GPWService
 from src.stock_scanner.strategies.news_tracker.llm_worker import LLMService
 from src.stock_scanner.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
+from src.stock_scanner.telegram import TelegramService
 
 logger = logging.getLogger(__name__)
 
@@ -83,18 +84,8 @@ class NewsFeedList(QWidget):
         self.feed_list.setColumnWidth(2, 90)
         self.feed_list.setColumnWidth(3, 90)
 
-        # self.load_data_btn = QPushButton("Load data")
-        # self.clear_database_btn = QPushButton("Clear database")
-
-        # self.load_data_btn.clicked.connect(self._update_list)
-
-        # test_buttons_box = QHBoxLayout()
-        # test_buttons_box.addWidget(self.load_data_btn)
-
         layout = QVBoxLayout()
-        # layout.addLayout(test_buttons_box)
         layout.addWidget(self.feed_list)
-
         self.setLayout(layout)
 
     def set_items(self, items: Sequence[tuple[dict, int | None]]) -> None:
@@ -143,7 +134,7 @@ class NewsFeedList(QWidget):
 
     def on_llm_result(self, entry: NewsEntry) -> None:
         self._update_list()
-        # TelegramService.send_message(entry)
+        TelegramService.send_message(entry)
 
     def on_gpw_result(self, has_new_entries: bool) -> None:
         self._update_list()
