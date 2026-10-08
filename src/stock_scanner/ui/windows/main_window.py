@@ -140,6 +140,7 @@ class MainWindow(QMainWindow):
     def start_news_strategy(self) -> None:
         self.news_tracker_window.news_feed.gpw.start()
         self.news_tracker_window.news_feed.llm.start()
+        self.news_tracker_window.news_feed.content.start()
 
     def switch_window(self, window: QWidget, button: QPushButton) -> None:
         self.show_window(window)

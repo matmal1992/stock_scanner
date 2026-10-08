@@ -3,22 +3,20 @@ from typing import Sequence
 
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
-    QHBoxLayout,
+    # QHBoxLayout,
     QHeaderView,
-    QPushButton,
+    # QPushButton,
     QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
     QWidget,
 )
 
-from src.stock_scanner.core.utils import get_actual_time
+from src.stock_scanner.scrapers.page_scraper_worker import ContentScrapeService
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository, NewsEntry
 from src.stock_scanner.strategies.news_tracker.gpw_worker import GPWService
 from src.stock_scanner.strategies.news_tracker.llm_worker import LLMService
-from src.stock_scanner.strategies.news_tracker.scrape_content_worker import ContentService
 from src.stock_scanner.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
-from src.stock_scanner.telegram import TelegramService
 
 logger = logging.getLogger(__name__)
 
@@ -46,8 +44,8 @@ class NewsFeedList(QWidget):
         self.llm.error.connect(self.on_llm_error)
         self.llm.finished.connect(self.on_llm_finished)
         self.llm.result.connect(self.on_llm_result)
-        
-        self.content = ContentService(entry_repo)
+
+        self.content = ContentScrapeService(entry_repo)
         self.content.log.connect(self.on_content_log)
         self.content.error.connect(self.on_content_error)
         self.content.finished.connect(self.on_content_finished)
@@ -85,16 +83,16 @@ class NewsFeedList(QWidget):
         self.feed_list.setColumnWidth(2, 90)
         self.feed_list.setColumnWidth(3, 90)
 
-        self.load_data_btn = QPushButton("Load data")
-        self.clear_database_btn = QPushButton("Clear database")
+        # self.load_data_btn = QPushButton("Load data")
+        # self.clear_database_btn = QPushButton("Clear database")
 
-        self.load_data_btn.clicked.connect(self._update_list)
+        # self.load_data_btn.clicked.connect(self._update_list)
 
-        test_buttons_box = QHBoxLayout()
-        test_buttons_box.addWidget(self.load_data_btn)
+        # test_buttons_box = QHBoxLayout()
+        # test_buttons_box.addWidget(self.load_data_btn)
 
         layout = QVBoxLayout()
-        layout.addLayout(test_buttons_box)
+        # layout.addLayout(test_buttons_box)
         layout.addWidget(self.feed_list)
 
         self.setLayout(layout)
@@ -136,23 +134,22 @@ class NewsFeedList(QWidget):
         self.notify.emit(text, "neutral")
 
     def on_llm_error(self, text: str) -> None:
-        logger.error(f"{get_actual_time()} - LLM ERROR: {text}")
+        logger.error(f"LLM ERROR: {text}")
         self.notify.emit(text, "error")
 
     def on_llm_finished(self) -> None:
-        logger.info(f"{get_actual_time()} - Kolejka LLM zakończona")
+        logger.info("Kolejka LLM zakończona")
         self.notify.emit("Kolejka LLM zakończona", "ok")
 
     def on_llm_result(self, entry: NewsEntry) -> None:
         self._update_list()
-        TelegramService.send_message(entry)
+        # TelegramService.send_message(entry)
 
     def on_gpw_result(self, has_new_entries: bool) -> None:
         self._update_list()
 
         if has_new_entries:
             self.notify.emit("Pobrano nowe komunikaty gpw", "ok")
-            self.llm.wake()
         else:
             self.notify.emit("Brak nowych komunikatów gpw", "neutral")
 
@@ -160,8 +157,21 @@ class NewsFeedList(QWidget):
         self.notify.emit(text, "neutral")
 
     def on_gpw_error(self, text: str) -> None:
-        logger.error(f"{get_actual_time()} - GPW ERROR: {text}")
-        self.notify.emit(f"{get_actual_time()} Błąd GPW: {text}", "error")
+        logger.error(f"GPW ERROR: {text}")
+        self.notify.emit(f"Błąd GPW: {text}", "error")
 
     def on_gpw_finished(self) -> None:
         self.notify.emit("Pojedyncze pobieranie GPW zakończone", "ok")
+
+    def on_content_result(self) -> None:
+        self._update_list()
+
+    def on_content_log(self, text: str) -> None:
+        self.notify.emit(text, "neutral")
+
+    def on_content_error(self, text: str) -> None:
+        logger.error(f"Content scraper error: {text}")
+        self.notify.emit(f"Content scraper error: {text}", "error")
+
+    def on_content_finished(self) -> None:
+        self.notify.emit("Content scraper zakończone", "ok")

@@ -219,3 +219,29 @@ class EntryRepository:
             ).fetchall()
 
         return [self._to_dict(row) for row in rows]
+
+    def get_no_content_pending(self, limit: int = 10) -> list[NewsEntry]:
+        with self.db.connect() as conn:
+            rows = conn.execute(
+                """
+                SELECT
+                    id,
+                    title,
+                    link,
+                    published,
+                    source_type,
+                    ticker,
+                    llm,
+                    justification,
+                    skipped,
+                    content
+                FROM entries
+                WHERE llm = ?
+                AND content IS NULL
+                ORDER BY id ASC
+                LIMIT ?
+                """,
+                ("pending", limit),
+            ).fetchall()
+
+        return [self._to_dict(row) for row in rows]

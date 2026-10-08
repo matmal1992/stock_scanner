@@ -3,7 +3,6 @@ from typing import Optional
 
 from PySide6.QtCore import QObject, QThread, QTimer, Signal
 
-from src.stock_scanner.scrapers.entry_content import PageContentScraper
 from src.stock_scanner.scrapers.pap_espi import PapEspiScraper
 from src.stock_scanner.scrapers.playwright import PlaywrightSession
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository, NewsEntry
@@ -23,16 +22,13 @@ class GPWWorker(QObject):
         super().__init__()
         self.entry_repo = entry_repo
         self.entry_scraper = PapEspiScraper(PlaywrightSession())
-        self.content_scraper = PageContentScraper(self.entry_repo, PlaywrightSession())
-        self._timer: QTimer | None = None
+        self._timer: QTimer = QTimer(interval=self.INTERVAL_MS)
 
     def run(self) -> None:
         self.log.emit("Start scrapowania komunikatów giełdowych z PAP...")
 
         try:
             self.entry_scraper.start()
-            self._timer = QTimer()
-            self._timer.setInterval(self.INTERVAL_MS)
             self._timer.timeout.connect(self._on_timer)
             self._scrape_and_save()
             self._timer.start()
@@ -47,16 +43,16 @@ class GPWWorker(QObject):
 
     def _on_timer(self) -> None:
         try:
-            self.log.emit("PAP: czas na kolejne pobieranie")
+            self.log.emit("PAP ESPI: czas na kolejne pobieranie")
 
-            self.entry_scraper.refresh()
+            self.entry_scraper.refresh_page()
             self._scrape_and_save()
 
         except Exception as exc:
             self.error.emit(f"PAP error podczas odświeżania: {exc}")
 
     def _scrape_and_save(self) -> None:
-        entries = self.entry_scraper.scrape()
+        entries = self.entry_scraper.scrape_entries()
         new_entries = 0
 
         for entry in entries:
@@ -69,7 +65,6 @@ class GPWWorker(QObject):
 
         if new_entries > 0:
             self.log.emit(f"PAP: znaleziono {new_entries} komunikatów")
-            self.content_scraper.run()
 
         self.result.emit(new_entries)
 

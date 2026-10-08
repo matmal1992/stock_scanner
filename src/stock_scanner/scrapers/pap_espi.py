@@ -5,7 +5,7 @@ from typing import Optional
 from playwright.sync_api import Locator
 from PySide6.QtCore import QObject
 
-from src.stock_scanner.scrapers.keywords import GPW_SUBSTRINGS, has_keywords
+from src.stock_scanner.scrapers.config import Config, has_keywords
 from src.stock_scanner.scrapers.playwright import PlaywrightSession
 from src.stock_scanner.strategies.news_tracker.entry_repo import NewsEntry
 
@@ -28,15 +28,15 @@ class PapEspiScraper(QObject):
 
         self.session.close()
 
-    def _refresh_page(self) -> None:
+    def refresh_page(self) -> None:
         refresh_button = self.session.page.locator("#refreshHomeId a.refreshButton")
-        refresh_button.wait_for(state="visible", timeout=self.PAGE_LOAD_TIMEOUT)
+        refresh_button.wait_for(state="visible", timeout=Config.page_load_timeout)
         refresh_button.click()
 
         # refresh_datetime = self.session.page.locator("#refreshHomeId .refreshDateTime").inner_text().strip()
         # logger.info("PAP: dane pobrano: %s", refresh_datetime)
 
-    def _scrape_entries(self) -> list[NewsEntry]:
+    def scrape_entries(self) -> list[NewsEntry]:
         day_blocks = self.session.page.locator(".view-report-listing div.day")
 
         results: list[NewsEntry] = []
@@ -60,18 +60,6 @@ class PapEspiScraper(QObject):
 
         return results
 
-    def scrape_content(self, url: str) -> str:
-        if self._content_page is None:
-            raise RuntimeError("PapEspiScraper nie został uruchomiony.")
-
-        self._content_page.goto(url, timeout=self.PAGE_LOAD_TIMEOUT, wait_until="domcontentloaded")
-
-        container = self._content_page.locator(self.CONTENT_SELECTOR)
-
-        container.wait_for(state="attached", timeout=self.PAGE_LOAD_TIMEOUT)
-
-        return container.evaluate("(element) => element.outerHTML")
-
     def _parse_item(self, item: Locator, date_str: str) -> Optional[NewsEntry]:
         link_locator = item.locator("a.link")
 
@@ -84,7 +72,7 @@ class PapEspiScraper(QObject):
             return None
 
         abs_url = self._absolute_url(link)
-        is_skipped = has_keywords(title, GPW_SUBSTRINGS)
+        is_skipped = has_keywords(title, Config.gpw_substrings)
 
         return {
             "id": 0,
