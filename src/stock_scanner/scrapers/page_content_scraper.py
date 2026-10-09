@@ -23,14 +23,20 @@ class PageContentScraper:
         content: str = "invalid content"
         page = self.session.page
 
-        logger.info(f"scrape content entered with url: {url}")
-
-        logger.info("Rozpoczynam nawigację do komunikatu")
-
         try:
+            logger.info("4. before goto: %s", url)
             response = page.goto(url, timeout=Config.page_load_timeout, wait_until="domcontentloaded")
+            logger.info("5. after goto: %s", response.status if response else None)
         except Exception:
             logger.exception("CRASH podczas page.goto(): %s", url)
+            print(("CRASH podczas page.goto(): %s", url))
+
+            try:
+                page.screenshot(path="debug_page_goto.png", full_page=True)
+                logger.info("Screenshot saved: debug_page_goto.png")
+            except Exception as s:
+                logger.warning("Could not save screenshot: %s", s)
+
             raise
 
         logger.info("Nawigacja zakończona, status HTTP: %s", response.status if response else "brak")

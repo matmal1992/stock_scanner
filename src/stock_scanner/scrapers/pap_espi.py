@@ -20,12 +20,8 @@ class PapEspiScraper(QObject):
 
     def start(self) -> None:
         self.session.start(self.BASE_URL, headless=False)
-        self._content_page = self.session.new_page()
 
     def close(self) -> None:
-        if self._content_page is not None:
-            self._content_page.close()
-
         self.session.close()
 
     def refresh_page(self) -> None:

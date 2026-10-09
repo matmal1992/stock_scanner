@@ -102,8 +102,10 @@ class LLMService(QObject):
 
     def start(self) -> bool:
         if self._thread is not None and self._thread.isRunning():
+            self.log.emit("LLM już działa")
             return False
 
+        self.log.emit("Uruchamiam LLM...")
         self._thread = QThread()
 
         self.worker = LLMWorker(self.entry_repo)

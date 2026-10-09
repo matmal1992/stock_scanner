@@ -75,8 +75,8 @@ def main() -> None:
     db = Database()
     db.init_db()
 
-    telegram = TelegramService()
-    telegram.start()
+    # telegram = TelegramService()
+    # telegram.start()
 
     entry_repo = EntryRepository(db)
     tracked_repo = TrackedTickerRepository(db)

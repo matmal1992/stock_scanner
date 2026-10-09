@@ -1,5 +1,4 @@
 import logging
-from typing import Optional
 
 from PySide6.QtCore import QObject, QThread, QTimer, Signal
 
@@ -32,7 +31,7 @@ class GPWWorker(QObject):
             self._timer.timeout.connect(self._on_timer)
             self._scrape_and_save()
             self._timer.start()
-            QThread.currentThread().exec()
+            # QThread.currentThread().exec()
 
         except Exception as exc:
             self.error.emit(f"PAP error: {exc}")
@@ -107,8 +106,8 @@ class GPWService(QObject):
         super().__init__()
 
         self.entry_repo = entry_repo
-        self._thread: Optional[QThread] = None
-        self.worker: Optional[GPWWorker] = None
+        self._thread: QThread | None = None
+        self.worker: GPWWorker | None = None
 
     def start(self) -> bool:
         if self._thread is not None and self._thread.isRunning():
