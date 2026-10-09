@@ -15,10 +15,10 @@ from src.stock_scanner.core.paths import (
     configure_logging,
     get_assets_dir,
 )
-from src.stock_scanner.core.telegram import send_telegram_alert
 from src.stock_scanner.download.database import Database
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository
 from src.stock_scanner.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
+from src.stock_scanner.telegram import TelegramService
 from src.stock_scanner.ui.windows.main_window import MainWindow
 
 NORMAL_EXIT_CODE = 42
@@ -54,7 +54,7 @@ def handle_exception(
     traceback.print_exception(exc_type, exc_value, exc_traceback)
 
     try:
-        send_telegram_alert(
+        TelegramService().send_alert(
             f"""💥 **Stock Scanner Crash (Python Exception)**:\n```{exc_value}```\n
             Zobacz plik logów po więcej szczegółów."""
         )
@@ -68,15 +68,19 @@ def main() -> None:
 
     configure_logging()
     configure_environment()
-    send_telegram_alert("🟢 Stock Scanner uruchomiony.")
 
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)
 
     db = Database()
     db.init_db()
+
+    # telegram = TelegramService()
+    # telegram.start()
+
     entry_repo = EntryRepository(db)
     tracked_repo = TrackedTickerRepository(db)
+
     window = MainWindow(entry_repo, tracked_repo)
     window.setWindowFlag(Qt.WindowType.Tool, True)
 

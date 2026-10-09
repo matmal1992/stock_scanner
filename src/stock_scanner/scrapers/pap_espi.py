@@ -3,41 +3,36 @@ import re
 from typing import Optional
 
 from playwright.sync_api import Locator
+from PySide6.QtCore import QObject
 
-from src.stock_scanner.scrapers.base import BaseScraper
-from src.stock_scanner.scrapers.keywords import (
-    GPW_SUBSTRINGS,
-    has_keywords,
-)
+from src.stock_scanner.scrapers.config import Config, has_keywords
 from src.stock_scanner.scrapers.playwright import PlaywrightSession
 from src.stock_scanner.strategies.news_tracker.entry_repo import NewsEntry
 
 logger = logging.getLogger(__name__)
 
 
-class PapEspiScraper(BaseScraper):
+class PapEspiScraper(QObject):
     BASE_URL = "https://espiebi.pap.pl/"
 
     def __init__(self, session: PlaywrightSession) -> None:
         self.session = session
 
     def start(self) -> None:
-        self.session.start(self.BASE_URL, headless=True)
+        self.session.start(self.BASE_URL, headless=False)
 
     def close(self) -> None:
         self.session.close()
 
-    def _refresh_page(self) -> None:
+    def refresh_page(self) -> None:
         refresh_button = self.session.page.locator("#refreshHomeId a.refreshButton")
-        refresh_button.wait_for(state="visible", timeout=10_000)
+        refresh_button.wait_for(state="visible", timeout=Config.page_load_timeout)
         refresh_button.click()
 
         # refresh_datetime = self.session.page.locator("#refreshHomeId .refreshDateTime").inner_text().strip()
         # logger.info("PAP: dane pobrano: %s", refresh_datetime)
 
-        self.session.page.wait_for_timeout(1_000)
-
-    def _scrape_entries(self) -> list[NewsEntry]:
+    def scrape_entries(self) -> list[NewsEntry]:
         day_blocks = self.session.page.locator(".view-report-listing div.day")
 
         results: list[NewsEntry] = []
@@ -72,18 +67,20 @@ class PapEspiScraper(BaseScraper):
         if not link:
             return None
 
-        is_skipped = has_keywords(title, GPW_SUBSTRINGS)
+        abs_url = self._absolute_url(link)
+        is_skipped = has_keywords(title, Config.gpw_substrings)
 
         return {
             "id": 0,
             "title": title,
-            "link": self._absolute_url(link),
+            "link": abs_url,
             "published": f"{date_str} {hour_str}",
             "source_type": "ESPI",
             "ticker": self._extract_ticker(title),
             "llm": "-" if is_skipped else "pending",
             "justification": "-",
             "skipped": int(is_skipped),
+            "content": None,
         }
 
     @staticmethod

@@ -1,0 +1,33 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Stock Scanner — Python Debug",
+            "type": "debugpy",
+            "python": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+            "request": "launch",
+            "program": "${workspaceFolder}\\src\\main.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "subProcess": true,
+            "justMyCode": false,
+            "redirectOutput": true,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}",
+                "PYTHONNOUSERSITE": "1"
+            }
+        },
+        {
+            "name": "Stock Scanner",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/main.py",
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}",
+                "PYTHONNOUSERSITE": "1"
+            }
+        }
+    ]  
+}

@@ -8,12 +8,12 @@ $projectRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $projectRoot
 $browserPath = Join-Path $projectRoot "browsers"
 
-Write-Host "=== BUILD START ===" -ForegroundColor Green
+Write-Host "=== RELEASE BUILD START ===" -ForegroundColor Green
 
 # Czyszczenie builda
-if (Test-Path build) {
+if (Test-Path build/release) {
     Write-Host "Cleaning build directory..." -ForegroundColor Yellow
-    Remove-Item -Recurse -Force build/* -ErrorAction SilentlyContinue
+    Remove-Item -Recurse -Force build/release/* -ErrorAction SilentlyContinue
 }
 
 # Sprawdzenie czy browsers istnieją
@@ -31,9 +31,9 @@ python -m uv run pyinstaller `
     --name stock_scanner `
     --add-data "$browserPath;browsers" `
     --add-data "$projectRoot/assets;assets" `
-    --distpath build/dist `
-    --workpath build/work `
-    --specpath build/spec `
+    --distpath build/release/dist `
+    --workpath build/release/work `
+    --specpath build/release/spec `
     src/main.py
 
 Write-Host "Building Watchdog..." -ForegroundColor Cyan
@@ -42,12 +42,12 @@ python -m uv run pyinstaller `
     --onedir `
     --name watchdog `
     --paths "$projectRoot/src" `
-    --distpath build/dist `
-    --workpath build/work `
-    --specpath build/spec `
+    --distpath build/release/dist `
+    --workpath build/release/work `
+    --specpath build/release/spec `
     src/stock_scanner/core/watchdog.py
 
 $timer.Stop()
 
-Write-Host "=== BUILD FINISHED ===" -ForegroundColor Green
+Write-Host "=== BUILD RELEASE FINISHED ===" -ForegroundColor Green
 Write-Host "Time: $($timer.Elapsed)" -ForegroundColor Green

@@ -1,5 +1,4 @@
 import logging
-from typing import Optional
 
 from PySide6.QtCore import QObject, QThread, QTimer, Signal
 
@@ -21,56 +20,52 @@ class GPWWorker(QObject):
     def __init__(self, entry_repo: EntryRepository) -> None:
         super().__init__()
         self.entry_repo = entry_repo
-
-        self.session = PlaywrightSession()
-        self.scraper = PapEspiScraper(self.session)
-        self._timer: QTimer | None = None
+        self.entry_scraper = PapEspiScraper(PlaywrightSession())
+        self._timer: QTimer = QTimer(interval=self.INTERVAL_MS)
 
     def run(self) -> None:
         self.log.emit("Start scrapowania komunikatów giełdowych z PAP...")
 
         try:
-            self.scraper.start()
-            self._timer = QTimer()
-            self._timer.setInterval(self.INTERVAL_MS)
+            self.entry_scraper.start()
             self._timer.timeout.connect(self._on_timer)
             self._scrape_and_save()
             self._timer.start()
-            QThread.currentThread().exec()
+            # QThread.currentThread().exec()
 
         except Exception as exc:
             self.error.emit(f"PAP error: {exc}")
 
         finally:
-            self.scraper.close()
+            self.entry_scraper.close()
             self.finished.emit()
 
     def _on_timer(self) -> None:
         try:
-            self.log.emit("PAP: czas na kolejne pobieranie")
+            self.log.emit("PAP ESPI: czas na kolejne pobieranie")
 
-            self.scraper.refresh()
+            self.entry_scraper.refresh_page()
             self._scrape_and_save()
 
         except Exception as exc:
             self.error.emit(f"PAP error podczas odświeżania: {exc}")
 
     def _scrape_and_save(self) -> None:
-        entries = self.scraper.scrape()
-
-        self.log.emit(f"PAP: znaleziono {len(entries)} komunikatów")
-
-        has_new = False
+        entries = self.entry_scraper.scrape_entries()
+        new_entries = 0
 
         for entry in entries:
             try:
                 if self.entry_repo.save(entry):
-                    has_new = True
+                    new_entries += 1
 
             except Exception as exc:
                 self.log.emit(f"Błąd zapisu: {exc}")
 
-        self.result.emit(has_new)
+        if new_entries > 0:
+            self.log.emit(f"PAP: znaleziono {new_entries} komunikatów")
+
+        self.result.emit(new_entries)
 
     def _save_entries(self, entries: list[NewsEntry]) -> bool:
         found_new = False
@@ -111,8 +106,8 @@ class GPWService(QObject):
         super().__init__()
 
         self.entry_repo = entry_repo
-        self._thread: Optional[QThread] = None
-        self.worker: Optional[GPWWorker] = None
+        self._thread: QThread | None = None
+        self.worker: GPWWorker | None = None
 
     def start(self) -> bool:
         if self._thread is not None and self._thread.isRunning():

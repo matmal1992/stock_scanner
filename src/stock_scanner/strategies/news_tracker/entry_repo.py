@@ -16,6 +16,7 @@ class NewsEntry(TypedDict):
     llm: str
     justification: str
     skipped: int
+    content: str | None
 
 
 class LLMResponse(TypedDict):
@@ -33,9 +34,9 @@ class EntryRepository:
                 cursor = conn.execute(
                     """
                     INSERT OR IGNORE INTO entries (
-                        source_type, ticker, title, link, published, llm, justification, skipped
+                        source_type, ticker, title, link, published, llm, justification, skipped, content
                     )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         entry["source_type"],
@@ -46,6 +47,7 @@ class EntryRepository:
                         entry["llm"],
                         entry["justification"],
                         entry["skipped"],
+                        entry["content"],
                     ),
                 )
                 return cursor.rowcount > 0
@@ -59,7 +61,7 @@ class EntryRepository:
 
             cursor.execute(
                 """
-                SELECT id, title, link, published, source_type, ticker, llm, justification, skipped
+                SELECT id, title, link, published, source_type, ticker, llm, justification, skipped, content
                 FROM entries
                 WHERE id = ?
                 """,
@@ -78,7 +80,7 @@ class EntryRepository:
             cur = conn.cursor()
             cur.execute(
                 """
-                SELECT id, title, link, published, source_type, ticker, llm, justification, skipped
+                SELECT id, title, link, published, source_type, ticker, llm, justification, skipped, content
                 FROM entries
                 WHERE skipped = 0
                 ORDER BY published DESC
@@ -126,6 +128,7 @@ class EntryRepository:
             "llm": row[6],
             "justification": row[7],
             "skipped": row[8],
+            "content": row[9],
         }
 
     def clear_all(self) -> None:
@@ -138,7 +141,7 @@ class EntryRepository:
 
             cursor.execute(
                 """
-                SELECT id, title, link, published, source_type, ticker, llm, justification, skipped
+                SELECT id, title, link, published, source_type, ticker, llm, justification, skipped, content
                 FROM entries
                 WHERE llm = ?
                 ORDER BY id ASC
@@ -166,3 +169,79 @@ class EntryRepository:
                 ("pending",),
             )
             return cursor.fetchone() is not None
+
+    def get_pending_number(self) -> int:
+        with self.db.connect() as conn:
+            cursor = conn.execute(
+                """
+                SELECT COUNT(*)
+                FROM entries
+                WHERE llm = ?
+                """,
+                ("pending",),
+            )
+            return cursor.fetchone()[0]
+
+    def update_content(self, entry_id: int, content: str) -> bool:
+        try:
+            with self.db.connect() as conn:
+                cur = conn.execute(
+                    """
+                    UPDATE entries
+                    SET content = ?
+                    WHERE id = ?
+                    """,
+                    (content, entry_id),
+                )
+
+            return cur.rowcount > 0
+
+        except Exception:
+            logger.exception(
+                "DB ERROR podczas aktualizacji content dla entry %s",
+                entry_id,
+            )
+            return False
+
+    def get_entries_without_content(self, limit: int = 10) -> list[NewsEntry]:
+        with self.db.connect() as conn:
+            rows = conn.execute(
+                """
+                SELECT id, title, link, published, source_type,
+                    ticker, llm, justification, skipped, content
+                FROM entries
+                WHERE skipped = 0
+                AND content IS NULL
+                ORDER BY id ASC
+                LIMIT ?
+                """,
+                (limit,),
+            ).fetchall()
+
+        return [self._to_dict(row) for row in rows]
+
+    def get_no_content_pending(self, limit: int = 10) -> list[NewsEntry]:
+        with self.db.connect() as conn:
+            rows = conn.execute(
+                """
+                SELECT
+                    id,
+                    title,
+                    link,
+                    published,
+                    source_type,
+                    ticker,
+                    llm,
+                    justification,
+                    skipped,
+                    content
+                FROM entries
+                WHERE llm = ?
+                AND content IS NULL
+                ORDER BY id ASC
+                LIMIT ?
+                """,
+                ("pending", limit),
+            ).fetchall()
+
+        return [self._to_dict(row) for row in rows]

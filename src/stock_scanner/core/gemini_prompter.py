@@ -2,8 +2,9 @@ import json
 import logging
 import time
 
+from src.stock_scanner.scrapers.config import Config
 from src.stock_scanner.scrapers.playwright import PlaywrightSession
-from src.stock_scanner.strategies.news_tracker.entry_repo import LLMResponse
+from src.stock_scanner.strategies.news_tracker.entry_repo import LLMResponse, NewsEntry
 
 logger = logging.getLogger(__name__)
 
@@ -14,17 +15,6 @@ logger = logging.getLogger(__name__)
 # Dodatkowo - optymalizacja i zabezpieczenie algorytmu - timeouty itp
 class GeminiPrompter:
     URL = "https://gemini.google.com/"
-
-    PAGE_LOAD_TIMEOUT = 15_000
-    PROMPT_TIMEOUT = 30_000
-
-    VALID_FORECASTS = {
-        "Silny spadek",
-        "Spadek",
-        "Neutralny",
-        "Wzrost",
-        "Silny wzrost",
-    }
 
     def __init__(self) -> None:
         self.session = PlaywrightSession()
@@ -41,24 +31,23 @@ class GeminiPrompter:
         self._handle_cookie_banner()
         self._wait_for_prompt_input()
 
-    def send_prompt(self, prompt: str) -> LLMResponse:
+    def send_prompt(self, prompt: str) -> None:
         prompt_input = self.session.page.locator("#prompt-textarea, div[contenteditable='true']").first
-        prompt_input.wait_for(state="visible", timeout=self.PROMPT_TIMEOUT)
+        prompt_input.wait_for(state="visible", timeout=Config.prompt_timeout)
         prompt_input.click()
         prompt_input.fill(prompt)
         prompt_input.press("Enter")
 
-        stable_response = self._wait_for_stable_response()
-        parsed_response = self._parse_response(stable_response)
-
-        return parsed_response
-
     def _wait_for_prompt_input(self) -> None:
         prompt_input = self.session.page.locator("#prompt-textarea, div[contenteditable='true']").first
-        prompt_input.wait_for(state="visible", timeout=self.PAGE_LOAD_TIMEOUT)
+        prompt_input.wait_for(state="visible", timeout=Config.page_load_timeout)
 
     def refresh(self) -> None:
-        self.session.page.goto(self.URL)
+        self.session.page.goto(
+            self.URL,
+            timeout=Config.page_load_timeout,
+            wait_until="domcontentloaded",
+        )
 
         try:
             self._handle_cookie_banner()
@@ -88,12 +77,12 @@ class GeminiPrompter:
             logger.debug("Baner cookies nie został wykryty.")
 
     def _wait_for_stable_response(self) -> str:
-        deadline = time.monotonic() + self.PROMPT_TIMEOUT
+        deadline = time.monotonic() + Config.prompt_timeout
 
         response = self.session.page.locator("message-content .markdown").last
 
         try:
-            response.wait_for(state="visible", timeout=self.PROMPT_TIMEOUT)
+            response.wait_for(state="visible", timeout=Config.prompt_timeout)
         except TimeoutError as exc:
             raise TimeoutError("Gemini nie utworzył elementu odpowiedzi w wyznaczonym czasie.") from exc
 
@@ -132,7 +121,7 @@ class GeminiPrompter:
         if set(parsed) != {"forecast", "justification"}:
             return False, "JSON ma nieprawidłowy zestaw pól"
 
-        if parsed["forecast"] not in cls.VALID_FORECASTS:
+        if parsed["forecast"] not in Config.valid_forecasts:
             return False, "nieprawidłowa wartość forecast"
 
         if not isinstance(parsed["justification"], str):
@@ -153,3 +142,14 @@ class GeminiPrompter:
             "forecast": forecast,
             "justification": justification,
         }
+
+    def process_entry(self, entry: NewsEntry) -> LLMResponse:
+        content = entry["content"]
+
+        full_prompt = f"{Config.gpw_prompt} \nFragment html do analizy: {content}"
+        self.send_prompt(full_prompt)
+
+        stable_response = self._wait_for_stable_response()
+        parsed_response = self._parse_response(stable_response)
+
+        return parsed_response
