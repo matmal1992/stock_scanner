@@ -26,7 +26,13 @@ class PageContentScraper:
         logger.info(f"scrape content entered with url: {url}")
 
         logger.info("Rozpoczynam nawigację do komunikatu")
-        response = page.goto(url, timeout=Config.page_load_timeout, wait_until="domcontentloaded")
+
+        try:
+            response = page.goto(url, timeout=Config.page_load_timeout, wait_until="domcontentloaded")
+        except Exception:
+            logger.exception("CRASH podczas page.goto(): %s", url)
+            raise
+
         logger.info("Nawigacja zakończona, status HTTP: %s", response.status if response else "brak")
 
         container = page.locator("div.field-body-xml-content")

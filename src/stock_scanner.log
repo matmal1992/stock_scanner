@@ -1,0 +1,50 @@
+2026-10-09 10:25:11,973 [INFO] root: Logging initialized. Log file: C:\Users\malekm\Desktop\stock_scanner\src\stock_scanner.log
+2026-10-09 10:25:11,974 [INFO] root: Playwright configured. Path: C:\Users\malekm\Desktop\stock_scanner\browsers
+2026-10-09 10:25:12,128 [INFO] src.stock_scanner.download.database: Database path: C:\Users\malekm\Desktop\stock_scanner\data\database.db
+2026-10-09 10:25:12,143 [INFO] src.stock_scanner.telegram: Uruchomiono nasłuchiwanie Telegram Bot...
+2026-10-09 10:25:12,774 [INFO] src.stock_scanner.strategies.news_tracker.llm_worker: LLM worker started
+2026-10-09 10:25:12,774 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Start workera do scrapowania contentu komunikatu...
+2026-10-09 10:25:12,777 [INFO] src.stock_scanner.scrapers.page_content_scraper: Start wywołany
+2026-10-09 10:25:18,813 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Timer scrapera uruchomiony
+2026-10-09 10:25:19,809 [INFO] src.stock_scanner.scrapers.page_scraper_worker: On timer wywołany
+2026-10-09 10:25:20,803 [INFO] src.stock_scanner.scrapers.page_scraper_worker: On timer wywołany
+2026-10-09 10:25:21,801 [INFO] src.stock_scanner.scrapers.page_scraper_worker: On timer wywołany
+2026-10-09 10:25:21,911 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraping zawartości komunikatu...
+2026-10-09 10:25:21,912 [INFO] src.stock_scanner.scrapers.page_content_scraper: scrape content entered with url: https://espiebi.pap.pl/node/739060
+2026-10-09 10:25:21,916 [INFO] src.stock_scanner.scrapers.page_content_scraper: Rozpoczynam nawigację do komunikatu
+2026-10-09 10:27:54,594 [INFO] root: Logging initialized. Log file: C:\Users\malekm\Desktop\stock_scanner\src\stock_scanner.log
+2026-10-09 10:27:54,595 [INFO] root: Playwright configured. Path: C:\Users\malekm\Desktop\stock_scanner\browsers
+2026-10-09 10:27:54,635 [INFO] src.stock_scanner.download.database: Database path: C:\Users\malekm\Desktop\stock_scanner\data\database.db
+2026-10-09 10:27:54,640 [INFO] src.stock_scanner.telegram: Uruchomiono nasłuchiwanie Telegram Bot...
+2026-10-09 10:27:54,918 [INFO] src.stock_scanner.strategies.news_tracker.llm_worker: LLM worker started
+2026-10-09 10:27:54,919 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Start workera do scrapowania contentu komunikatu...
+2026-10-09 10:27:54,919 [INFO] src.stock_scanner.scrapers.page_content_scraper: Start wywołany
+2026-10-09 10:28:00,747 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Timer scrapera uruchomiony
+2026-10-09 10:28:01,739 [INFO] src.stock_scanner.scrapers.page_scraper_worker: On timer wywołany
+2026-10-09 10:28:01,834 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraping zawartości komunikatu...
+2026-10-09 10:28:01,841 [INFO] src.stock_scanner.scrapers.page_content_scraper: scrape content entered with url: https://espiebi.pap.pl/node/739060
+2026-10-09 10:28:01,876 [INFO] src.stock_scanner.scrapers.page_content_scraper: Rozpoczynam nawigację do komunikatu
+2026-10-09 12:02:09,995 [INFO] root: Logging initialized. Log file: C:\Users\malekm\Desktop\stock_scanner\src\stock_scanner.log
+2026-10-09 12:02:09,997 [INFO] root: Playwright configured. Path: C:\Users\malekm\Desktop\stock_scanner\browsers
+2026-10-09 12:02:10,035 [INFO] src.stock_scanner.download.database: Database path: C:\Users\malekm\Desktop\stock_scanner\data\database.db
+2026-10-09 12:02:10,040 [INFO] src.stock_scanner.telegram: Uruchomiono nasłuchiwanie Telegram Bot...
+2026-10-09 12:02:10,472 [INFO] src.stock_scanner.strategies.news_tracker.llm_worker: LLM worker started
+2026-10-09 12:02:10,472 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Start workera do scrapowania contentu komunikatu...
+2026-10-09 12:02:10,473 [INFO] src.stock_scanner.scrapers.page_content_scraper: Start wywołany
+2026-10-09 12:02:16,741 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Timer scrapera uruchomiony
+2026-10-09 12:02:17,735 [INFO] src.stock_scanner.scrapers.page_scraper_worker: On timer wywołany
+2026-10-09 12:02:17,739 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraping zawartości komunikatu...
+2026-10-09 12:02:17,740 [INFO] src.stock_scanner.scrapers.page_content_scraper: scrape content entered with url: https://espiebi.pap.pl/node/739060
+2026-10-09 12:02:17,741 [INFO] src.stock_scanner.scrapers.page_content_scraper: Rozpoczynam nawigację do komunikatu
+2026-10-09 12:14:23,016 [INFO] root: Logging initialized. Log file: C:\Users\malekm\Desktop\stock_scanner\src\stock_scanner.log
+2026-10-09 12:14:23,017 [INFO] root: Playwright configured. Path: C:\Users\malekm\Desktop\stock_scanner\browsers
+2026-10-09 12:14:23,060 [INFO] src.stock_scanner.download.database: Database path: C:\Users\malekm\Desktop\stock_scanner\data\database.db
+2026-10-09 12:14:23,070 [INFO] src.stock_scanner.telegram: Uruchomiono nasłuchiwanie Telegram Bot...
+2026-10-09 12:14:23,368 [INFO] src.stock_scanner.strategies.news_tracker.llm_worker: LLM worker started
+2026-10-09 12:14:23,368 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Start workera do scrapowania contentu komunikatu...
+2026-10-09 12:14:23,369 [INFO] src.stock_scanner.scrapers.page_content_scraper: Start wywołany
+2026-10-09 12:14:30,758 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Timer scrapera uruchomiony
+2026-10-09 12:14:31,772 [INFO] src.stock_scanner.scrapers.page_scraper_worker: On timer wywołany
+2026-10-09 12:14:31,775 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraping zawartości komunikatu...
+2026-10-09 12:14:31,776 [INFO] src.stock_scanner.scrapers.page_content_scraper: scrape content entered with url: https://espiebi.pap.pl/node/739060
+2026-10-09 12:14:31,776 [INFO] src.stock_scanner.scrapers.page_content_scraper: Rozpoczynam nawigację do komunikatu

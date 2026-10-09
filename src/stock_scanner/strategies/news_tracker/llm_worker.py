@@ -72,10 +72,10 @@ class LLMWorker(QObject):
         self._finish()
 
     def _finish(self) -> None:
-        if self._is_finished:
-            return
+        # if self._is_finished:
+        #     return
 
-        self._is_finished = True
+        # self._is_finished = True
         self._timer.stop()
 
         try:
@@ -108,7 +108,7 @@ class LLMService(QObject):
 
         self.worker = LLMWorker(self.entry_repo)
         self.worker.moveToThread(self._thread)
-        self.worker.stop_requested.connect(self.worker.stop)
+        # self.worker.stop_requested.connect(self.worker.stop)
         self.worker.log.connect(self.log)
         self.worker.error.connect(self.error)
         self.worker.finished.connect(self._thread.quit)
@@ -127,7 +127,7 @@ class LLMService(QObject):
         if self.worker is None or not self.is_running():
             return
 
-        self.worker.stop_requested.emit()
+        # self.worker.stop_requested.emit()
 
     def is_running(self) -> bool:
         return self._thread is not None and self._thread.isRunning()

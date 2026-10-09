@@ -30,14 +30,39 @@
             "problemMatcher": []
         },
         {
-            "label": "Build EXE",
+            "label": "Build Release",
             "type": "shell",
             "command": "powershell",
             "args": [
                 "-NoProfile",
                 "-ExecutionPolicy", "Bypass",
                 "-File",
-                "${workspaceFolder}/scripts/build.ps1"
+                "${workspaceFolder}/scripts/build_release.ps1"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "dependsOn": ["Pre-build check"],
+            "dependsOrder": "sequence",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Build Debug",
+            "type": "shell",
+            "command": "powershell",
+            "args": [
+                "-NoProfile",
+                "-ExecutionPolicy", "Bypass",
+                "-File",
+                "${workspaceFolder}/scripts/build_debug.ps1"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"
