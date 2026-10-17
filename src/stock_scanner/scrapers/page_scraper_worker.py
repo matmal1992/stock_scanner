@@ -1,4 +1,5 @@
 import logging
+import threading
 
 from PySide6.QtCore import QObject, QThread, QTimer, Signal
 
@@ -22,13 +23,16 @@ class ScraperWorker(QObject):
         super().__init__()
         self.entry_repo = entry_repo
         self.page_content_scraper = PageContentScraper(PlaywrightSession())
-        self._timer: QTimer = QTimer(self, interval=self.INTERVAL_MS)
+        self._timer: QTimer | None = None
 
     def run(self) -> None:
+        logger.info("[THREAD DEBUG] ScraperWorker.run() | thread_id=%s", threading.get_ident())
         logger.info("Start workera do scrapowania contentu komunikatu...")
 
         try:
             self.page_content_scraper.start()
+            self._timer = QTimer(self)
+            self._timer.setInterval(self.INTERVAL_MS)
             self._timer.timeout.connect(self._on_timer)
             self._timer.start()
             logger.info("Timer scrapera uruchomiony")
@@ -42,12 +46,14 @@ class ScraperWorker(QObject):
         logger.info("On timer wywołany")
         try:
             entries = self.entry_repo.get_entries_without_content(limit=1)
+            logger.info(f"entries: {entries}")
         except Exception as exc:
-            logger.exception("Błąd podczas pobierania wpisu do scrapowania")
+            logger.info("Błąd podczas pobierania wpisu do scrapowania")
             self.error.emit(f"Scraper repository error: {exc}")
             return
 
         if not entries:
+            logger.info("no entries found")
             return
 
         entry = entries[0]
@@ -66,7 +72,7 @@ class ScraperWorker(QObject):
         self._finish()
 
     def _finish(self) -> None:
-        self._timer.stop()
+        # self._timer.stop()
 
         try:
             self.page_content_scraper.close()
@@ -130,10 +136,12 @@ class ContentScrapeService(QObject):
         self.error.emit(message)
 
     def _on_worker_finished(self) -> None:
+        logger.info("Worker finished - proszę o zakończenie wątku")
         if self._thread is not None:
             self._thread.quit()
 
     def _on_thread_finished(self) -> None:
+        logger.info("Wątek zakończony")
         self.worker = None
         self._thread = None
         self.log.emit("Content scraping zatrzymane")

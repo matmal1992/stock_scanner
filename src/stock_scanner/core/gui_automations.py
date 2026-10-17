@@ -1,4 +1,5 @@
 import logging
+import threading
 import traceback
 
 from src.stock_scanner.core.paths import configure_environment
@@ -7,6 +8,13 @@ from src.stock_scanner.scrapers.playwright import PlaywrightSession
 logger = logging.getLogger(__name__)
 
 PAP_URL = "https://espiebi.pap.pl/node/739060"
+
+
+def run() -> None:
+    try:
+        main()
+    except Exception:
+        traceback.print_exc()
 
 
 def main() -> None:
@@ -27,7 +35,7 @@ def main() -> None:
         print("4. Nawigacja zakończona.", flush=True)
         print("STATUS:", response.status if response else None, flush=True)
         print("URL:", page.url, flush=True)
-        # input("Naciśnij Enter, aby zamknąć przeglądarkę...")
+        input("Naciśnij Enter, aby zamknąć przeglądarkę...")
     except Exception:
         traceback.print_exc()
         if page is not None:
@@ -57,4 +65,7 @@ def main() -> None:
 
 if __name__ == "__main__":
     configure_environment()
+    t = threading.Thread(target=run, name="pw-test")
+    t.start()
+    t.join()
     main()

@@ -1,5 +1,6 @@
 import logging
 
+# import threading
 from src.stock_scanner.scrapers.config import Config
 from src.stock_scanner.scrapers.playwright import PlaywrightSession
 
@@ -22,11 +23,17 @@ class PageContentScraper:
     def scrape_content(self, url: str) -> str:
         content: str = "invalid content"
         page = self.session.page
+        # logger.info(
+        #     "[THREAD DEBUG] PageContentScraper.scrape_content() | thread_id=%s | url=%s",
+        #     threading.get_ident(),
+        #     url,
+        # )
 
         try:
             logger.info("4. before goto: %s", url)
-            response = page.goto(url, timeout=Config.page_load_timeout, wait_until="domcontentloaded")
-            logger.info("5. after goto: %s", response.status if response else None)
+            page.goto(url, timeout=Config.page_load_timeout, wait_until="domcontentloaded")
+            # input("Naciśnij Enter, aby zamknąć przeglądarkę...")
+            logger.info("5. after goto: %s")
         except Exception:
             logger.exception("CRASH podczas page.goto(): %s", url)
             print(("CRASH podczas page.goto(): %s", url))
@@ -39,7 +46,7 @@ class PageContentScraper:
 
             raise
 
-        logger.info("Nawigacja zakończona, status HTTP: %s", response.status if response else "brak")
+        logger.info("Nawigacja zakończona, status HTTP: %s")
 
         container = page.locator("div.field-body-xml-content")
         logger.info("Oczekiwanie na kontener treści komunikatu")

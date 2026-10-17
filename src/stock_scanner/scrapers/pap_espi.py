@@ -16,6 +16,7 @@ class PapEspiScraper(QObject):
     BASE_URL = "https://espiebi.pap.pl/"
 
     def __init__(self, session: PlaywrightSession) -> None:
+        super().__init__()
         self.session = session
 
     def start(self) -> None:

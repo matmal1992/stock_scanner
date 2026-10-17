@@ -1,6 +1,7 @@
 import logging
+import threading
 
-from PySide6.QtCore import QObject, QThread, QTimer, Signal
+from PySide6.QtCore import QObject, QThread, Signal
 
 from src.stock_scanner.scrapers.pap_espi import PapEspiScraper
 from src.stock_scanner.scrapers.playwright import PlaywrightSession
@@ -15,42 +16,44 @@ class GPWWorker(QObject):
     log = Signal(str)
     finished = Signal()
 
-    INTERVAL_MS = 5_000
+    INTERVAL_SECONDS = 5
 
     def __init__(self, entry_repo: EntryRepository) -> None:
         super().__init__()
         self.entry_repo = entry_repo
-        self.entry_scraper = PapEspiScraper(PlaywrightSession())
-        self._timer: QTimer = QTimer(interval=self.INTERVAL_MS)
+        self.entry_scraper: PapEspiScraper | None = None
+        self._stop_event = threading.Event()
 
     def run(self) -> None:
-        self.log.emit("Start scrapowania komunikatów giełdowych z PAP...")
-
         try:
+            logger.info("PAP: start wątku %s", threading.current_thread().name)
+
+            self.entry_scraper = PapEspiScraper(PlaywrightSession())
             self.entry_scraper.start()
-            self._timer.timeout.connect(self._on_timer)
+
+            logger.info("PAP: przeglądarka uruchomiona")
             self._scrape_and_save()
-            self._timer.start()
-            # QThread.currentThread().exec()
+
+            while not self._stop_event.wait(self.INTERVAL_SECONDS):
+                if self._stop_event.is_set():
+                    break
+
+                logger.info("PAP: kolejne pobieranie w wątku %s", threading.current_thread().name)
+
+                self.entry_scraper.refresh_page()
+                self._scrape_and_save()
 
         except Exception as exc:
-            self.error.emit(f"PAP error: {exc}")
+            logger.exception(f"PAP: błąd podczas inicjalizacji workera: {exc}")
 
         finally:
-            self.entry_scraper.close()
+            self._cleanup()
             self.finished.emit()
 
-    def _on_timer(self) -> None:
-        try:
-            self.log.emit("PAP ESPI: czas na kolejne pobieranie")
-
-            self.entry_scraper.refresh_page()
-            self._scrape_and_save()
-
-        except Exception as exc:
-            self.error.emit(f"PAP error podczas odświeżania: {exc}")
-
     def _scrape_and_save(self) -> None:
+        if self.entry_scraper is None:
+            return
+
         entries = self.entry_scraper.scrape_entries()
         new_entries = 0
 
@@ -65,7 +68,7 @@ class GPWWorker(QObject):
         if new_entries > 0:
             self.log.emit(f"PAP: znaleziono {new_entries} komunikatów")
 
-        self.result.emit(new_entries)
+        self.result.emit(new_entries > 0)
 
     def _save_entries(self, entries: list[NewsEntry]) -> bool:
         found_new = False
@@ -85,15 +88,16 @@ class GPWWorker(QObject):
         return found_new
 
     def stop(self) -> None:
-        self.log.emit("PAP: zatrzymywanie workera...")
+        self._stop_event.set()
 
-        if self._timer is not None:
-            self._timer.stop()
-
-        thread = QThread.currentThread()
-
-        if thread is not None:
-            thread.quit()
+    def _cleanup(self) -> None:
+        if self.entry_scraper is not None:
+            try:
+                self.entry_scraper.close()
+            except Exception:
+                logger.exception("PAP: błąd zamykania Playwright")
+            finally:
+                self.entry_scraper = None
 
 
 class GPWService(QObject):
@@ -101,6 +105,7 @@ class GPWService(QObject):
     error = Signal(str)
     log = Signal(str)
     finished = Signal()
+    stop_requested = Signal()
 
     def __init__(self, entry_repo: EntryRepository) -> None:
         super().__init__()
@@ -120,6 +125,7 @@ class GPWService(QObject):
         self.worker = GPWWorker(self.entry_repo)
 
         self.worker.moveToThread(self._thread)
+        self.stop_requested.connect(self.worker.stop)
         self.worker.result.connect(self._on_worker_result)
         self.worker.error.connect(self._on_worker_error)
         self.worker.log.connect(self.log)
@@ -134,11 +140,9 @@ class GPWService(QObject):
     def stop(self) -> None:
         if self.worker is None:
             self.log.emit("Automatyczne pobieranie PAP nie działa")
-
             return
 
         self.log.emit("PAP: zatrzymywanie automatycznego pobierania...")
-
         self.worker.stop()
 
     def is_running(self) -> bool:

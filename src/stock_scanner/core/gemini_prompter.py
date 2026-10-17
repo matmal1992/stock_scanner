@@ -22,12 +22,12 @@ class GeminiPrompter:
     def restart(self) -> None:
         logger.info("Restartowanie sesji Gemini...")
         self.session.close()
-        self.session.start(self.URL, headless=False, context=True)
+        self.session.start(self.URL, headless=False, context=False)
         self._handle_cookie_banner()
         self._wait_for_prompt_input()
 
     def start(self) -> None:
-        self.session.start(self.URL, headless=False, context=True)
+        self.session.start(self.URL, headless=False, context=False)
         self._handle_cookie_banner()
         self._wait_for_prompt_input()
 
@@ -54,10 +54,7 @@ class GeminiPrompter:
             self._wait_for_prompt_input()
 
         except Exception as exc:
-            logger.warning(
-                "Gemini: strona została odświeżona, ale interfejs nie jest gotowy: %s",
-                exc,
-            )
+            logger.warning("Gemini: błąd cookie albo input niegotowy: %s", exc)
 
     def screenshot(self, name: str) -> None:
         self.session.screenshot(name)
@@ -144,9 +141,9 @@ class GeminiPrompter:
         }
 
     def process_entry(self, entry: NewsEntry) -> LLMResponse:
-        content = entry["content"]
+        link = entry["link"]
 
-        full_prompt = f"{Config.gpw_prompt} \nFragment html do analizy: {content}"
+        full_prompt = f"{Config.gpw_prompt} \nLink do analizy: {link}"
         self.send_prompt(full_prompt)
 
         stable_response = self._wait_for_stable_response()
