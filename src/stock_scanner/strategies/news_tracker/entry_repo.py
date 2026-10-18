@@ -225,7 +225,7 @@ class EntryRepository:
 
         return [self._to_dict(row) for row in rows]
 
-    def get_no_content_pending(self, limit: int = 10) -> list[NewsEntry]:
+    def get_pending_with_content(self, limit: int = 10) -> list[NewsEntry]:
         with self.db.connect() as conn:
             rows = conn.execute(
                 """
@@ -242,7 +242,7 @@ class EntryRepository:
                     content
                 FROM entries
                 WHERE llm = ?
-                AND content IS NULL
+                AND content IS NOT NULL
                 ORDER BY id ASC
                 LIMIT ?
                 """,

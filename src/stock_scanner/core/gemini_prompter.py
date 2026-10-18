@@ -27,6 +27,7 @@ class GeminiPrompter:
         self._wait_for_prompt_input()
 
     def start(self) -> None:
+        logger.info("Start sesji gemini")
         self.session.start(self.URL, headless=False, context=False)
         self._handle_cookie_banner()
         self._wait_for_prompt_input()
@@ -141,9 +142,9 @@ class GeminiPrompter:
         }
 
     def process_entry(self, entry: NewsEntry) -> LLMResponse:
-        link = entry["link"]
+        content = entry["content"]
 
-        full_prompt = f"{Config.gpw_prompt} \nLink do analizy: {link}"
+        full_prompt = f"{Config.gpw_prompt} \nFragment html do analizy: {content}"
         self.send_prompt(full_prompt)
 
         stable_response = self._wait_for_stable_response()

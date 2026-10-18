@@ -1,7 +1,5 @@
-import logging
 import sys
 import traceback
-from pathlib import Path
 from types import TracebackType
 from typing import Type
 
@@ -9,12 +7,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction, QIcon
 from PySide6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
-from src.stock_scanner.core.paths import (
-    application_dir,
-    configure_environment,
-    configure_logging,
-    get_assets_dir,
-)
+from src.stock_scanner.core.paths import configure_environment, configure_logging, get_assets_dir
 from src.stock_scanner.download.database import Database
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository
 from src.stock_scanner.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
@@ -22,21 +15,6 @@ from src.stock_scanner.telegram import ApplicationController, TelegramService
 from src.stock_scanner.ui.windows.main_window import MainWindow
 
 NORMAL_EXIT_CODE = 42
-LOGS_DIR = Path(application_dir() / "logs")
-CRASH_DUMPS_DIR = LOGS_DIR / "dumps"
-
-
-def setup_file_logger() -> None:
-    """Dodatkowa obsługa zapisu wyjątków do dedykowanego pliku logów crashy."""
-    LOGS_DIR.mkdir(parents=True, exist_ok=True)
-    crash_log_file = LOGS_DIR / "crash_history.log"
-    handler = logging.FileHandler(crash_log_file, encoding="utf-8")
-    formatter = logging.Formatter("[%(asctime)s] %(levelname)s - %(message)s")
-    handler.setFormatter(formatter)
-
-    logger = logging.getLogger("CrashLogger")
-    logger.setLevel(logging.ERROR)
-    logger.addHandler(handler)
 
 
 def handle_exception(
@@ -45,11 +23,6 @@ def handle_exception(
     if issubclass(exc_type, KeyboardInterrupt):
         sys.__excepthook__(exc_type, exc_value, exc_traceback)
         return
-
-    tb_text = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback))
-
-    crash_logger = logging.getLogger("CrashLogger")
-    crash_logger.error(f"Nieobsłużony wyjątek Python:\n{tb_text}")
 
     traceback.print_exception(exc_type, exc_value, exc_traceback)
 
@@ -63,7 +36,6 @@ def handle_exception(
 
 
 def main() -> None:
-    setup_file_logger()
     sys.excepthook = handle_exception
 
     configure_logging()

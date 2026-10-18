@@ -24,10 +24,6 @@ class NewsTrackerWindow(QWidget):
 
         self.setup_window_layout()
 
-    # def on_timer(self) -> None:
-    #     if self.rss_worker is None:
-    #         self.getting_news()
-
     def setup_window_layout(self) -> None:
         self.status_label = StatusLabel(text="Status: standby")
 

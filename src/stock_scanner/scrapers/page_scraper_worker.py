@@ -1,7 +1,7 @@
 import logging
 import threading
 
-from PySide6.QtCore import QObject, QThread, QTimer, Signal
+from PySide6.QtCore import QObject, QThread, Signal
 
 from src.stock_scanner.scrapers.page_content_scraper import PageContentScraper
 from src.stock_scanner.scrapers.playwright import PlaywrightSession
@@ -15,65 +15,47 @@ class ScraperWorker(QObject):
     error = Signal(str)
     log = Signal(str)
     finished = Signal()
-    stop_requested = Signal()
 
-    INTERVAL_MS = 1_000
+    INTERVAL_SECONDS = 1
 
     def __init__(self, entry_repo: EntryRepository) -> None:
         super().__init__()
         self.entry_repo = entry_repo
         self.page_content_scraper = PageContentScraper(PlaywrightSession())
-        self._timer: QTimer | None = None
+        self._stop_event = threading.Event()
 
     def run(self) -> None:
-        logger.info("[THREAD DEBUG] ScraperWorker.run() | thread_id=%s", threading.get_ident())
-        logger.info("Start workera do scrapowania contentu komunikatu...")
-
         try:
+            logger.info("Start workera do scrapowania contentu komunikatu...")
             self.page_content_scraper.start()
-            self._timer = QTimer(self)
-            self._timer.setInterval(self.INTERVAL_MS)
-            self._timer.timeout.connect(self._on_timer)
-            self._timer.start()
-            logger.info("Timer scrapera uruchomiony")
+
+            while not self._stop_event.wait(self.INTERVAL_SECONDS):
+                if self._stop_event.is_set():
+                    break
+
+                logger.info("getting entries...")
+                entries = self.entry_repo.get_entries_without_content(limit=1)
+
+                if not entries:
+                    logger.info("NO ENTRIES")
+                    return
+
+                entry = entries[0]
+                logger.info(f"entry: {entry}")
+
+                content = self.page_content_scraper.scrape_content(entry["link"])
+                logger.debug(f"HTML: {content}")
+                self.entry_repo.update_content(entry["id"], content)
 
         except Exception as exc:
-            logger.exception("Nie udało się uruchomić scrapera")
-            self.error.emit(f"Page scraper error: {exc}")
+            logger.exception(f"Content scraper exception: {exc}")
             self._finish()
-
-    def _on_timer(self) -> None:
-        logger.info("On timer wywołany")
-        try:
-            entries = self.entry_repo.get_entries_without_content(limit=1)
-            logger.info(f"entries: {entries}")
-        except Exception as exc:
-            logger.info("Błąd podczas pobierania wpisu do scrapowania")
-            self.error.emit(f"Scraper repository error: {exc}")
-            return
-
-        if not entries:
-            logger.info("no entries found")
-            return
-
-        entry = entries[0]
-
-        try:
-            logger.info("Scraping zawartości komunikatu...")
-            content = self.page_content_scraper.scrape_content(entry["link"])
-            self.entry_repo.update_content(entry["id"], content)
-
-        except Exception as exc:
-            logger.exception("Błąd podczas scrapingu zawartości wpisu")
-            self.error.emit(f"Scraper error: {exc}")
 
     def stop(self) -> None:
         self.log.emit("Zatrzymywanie workera...")
         self._finish()
 
     def _finish(self) -> None:
-        # self._timer.stop()
-
         try:
             self.page_content_scraper.close()
         except Exception:
@@ -96,35 +78,32 @@ class ContentScrapeService(QObject):
         self.worker: ScraperWorker | None = None
 
     def start(self) -> bool:
-        if self.is_running():
+        if self._thread is not None and self._thread.isRunning():
             self.log.emit("Content scrape worker już działa")
             return False
 
         self.log.emit("Uruchamiam content scrape worker")
-
         self._thread = QThread()
+
         self.worker = ScraperWorker(self.entry_repo)
         self.worker.moveToThread(self._thread)
-        self.worker.stop_requested.connect(self.worker.stop)
-        self.worker.result.connect(self._on_worker_result)
-        self.worker.error.connect(self._on_worker_error)
         self.worker.log.connect(self.log)
+        self.worker.error.connect(self._on_worker_error)
+        self.worker.result.connect(self._on_worker_result)
         self.worker.finished.connect(self._on_worker_finished)
+
+        self._thread.started.connect(self.worker.run)
         self._thread.finished.connect(self.worker.deleteLater)
         self._thread.finished.connect(self._thread.deleteLater)
         self._thread.finished.connect(self._on_thread_finished)
-        self._thread.started.connect(self.worker.run)
+
         self._thread.start()
 
         return True
 
     def stop(self) -> None:
         if self.worker is None or not self.is_running():
-            self.log.emit("Content scrape worker nie działa")
             return
-
-        self.log.emit("Wysyłam żądanie zatrzymania content scrape workera")
-        self.worker.stop_requested.emit()
 
     def is_running(self) -> bool:
         return self._thread is not None and self._thread.isRunning()
@@ -136,13 +115,10 @@ class ContentScrapeService(QObject):
         self.error.emit(message)
 
     def _on_worker_finished(self) -> None:
-        logger.info("Worker finished - proszę o zakończenie wątku")
         if self._thread is not None:
             self._thread.quit()
 
     def _on_thread_finished(self) -> None:
-        logger.info("Wątek zakończony")
         self.worker = None
         self._thread = None
-        self.log.emit("Content scraping zatrzymane")
         self.finished.emit()
