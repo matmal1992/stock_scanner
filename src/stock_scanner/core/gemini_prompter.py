@@ -36,7 +36,7 @@ class GeminiPrompter:
         prompt_input = self.session.page.locator("#prompt-textarea, div[contenteditable='true']").first
         prompt_input.wait_for(state="visible", timeout=Config.prompt_timeout)
         prompt_input.click()
-        prompt_input.fill(prompt)
+        prompt_input.fill(prompt, timeout=Config.page_load_timeout)
         prompt_input.press("Enter")
 
     def _wait_for_prompt_input(self) -> None:
@@ -92,6 +92,7 @@ class GeminiPrompter:
             is_valid, validation_error = self._validate_response(last_text)
 
             if is_valid:
+                self.session.page.wait_for_timeout(500)
                 return last_text
 
             last_validation_error = validation_error

@@ -82,3 +82,225 @@
 2026-10-09 12:40:31,673 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraping zawartości komunikatu...
 2026-10-09 12:40:31,673 [INFO] src.stock_scanner.scrapers.page_content_scraper: scrape content entered with url: https://espiebi.pap.pl/node/739060
 2026-10-09 12:40:31,673 [INFO] src.stock_scanner.scrapers.page_content_scraper: Rozpoczynam nawigację do komunikatu
+2026-10-18 22:02:26,494 [INFO] root: Logging initialized. Log file: C:\Users\kowboj69\Desktop\stock_scanner\src\stock_scanner.log
+2026-10-18 22:02:26,495 [INFO] root: Playwright configured. Path: C:\Users\kowboj69\Desktop\stock_scanner\browsers
+2026-10-18 22:02:26,527 [INFO] src.stock_scanner.download.database: Database path: C:\Users\kowboj69\Desktop\stock_scanner\data\database.db
+2026-10-18 22:02:26,553 [INFO] src.stock_scanner.telegram: Uruchomiono nasłuchiwanie Telegram Bot...
+2026-10-18 22:02:26,880 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: PAP: start wątku Dummy-8
+2026-10-18 22:02:26,880 [INFO] src.stock_scanner.strategies.news_tracker.llm_worker: LLM worker started
+2026-10-18 22:02:26,880 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Start workera do scrapowania contentu komunikatu...
+2026-10-18 22:02:26,881 [INFO] src.stock_scanner.core.gemini_prompter: Start sesji gemini
+2026-10-18 22:02:26,881 [INFO] src.stock_scanner.scrapers.page_content_scraper: Start content scrapera wywołany
+2026-10-18 22:02:32,155 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: PAP: przeglądarka uruchomiona
+2026-10-18 22:02:33,139 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraper Worker - 1s
+2026-10-18 22:02:33,139 [INFO] src.stock_scanner.scrapers.page_scraper_worker: getting entries...
+2026-10-18 22:02:33,213 [INFO] src.stock_scanner.scrapers.page_scraper_worker: entry: {'id': 5829, 'title': 'BLACK PEARL S.A. - Black Pearl S.A. - rozpoczęcie przygotowań do otwarcia placówki w Turcji w związku z rozwojem działalności FinTech', 'link': 'https://espiebi.pap.pl/node/739615', 'published': '18.10.2026 15:38', 'source_type': 'ESPI', 'ticker': 'BLACK PEARL S.A.', 'llm': 'pending', 'justification': '-', 'skipped': 0, 'content': None}
+2026-10-18 22:02:33,724 [INFO] src.stock_scanner.strategies.news_tracker.llm_worker: LLM Worker - 1s
+2026-10-18 22:02:34,759 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraper Worker - 1s
+2026-10-18 22:02:34,760 [INFO] src.stock_scanner.scrapers.page_scraper_worker: getting entries...
+2026-10-18 22:02:34,762 [INFO] src.stock_scanner.scrapers.page_scraper_worker: NO ENTRIES
+2026-10-18 22:02:38,721 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:02:45,407 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:02:52,008 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:02:58,569 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:03:05,158 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:03:11,742 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:11:23,755 [INFO] root: Logging initialized. Log file: C:\Users\kowboj69\Desktop\stock_scanner\src\stock_scanner.log
+2026-10-18 22:11:23,756 [INFO] root: Playwright configured. Path: C:\Users\kowboj69\Desktop\stock_scanner\browsers
+2026-10-18 22:11:23,787 [INFO] src.stock_scanner.download.database: Database path: C:\Users\kowboj69\Desktop\stock_scanner\data\database.db
+2026-10-18 22:11:23,828 [INFO] src.stock_scanner.telegram: Uruchomiono nasłuchiwanie Telegram Bot...
+2026-10-18 22:11:24,279 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: PAP: start wątku Dummy-8
+2026-10-18 22:11:24,279 [INFO] src.stock_scanner.strategies.news_tracker.llm_worker: LLM worker started
+2026-10-18 22:11:24,279 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Start workera do scrapowania contentu komunikatu...
+2026-10-18 22:11:24,280 [INFO] src.stock_scanner.core.gemini_prompter: Start sesji gemini
+2026-10-18 22:11:24,280 [INFO] src.stock_scanner.scrapers.page_content_scraper: Start content scrapera wywołany
+2026-10-18 22:11:30,209 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: PAP: przeglądarka uruchomiona
+2026-10-18 22:11:30,618 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraper Worker - 1s
+2026-10-18 22:11:30,619 [INFO] src.stock_scanner.scrapers.page_scraper_worker: getting entries...
+2026-10-18 22:11:30,622 [INFO] src.stock_scanner.scrapers.page_scraper_worker: NO ENTRIES
+2026-10-18 22:11:31,236 [INFO] src.stock_scanner.strategies.news_tracker.llm_worker: LLM Worker - 1s
+2026-10-18 22:11:36,719 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:11:43,457 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:11:49,885 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:11:56,289 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:12:03,439 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:12:10,054 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:12:42,388 [INFO] root: Logging initialized. Log file: C:\Users\kowboj69\Desktop\stock_scanner\src\stock_scanner.log
+2026-10-18 22:12:42,389 [INFO] root: Playwright configured. Path: C:\Users\kowboj69\Desktop\stock_scanner\browsers
+2026-10-18 22:12:42,418 [INFO] src.stock_scanner.download.database: Database path: C:\Users\kowboj69\Desktop\stock_scanner\data\database.db
+2026-10-18 22:12:42,444 [INFO] src.stock_scanner.telegram: Uruchomiono nasłuchiwanie Telegram Bot...
+2026-10-18 22:12:42,919 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: PAP: start wątku Dummy-8
+2026-10-18 22:12:42,920 [INFO] src.stock_scanner.strategies.news_tracker.llm_worker: LLM worker started
+2026-10-18 22:12:42,920 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Start workera do scrapowania contentu komunikatu...
+2026-10-18 22:12:42,921 [INFO] src.stock_scanner.core.gemini_prompter: Start sesji gemini
+2026-10-18 22:12:42,921 [INFO] src.stock_scanner.scrapers.page_content_scraper: Start content scrapera wywołany
+2026-10-18 22:12:48,028 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: PAP: przeglądarka uruchomiona
+2026-10-18 22:12:48,976 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraper Worker - 1s
+2026-10-18 22:12:48,976 [INFO] src.stock_scanner.scrapers.page_scraper_worker: getting entries...
+2026-10-18 22:12:49,044 [INFO] src.stock_scanner.scrapers.page_scraper_worker: NO ENTRIES
+2026-10-18 22:12:49,198 [INFO] src.stock_scanner.strategies.news_tracker.llm_worker: LLM Worker - 1s
+2026-10-18 22:12:54,528 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:13:01,281 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:13:07,995 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:13:14,680 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:13:21,392 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:13:27,942 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:13:34,392 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:13:40,877 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:13:47,495 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:13:53,990 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:14:00,457 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:27:16,345 [INFO] root: Logging initialized. Log file: C:\Users\kowboj69\Desktop\stock_scanner\src\stock_scanner.log
+2026-10-18 22:27:16,346 [INFO] root: Playwright configured. Path: C:\Users\kowboj69\Desktop\stock_scanner\browsers
+2026-10-18 22:27:16,375 [INFO] src.stock_scanner.download.database: Database path: C:\Users\kowboj69\Desktop\stock_scanner\data\database.db
+2026-10-18 22:27:16,402 [INFO] src.stock_scanner.telegram: Uruchomiono nasłuchiwanie Telegram Bot...
+2026-10-18 22:27:16,820 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: PAP: start wątku Dummy-8
+2026-10-18 22:27:16,821 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Start workera do scrapowania contentu komunikatu...
+2026-10-18 22:27:16,821 [INFO] src.stock_scanner.scrapers.page_content_scraper: Start content scrapera wywołany
+2026-10-18 22:27:21,472 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: PAP: przeglądarka uruchomiona
+2026-10-18 22:27:22,438 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraper Worker - 1s
+2026-10-18 22:27:22,439 [INFO] src.stock_scanner.scrapers.page_scraper_worker: getting entries...
+2026-10-18 22:27:22,623 [INFO] src.stock_scanner.scrapers.page_scraper_worker: NO ENTRIES
+2026-10-18 22:27:23,625 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraper Worker - 1s
+2026-10-18 22:27:23,625 [INFO] src.stock_scanner.scrapers.page_scraper_worker: getting entries...
+2026-10-18 22:27:23,627 [INFO] src.stock_scanner.scrapers.page_scraper_worker: NO ENTRIES
+2026-10-18 22:27:24,627 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraper Worker - 1s
+2026-10-18 22:27:24,629 [INFO] src.stock_scanner.scrapers.page_scraper_worker: getting entries...
+2026-10-18 22:27:24,633 [INFO] src.stock_scanner.scrapers.page_scraper_worker: NO ENTRIES
+2026-10-18 22:27:25,630 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraper Worker - 1s
+2026-10-18 22:27:25,631 [INFO] src.stock_scanner.scrapers.page_scraper_worker: getting entries...
+2026-10-18 22:27:25,636 [INFO] src.stock_scanner.scrapers.page_scraper_worker: NO ENTRIES
+2026-10-18 22:27:26,631 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraper Worker - 1s
+2026-10-18 22:27:26,632 [INFO] src.stock_scanner.scrapers.page_scraper_worker: getting entries...
+2026-10-18 22:27:26,637 [INFO] src.stock_scanner.scrapers.page_scraper_worker: NO ENTRIES
+2026-10-18 22:27:27,635 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraper Worker - 1s
+2026-10-18 22:27:27,636 [INFO] src.stock_scanner.scrapers.page_scraper_worker: getting entries...
+2026-10-18 22:27:27,637 [INFO] src.stock_scanner.scrapers.page_scraper_worker: NO ENTRIES
+2026-10-18 22:27:27,969 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:27:28,636 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraper Worker - 1s
+2026-10-18 22:27:28,637 [INFO] src.stock_scanner.scrapers.page_scraper_worker: getting entries...
+2026-10-18 22:27:28,638 [INFO] src.stock_scanner.scrapers.page_scraper_worker: NO ENTRIES
+2026-10-18 22:27:29,639 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraper Worker - 1s
+2026-10-18 22:27:29,639 [INFO] src.stock_scanner.scrapers.page_scraper_worker: getting entries...
+2026-10-18 22:27:29,641 [INFO] src.stock_scanner.scrapers.page_scraper_worker: NO ENTRIES
+2026-10-18 22:27:30,642 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraper Worker - 1s
+2026-10-18 22:27:30,642 [INFO] src.stock_scanner.scrapers.page_scraper_worker: getting entries...
+2026-10-18 22:27:30,644 [INFO] src.stock_scanner.scrapers.page_scraper_worker: NO ENTRIES
+2026-10-18 22:27:31,644 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraper Worker - 1s
+2026-10-18 22:27:31,646 [INFO] src.stock_scanner.scrapers.page_scraper_worker: getting entries...
+2026-10-18 22:27:31,650 [INFO] src.stock_scanner.scrapers.page_scraper_worker: NO ENTRIES
+2026-10-18 22:27:32,663 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraper Worker - 1s
+2026-10-18 22:27:32,663 [INFO] src.stock_scanner.scrapers.page_scraper_worker: getting entries...
+2026-10-18 22:27:32,665 [INFO] src.stock_scanner.scrapers.page_scraper_worker: NO ENTRIES
+2026-10-18 22:27:33,665 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraper Worker - 1s
+2026-10-18 22:27:33,666 [INFO] src.stock_scanner.scrapers.page_scraper_worker: getting entries...
+2026-10-18 22:27:33,667 [INFO] src.stock_scanner.scrapers.page_scraper_worker: NO ENTRIES
+2026-10-18 22:27:34,485 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:27:34,668 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraper Worker - 1s
+2026-10-18 22:27:34,668 [INFO] src.stock_scanner.scrapers.page_scraper_worker: getting entries...
+2026-10-18 22:27:34,670 [INFO] src.stock_scanner.scrapers.page_scraper_worker: NO ENTRIES
+2026-10-18 22:27:35,671 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraper Worker - 1s
+2026-10-18 22:27:35,671 [INFO] src.stock_scanner.scrapers.page_scraper_worker: getting entries...
+2026-10-18 22:27:35,791 [INFO] src.stock_scanner.scrapers.page_scraper_worker: NO ENTRIES
+2026-10-18 22:27:36,791 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraper Worker - 1s
+2026-10-18 22:27:36,792 [INFO] src.stock_scanner.scrapers.page_scraper_worker: getting entries...
+2026-10-18 22:27:36,793 [INFO] src.stock_scanner.scrapers.page_scraper_worker: NO ENTRIES
+2026-10-18 22:27:37,793 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraper Worker - 1s
+2026-10-18 22:27:37,793 [INFO] src.stock_scanner.scrapers.page_scraper_worker: getting entries...
+2026-10-18 22:27:37,794 [INFO] src.stock_scanner.scrapers.page_scraper_worker: NO ENTRIES
+2026-10-18 22:27:38,795 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraper Worker - 1s
+2026-10-18 22:27:38,796 [INFO] src.stock_scanner.scrapers.page_scraper_worker: getting entries...
+2026-10-18 22:27:38,801 [INFO] src.stock_scanner.scrapers.page_scraper_worker: NO ENTRIES
+2026-10-18 22:27:39,815 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraper Worker - 1s
+2026-10-18 22:27:39,816 [INFO] src.stock_scanner.scrapers.page_scraper_worker: getting entries...
+2026-10-18 22:27:39,821 [INFO] src.stock_scanner.scrapers.page_scraper_worker: NO ENTRIES
+2026-10-18 22:27:40,835 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraper Worker - 1s
+2026-10-18 22:27:40,836 [INFO] src.stock_scanner.scrapers.page_scraper_worker: getting entries...
+2026-10-18 22:27:40,840 [INFO] src.stock_scanner.scrapers.page_scraper_worker: NO ENTRIES
+2026-10-18 22:27:41,035 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:27:41,835 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraper Worker - 1s
+2026-10-18 22:27:41,835 [INFO] src.stock_scanner.scrapers.page_scraper_worker: getting entries...
+2026-10-18 22:27:41,938 [INFO] src.stock_scanner.scrapers.page_scraper_worker: NO ENTRIES
+2026-10-18 22:27:42,939 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraper Worker - 1s
+2026-10-18 22:27:42,939 [INFO] src.stock_scanner.scrapers.page_scraper_worker: getting entries...
+2026-10-18 22:27:42,940 [INFO] src.stock_scanner.scrapers.page_scraper_worker: NO ENTRIES
+2026-10-18 22:27:43,947 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraper Worker - 1s
+2026-10-18 22:27:43,947 [INFO] src.stock_scanner.scrapers.page_scraper_worker: getting entries...
+2026-10-18 22:27:43,949 [INFO] src.stock_scanner.scrapers.page_scraper_worker: NO ENTRIES
+2026-10-18 22:27:44,969 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraper Worker - 1s
+2026-10-18 22:27:44,969 [INFO] src.stock_scanner.scrapers.page_scraper_worker: getting entries...
+2026-10-18 22:27:44,971 [INFO] src.stock_scanner.scrapers.page_scraper_worker: NO ENTRIES
+2026-10-18 22:27:45,981 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraper Worker - 1s
+2026-10-18 22:27:45,982 [INFO] src.stock_scanner.scrapers.page_scraper_worker: getting entries...
+2026-10-18 22:27:45,984 [INFO] src.stock_scanner.scrapers.page_scraper_worker: NO ENTRIES
+2026-10-18 22:32:45,866 [INFO] root: Logging initialized. Log file: C:\Users\kowboj69\Desktop\stock_scanner\src\stock_scanner.log
+2026-10-18 22:32:45,867 [INFO] root: Playwright configured. Path: C:\Users\kowboj69\Desktop\stock_scanner\browsers
+2026-10-18 22:32:45,897 [INFO] src.stock_scanner.download.database: Database path: C:\Users\kowboj69\Desktop\stock_scanner\data\database.db
+2026-10-18 22:32:45,925 [INFO] src.stock_scanner.telegram: Uruchomiono nasłuchiwanie Telegram Bot...
+2026-10-18 22:32:46,423 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: PAP: start wątku Dummy-8
+2026-10-18 22:32:46,423 [INFO] src.stock_scanner.strategies.news_tracker.llm_worker: LLM worker started
+2026-10-18 22:32:46,423 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Start workera do scrapowania contentu komunikatu...
+2026-10-18 22:32:46,424 [INFO] src.stock_scanner.core.gemini_prompter: Start sesji gemini
+2026-10-18 22:32:46,424 [INFO] src.stock_scanner.scrapers.page_content_scraper: Start content scrapera wywołany
+2026-10-18 22:32:51,319 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: PAP: przeglądarka uruchomiona
+2026-10-18 22:32:53,573 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraper Worker - 1s
+2026-10-18 22:32:54,579 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraper Worker - 1s
+2026-10-18 22:32:54,726 [INFO] src.stock_scanner.strategies.news_tracker.llm_worker: LLM Worker - 1s
+2026-10-18 22:32:55,596 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraper Worker - 1s
+2026-10-18 22:32:56,617 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraper Worker - 1s
+2026-10-18 22:32:57,618 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraper Worker - 1s
+2026-10-18 22:32:58,186 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:32:58,621 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraper Worker - 1s
+2026-10-18 22:33:05,037 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:33:11,659 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:33:18,285 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:33:24,834 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:33:31,369 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:33:37,971 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:33:44,541 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:33:51,141 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:33:57,703 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:37:41,680 [INFO] root: Logging initialized. Log file: C:\Users\kowboj69\Desktop\stock_scanner\src\stock_scanner.log
+2026-10-18 22:37:41,680 [INFO] root: Playwright configured. Path: C:\Users\kowboj69\Desktop\stock_scanner\browsers
+2026-10-18 22:37:41,713 [INFO] src.stock_scanner.download.database: Database path: C:\Users\kowboj69\Desktop\stock_scanner\data\database.db
+2026-10-18 22:37:41,742 [INFO] src.stock_scanner.telegram: Uruchomiono nasłuchiwanie Telegram Bot...
+2026-10-18 22:37:42,277 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: PAP: start wątku Dummy-8
+2026-10-18 22:37:42,277 [INFO] src.stock_scanner.strategies.news_tracker.llm_worker: LLM worker started
+2026-10-18 22:37:42,278 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Start workera do scrapowania contentu komunikatu...
+2026-10-18 22:37:42,278 [INFO] src.stock_scanner.core.gemini_prompter: Start sesji gemini
+2026-10-18 22:37:42,278 [INFO] src.stock_scanner.scrapers.page_content_scraper: Start content scrapera wywołany
+2026-10-18 22:37:47,468 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: PAP: przeglądarka uruchomiona
+2026-10-18 22:37:48,440 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraper Worker - 1s
+2026-10-18 22:37:49,459 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraper Worker - 1s
+2026-10-18 22:37:50,444 [INFO] src.stock_scanner.strategies.news_tracker.llm_worker: LLM Worker - 1s
+2026-10-18 22:37:50,461 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraper Worker - 1s
+2026-10-18 22:37:51,463 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraper Worker - 1s
+2026-10-18 22:37:52,466 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraper Worker - 1s
+2026-10-18 22:37:53,470 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraper Worker - 1s
+2026-10-18 22:37:54,219 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:37:54,481 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Scraper Worker - 1s
+2026-10-18 22:38:00,836 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:38:07,558 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:38:14,171 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:38:20,952 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:38:27,520 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:38:34,051 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:38:40,469 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:38:47,702 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:38:54,293 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:39:00,785 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:39:07,317 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:39:13,871 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:39:20,531 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:39:27,264 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:39:33,883 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:39:40,498 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:39:47,003 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:39:53,577 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:40:00,213 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:40:07,045 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:40:13,780 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:40:20,480 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:40:27,050 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:40:33,676 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-18 22:40:40,331 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s

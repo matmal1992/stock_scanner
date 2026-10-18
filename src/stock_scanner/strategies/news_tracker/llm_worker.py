@@ -29,17 +29,16 @@ class LLMWorker(QObject):
             self.prompter.start()
 
             while not self._stop_event.wait(self.INTERVAL_SECONDS):
+                logger.info("LLM Worker - 1s")
                 if self._stop_event.is_set():
                     break
 
                 pending = self.entry_repo.get_pending_with_content(limit=1)
 
                 if not pending:
-                    logger.info("no pending")
-                    return
+                    continue
 
                 entry = pending[0]
-                print(entry)
                 response = self.prompter.process_entry(entry)
                 self.entry_repo.update_llm(entry["id"], response)
 

@@ -30,15 +30,14 @@ class ScraperWorker(QObject):
             self.page_content_scraper.start()
 
             while not self._stop_event.wait(self.INTERVAL_SECONDS):
+                logger.info("Scraper Worker - 1s")
                 if self._stop_event.is_set():
                     break
 
-                logger.info("getting entries...")
                 entries = self.entry_repo.get_entries_without_content(limit=1)
 
                 if not entries:
-                    logger.info("NO ENTRIES")
-                    return
+                    continue
 
                 entry = entries[0]
                 logger.info(f"entry: {entry}")
