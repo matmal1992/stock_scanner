@@ -3,6 +3,7 @@ import logging
 import time
 import urllib.parse
 import urllib.request
+from typing import Callable
 
 from PySide6.QtCore import QObject, QThread, Signal
 
@@ -19,6 +20,10 @@ telegram_chat_id = config.get("telegram_chat_id")
 
 
 class TelegramClient:
+    def __init__(self) -> None:
+        self._pending_message_id: int | None = None
+        self._pending_message_text: str | None = None
+
     def _request(self, method: str, payload: dict) -> dict | None:
         url = f"https://api.telegram.org/bot{telegram_token}/{method}"
 
@@ -41,7 +46,7 @@ class TelegramClient:
 
         return None
 
-    def send_message(self, text: str) -> None:
+    def send_message(self, text: str) -> int | None:
         payload = {
             "chat_id": telegram_chat_id,
             "text": text,
@@ -49,7 +54,55 @@ class TelegramClient:
             "link_preview_options": json.dumps({"is_disabled": True}),
         }
 
-        self._request("sendMessage", payload)
+        result = self._request("sendMessage", payload)
+        if result is None:
+            return None
+
+        return result["result"]["message_id"]
+
+    def update_pending_message(self, pending: int) -> None:
+        text = f"Pending: {pending}"
+
+        if self._pending_message_id is None:
+            chat = self._request("getChat", {"chat_id": telegram_chat_id})
+            pinned_message = (chat or {}).get("result", {}).get("pinned_message", {})
+            pinned_text = pinned_message.get("text", "")
+            sent_by_bot = pinned_message.get("from", {}).get("is_bot", False)
+
+            if sent_by_bot and pinned_text.startswith("Pending: "):
+                self._pending_message_id = pinned_message["message_id"]
+                self._pending_message_text = pinned_text
+
+        if self._pending_message_id is not None:
+            if self._pending_message_text == text:
+                return
+
+            result = self._request(
+                "editMessageText",
+                {
+                    "chat_id": telegram_chat_id,
+                    "message_id": self._pending_message_id,
+                    "text": text,
+                },
+            )
+            if result is not None:
+                self._pending_message_text = text
+            return
+
+        message_id = self.send_message(text)
+        if message_id is None:
+            return
+
+        self._pending_message_id = message_id
+        self._pending_message_text = text
+        self._request(
+            "pinChatMessage",
+            {
+                "chat_id": telegram_chat_id,
+                "message_id": message_id,
+                "disable_notification": True,
+            },
+        )
 
 
 class TelegramService:
@@ -58,7 +111,8 @@ class TelegramService:
     def __init__(self) -> None:
         self.listener = TelegramBotListener()
 
-    def start(self) -> None:
+    def start(self, pending_count_provider: Callable[[], int] | None = None) -> None:
+        self.listener.pending_count_provider = pending_count_provider
         self.listener.start()
         self.send_alert("🟢 Stock Scanner uruchomiony.")
 
@@ -115,10 +169,13 @@ class TelegramBotListener(QThread):
         self._running = True
         self._last_update_id = 0
         self.telegram_client = TelegramClient()
+        self.pending_count_provider: Callable[[], int] | None = None
+        self._last_pending_refresh = 0.0
 
     def run(self) -> None:
         logger.info("Uruchomiono nasłuchiwanie Telegram Bot...")
         while self._running:
+            self._refresh_pending_message()
             try:
                 updates = self._get_updates()
                 for update in updates:
@@ -127,6 +184,21 @@ class TelegramBotListener(QThread):
             except Exception as e:
                 logger.error("Błąd podczas odpytywania Telegrama: %s", e)
                 time.sleep(3)
+
+    def _refresh_pending_message(self) -> None:
+        if self.pending_count_provider is None:
+            return
+
+        now = time.monotonic()
+        if now - self._last_pending_refresh < 30:
+            return
+
+        self._last_pending_refresh = now
+        try:
+            pending = self.pending_count_provider()
+            self.telegram_client.update_pending_message(pending)
+        except Exception:
+            logger.exception("Nie udało się odświeżyć licznika pending na Telegramie")
 
     def stop(self) -> None:
         self._running = False
@@ -139,7 +211,7 @@ class TelegramBotListener(QThread):
 
         req = urllib.request.Request(full_url)
 
-        with urllib.request.urlopen(req, timeout=25) as response:
+        with urllib.request.urlopen(req, timeout=35) as response:
             data = json.loads(response.read().decode("utf-8"))
 
         if data.get("ok"):

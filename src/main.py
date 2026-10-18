@@ -76,7 +76,6 @@ def main() -> None:
     db.init_db()
 
     telegram = TelegramService()
-    telegram.start()
 
     entry_repo = EntryRepository(db)
     tracked_repo = TrackedTickerRepository(db)
@@ -91,6 +90,7 @@ def main() -> None:
     )
     telegram.listener.command_received.connect(telegram_controller.handle_command)
     telegram_controller.response_ready.connect(telegram.listener.send_response)
+    telegram.start(entry_repo.get_pending_number)
 
     tray_icon = QSystemTrayIcon()
     tray_icon.setIcon(QIcon(f"{get_assets_dir()}/icon.ico"))
