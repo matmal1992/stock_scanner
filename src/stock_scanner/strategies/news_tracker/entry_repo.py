@@ -182,6 +182,11 @@ class EntryRepository:
             )
             return cursor.fetchone()[0]
 
+    def get_total_number(self) -> int:
+        with self.db.connect() as conn:
+            cursor = conn.execute("SELECT COUNT(*) FROM entries")
+            return cursor.fetchone()[0]
+
     def update_content(self, entry_id: int, content: str) -> bool:
         try:
             with self.db.connect() as conn:

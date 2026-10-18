@@ -38,8 +38,6 @@ class GPWWorker(QObject):
                 if self._stop_event.is_set():
                     break
 
-                logger.info("PAP: kolejne pobieranie w wątku %s", threading.current_thread().name)
-
                 self.entry_scraper.refresh_page()
                 self._scrape_and_save()
 

@@ -18,7 +18,7 @@ from src.stock_scanner.core.paths import (
 from src.stock_scanner.download.database import Database
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository
 from src.stock_scanner.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
-from src.stock_scanner.telegram import TelegramService
+from src.stock_scanner.telegram import ApplicationController, TelegramService
 from src.stock_scanner.ui.windows.main_window import MainWindow
 
 NORMAL_EXIT_CODE = 42
@@ -75,14 +75,22 @@ def main() -> None:
     db = Database()
     db.init_db()
 
-    # telegram = TelegramService()
-    # telegram.start()
+    telegram = TelegramService()
+    telegram.start()
 
     entry_repo = EntryRepository(db)
     tracked_repo = TrackedTickerRepository(db)
 
     window = MainWindow(entry_repo, tracked_repo)
     window.setWindowFlag(Qt.WindowType.Tool, True)
+
+    telegram_controller = ApplicationController(
+        entry_repo,
+        window.news_tracker_window.news_feed.gpw,
+        window.news_tracker_window.news_feed.llm,
+    )
+    telegram.listener.command_received.connect(telegram_controller.handle_command)
+    telegram_controller.response_ready.connect(telegram.listener.send_response)
 
     tray_icon = QSystemTrayIcon()
     tray_icon.setIcon(QIcon(f"{get_assets_dir()}/icon.ico"))

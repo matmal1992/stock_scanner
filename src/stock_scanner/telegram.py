@@ -191,12 +191,14 @@ class ApplicationController(QObject):
     def get_status(self) -> str:
         gpw = self.gpw_service.is_running()
         llm = self.llm_service.is_running()
+        total = self.entry_repo.get_total_number()
         pending = self.entry_repo.get_pending_number()
 
         return (
             "Status aplikacji\n\n"
             f"GPW: {'🟢 aktywny' if gpw else '🔴 zatrzymany'}\n"
             f"LLM: {'🟢 aktywny' if llm else '🔴 zatrzymany'}\n"
+            f"Wpisy w bazie: {total}\n"
             f"Pending: {pending}\n"
         )
 
