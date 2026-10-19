@@ -11,7 +11,7 @@ from src.stock_scanner.core.paths import configure_environment, configure_loggin
 from src.stock_scanner.download.database import Database
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository
 from src.stock_scanner.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
-from src.stock_scanner.telegram import ApplicationController, TelegramService
+from src.stock_scanner.telegram import ApplicationController, TelegramService, TelegramStateWorker
 from src.stock_scanner.ui.windows.main_window import MainWindow
 
 NORMAL_EXIT_CODE = 42
@@ -55,6 +55,9 @@ def main() -> None:
     window = MainWindow(entry_repo, tracked_repo)
     window.setWindowFlag(Qt.WindowType.Tool, True)
 
+    telegram_state_worker = TelegramStateWorker(entry_repo)
+    telegram_state_worker.start()
+
     telegram_controller = ApplicationController(
         entry_repo,
         window.news_tracker_window.news_feed.gpw,
@@ -63,7 +66,6 @@ def main() -> None:
     telegram.listener.command_received.connect(telegram_controller.handle_command)
     telegram_controller.response_ready.connect(telegram.listener.send_response)
     telegram.start(entry_repo.get_pending_number)
-
     tray_icon = QSystemTrayIcon()
     tray_icon.setIcon(QIcon(f"{get_assets_dir()}/icon.ico"))
     tray_icon.setToolTip("Stock Scanner")
@@ -87,8 +89,15 @@ def main() -> None:
     def hide_window() -> None:
         window.hide()
 
+    def shutdown_application() -> None:
+        if telegram_state_worker.isRunning():
+            telegram_state_worker.stop()
+
+        telegram.stop()
+
     def quit_application() -> None:
         tray_icon.hide()
+        shutdown_application()
         app.exit(NORMAL_EXIT_CODE)
 
     show_action.triggered.connect(show_window)

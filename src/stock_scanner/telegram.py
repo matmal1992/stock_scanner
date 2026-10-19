@@ -275,6 +275,101 @@ class ApplicationController(QObject):
         )
 
 
+class TelegramStateBot:
+    def __init__(self) -> None:
+        self.token = config.get("telegram_state_bot_token")
+        self.chat_id = config.get("telegram_state_chat_id")
+        self.message_id: int | None = None
+        self.last_text: str | None = None
+
+    def _request(self, method: str, payload: dict) -> dict | None:
+        url = f"https://api.telegram.org/bot{self.token}/{method}"
+        data = urllib.parse.urlencode(payload).encode("utf-8")
+        request = urllib.request.Request(url, data=data)
+
+        try:
+            with urllib.request.urlopen(request, timeout=10) as response:
+                result = json.loads(response.read().decode("utf-8"))
+
+            if result.get("ok"):
+                return result
+
+            logger.error("State bot API error: %s", result)
+        except Exception:
+            logger.exception("State bot HTTP error")
+
+        return None
+
+    def update(self, text: str) -> None:
+        if not self.token or not self.chat_id:
+            return
+
+        if text == self.last_text:
+            return
+
+        if self.message_id is not None:
+            result = self._request(
+                "editMessageText",
+                {
+                    "chat_id": self.chat_id,
+                    "message_id": self.message_id,
+                    "text": text,
+                },
+            )
+
+            if result is not None:
+                self.last_text = text
+                return
+
+            # Jeśli edycja się nie powiedzie, spróbuj utworzyć wiadomość.
+            self.message_id = None
+
+        result = self._request(
+            "sendMessage",
+            {
+                "chat_id": self.chat_id,
+                "text": text,
+            },
+        )
+
+        if result is not None:
+            self.message_id = result["result"]["message_id"]
+            self.last_text = text
+
+            self._request(
+                "pinChatMessage",
+                {
+                    "chat_id": self.chat_id,
+                    "message_id": self.message_id,
+                    "disable_notification": True,
+                },
+            )
+
+
+class TelegramStateWorker(QThread):
+    def __init__(self, entry_repo: EntryRepository) -> None:
+        super().__init__()
+        self.entry_repo = entry_repo
+        self.bot = TelegramStateBot()
+        self._running = True
+
+    def run(self) -> None:
+        while self._running:
+            try:
+                pending = self.entry_repo.get_pending_number()
+                self.bot.update(f"Pending: {pending}")
+            except Exception:
+                logger.exception("Błąd aktualizacji Scanner State")
+
+            for _ in range(50):
+                if not self._running:
+                    break
+                self.msleep(100)
+
+    def stop(self) -> None:
+        self._running = False
+
+
 # diagnostyka: stan aplikacji: ilosc pending, finished, skipped, wszystkich, errorow
 # screeny z exceptionow
 # stan workerow
