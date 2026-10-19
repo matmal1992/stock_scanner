@@ -30,8 +30,8 @@ class ScraperWorker(QObject):
             self.page_content_scraper.start()
 
             while not self._stop_event.wait(self.INTERVAL_SECONDS):
-                logger.info("Scraper Worker - 1s")
                 if self._stop_event.is_set():
+                    logger.info("Content Scraper Worker - STOP invoked")
                     break
 
                 entries = self.entry_repo.get_entries_without_content(limit=1)
@@ -40,8 +40,6 @@ class ScraperWorker(QObject):
                     continue
 
                 entry = entries[0]
-                logger.info(f"entry: {entry}")
-
                 content = self.page_content_scraper.scrape_content(entry["link"])
                 logger.debug(f"HTML: {content}")
                 self.entry_repo.update_content(entry["id"], content)

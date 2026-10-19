@@ -3,9 +3,7 @@ from typing import Sequence
 
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
-    # QHBoxLayout,
     QHeaderView,
-    # QPushButton,
     QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,

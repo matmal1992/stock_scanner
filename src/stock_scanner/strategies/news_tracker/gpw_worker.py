@@ -35,8 +35,8 @@ class GPWWorker(QObject):
             self._scrape_and_save()
 
             while not self._stop_event.wait(self.INTERVAL_SECONDS):
-                logger.info("GPW Worker - 5s")
                 if self._stop_event.is_set():
+                    logger.info("GPW Worker - STOP invoked")
                     break
 
                 self.entry_scraper.refresh_page()

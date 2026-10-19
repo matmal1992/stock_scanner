@@ -24,15 +24,20 @@ class LLMWorker(QObject):
         self._stop_event = threading.Event()
 
     def run(self) -> None:
+        logger.info("LLM worker started")
+
         try:
-            logger.info("LLM worker started")
             self.prompter.start()
+        except Exception:
+            logger.exception("LLM: błąd uruchamiania promptera")
+            return
 
-            while not self._stop_event.wait(self.INTERVAL_SECONDS):
-                logger.info("LLM Worker - 1s")
-                if self._stop_event.is_set():
-                    break
+        while not self._stop_event.wait(self.INTERVAL_SECONDS):
+            if self._stop_event.is_set():
+                logger.info("LLM Worker - STOP invoked")
+                break
 
+            try:
                 pending = self.entry_repo.get_pending_with_content(limit=1)
 
                 if not pending:
@@ -42,15 +47,20 @@ class LLMWorker(QObject):
                 response = self.prompter.process_entry(entry)
                 self.entry_repo.update_llm(entry["id"], response)
 
-        except Exception as exc:
-            logger.exception(f"LLM exception: {exc}")
-            self._finish()
+                entry["llm"] = response["forecast"]
+                entry["justification"] = response["justification"]
 
-        finally:
-            try:
+                self.result.emit(dict(entry))
+
                 self.prompter.refresh()
-            except Exception:
-                logger.exception("Nie udało się odświeżyć LLM")
+
+            except Exception as exc:
+                logger.exception("LLM exception: %s", exc)
+                try:
+                    self.prompter.refresh()
+                except Exception:
+                    logger.exception("Nie udało się odświeżyć LLM po błędzie")
+                continue
 
     def _cleanup(self) -> None:
         if self.prompter is not None:
@@ -63,6 +73,7 @@ class LLMWorker(QObject):
 
     def stop(self) -> None:
         logger.info("Zatrzymywanie LLM workera...")
+        self._stop_event.set()
         self._finish()
 
     def _finish(self) -> None:
