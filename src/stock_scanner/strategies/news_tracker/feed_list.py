@@ -15,7 +15,6 @@ from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository
 from src.stock_scanner.strategies.news_tracker.gpw_worker import GPWService
 from src.stock_scanner.strategies.news_tracker.llm_worker import LLMService
 from src.stock_scanner.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
-from src.stock_scanner.telegram import TelegramService
 
 logger = logging.getLogger(__name__)
 
@@ -132,7 +131,7 @@ class NewsFeedList(QWidget):
 
     def on_llm_result(self, entry: NewsEntry) -> None:
         self._update_list()
-        TelegramService.send_message(entry)
+        # TelegramService.send_message(entry)
 
     def on_gpw_result(self, has_new_entries: bool) -> None:
         self._update_list()
