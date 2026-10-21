@@ -3,6 +3,8 @@ import logging
 import urllib.parse
 import urllib.request
 
+from PySide6.QtCore import QThread
+
 from config.app_config import load_config
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository, NewsEntry
 
@@ -13,329 +15,179 @@ telegram_token = config.get("telegram_bot_token")
 telegram_chat_id = config.get("telegram_chat_id")
 
 
-# class TelegramClient:
-#     def __init__(self) -> None:
-#         self._pending_message_id: int | None = None
-#         self._pending_message_text: str | None = None
+class TelegramCommandWorker(QThread):
+    def __init__(self, token: str | None, chat_id: str | None) -> None:
+        super().__init__()
+        self.token = token
+        self.chat_id = str(chat_id)
+        self._running = True
+        self._offset: int | None = None
 
-#     def _request(self, method: str, payload: dict) -> dict | None:
-#         url = f"https://api.telegram.org/bot{telegram_token}/{method}"
+    def _request(self, method: str, payload: dict) -> dict | None:
+        url = f"https://api.telegram.org/bot{self.token}/{method}"
+        data = urllib.parse.urlencode(payload).encode("utf-8")
+        request = urllib.request.Request(url, data=data)
 
-#         data = urllib.parse.urlencode(payload).encode("utf-8")
-#         request = urllib.request.Request(url, data=data, method="POST")
-
-#         try:
-#             with urllib.request.urlopen(request, timeout=30) as response:
-#                 body = response.read().decode("utf-8")
-
-#             result = json.loads(body)
-
-#             if result.get("ok"):
-#                 return result
-
-#             logger.error("Telegram API error: %s", result)
-
-#         except Exception as e:
-#             logger.error("Telegram HTTP error: %s", e)
-
-#         return None
-
-#     def send_message(self, text: str) -> int | None:
-#         payload = {
-#             "chat_id": telegram_chat_id,
-#             "text": text,
-#             "parse_mode": "HTML",
-#             "link_preview_options": json.dumps({"is_disabled": True}),
-#         }
-
-#         result = self._request("sendMessage", payload)
-#         if result is None:
-#             return None
-
-#         return result["result"]["message_id"]
-
-#     def update_pending_message(self, pending: int) -> None:
-#         text = f"Pending: {pending}"
-
-#         if self._pending_message_id is None:
-#             chat = self._request("getChat", {"chat_id": telegram_chat_id})
-#             pinned_message = (chat or {}).get("result", {}).get("pinned_message", {})
-#             pinned_text = pinned_message.get("text", "")
-#             sent_by_bot = pinned_message.get("from", {}).get("is_bot", False)
-
-#             if sent_by_bot and pinned_text.startswith("Pending: "):
-#                 self._pending_message_id = pinned_message["message_id"]
-#                 self._pending_message_text = pinned_text
-
-#         if self._pending_message_id is not None:
-#             if self._pending_message_text == text:
-#                 return
-
-#             result = self._request(
-#                 "editMessageText",
-#                 {
-#                     "chat_id": telegram_chat_id,
-#                     "message_id": self._pending_message_id,
-#                     "text": text,
-#                 },
-#             )
-#             if result is not None:
-#                 self._pending_message_text = text
-#             return
-
-#         message_id = self.send_message(text)
-#         if message_id is None:
-#             return
-
-#         self._pending_message_id = message_id
-#         self._pending_message_text = text
-#         self._request(
-#             "pinChatMessage",
-#             {
-#                 "chat_id": telegram_chat_id,
-#                 "message_id": message_id,
-#                 "disable_notification": True,
-#             },
-#         )
-
-
-# class TelegramService:
-#     client = TelegramClient()
-
-#     def __init__(self) -> None:
-#         self.listener = TelegramBotListener()
-
-#     def start(self, pending_count_provider: Callable[[], int] | None = None) -> None:
-#         self.listener.pending_count_provider = pending_count_provider
-#         self.listener.start()
-#         self.send_alert("🟢 Stock Scanner uruchomiony.")
-
-#     def stop(self) -> None:
-#         self.listener.stop()
-
-#         if self.listener.isRunning():
-#             self.listener.wait()
-
-
-# class TelegramBotListener(QThread):
-#     command_received = Signal(str)
-
-#     def __init__(self) -> None:
-#         super().__init__()
-#         self._running = True
-#         self._last_update_id = 0
-#         self.telegram_client = TelegramClient()
-#         self.pending_count_provider: Callable[[], int] | None = None
-#         self._last_pending_refresh = 0.0
-
-#     def run(self) -> None:
-#         logger.info("Uruchomiono nasłuchiwanie Telegram Bot...")
-#         while self._running:
-#             self._refresh_pending_message()
-#             try:
-#                 updates = self._get_updates()
-#                 for update in updates:
-#                     self._last_update_id = update["update_id"]
-#                     self._process_update(update)
-#             except Exception as e:
-#                 logger.error("Błąd podczas odpytywania Telegrama: %s", e)
-#                 time.sleep(3)
-
-#     def _refresh_pending_message(self) -> None:
-#         if self.pending_count_provider is None:
-#             return
-
-#         now = time.monotonic()
-#         if now - self._last_pending_refresh < 30:
-#             return
-
-#         self._last_pending_refresh = now
-#         try:
-#             pending = self.pending_count_provider()
-#             self.telegram_client.update_pending_message(pending)
-#         except Exception:
-#             logger.exception("Nie udało się odświeżyć licznika pending na Telegramie")
-
-#     def stop(self) -> None:
-#         self._running = False
-
-#     def _get_updates(self) -> list:
-#         url = f"https://api.telegram.org/bot{telegram_token}/getUpdates"
-#         params = {"offset": self._last_update_id + 1, "timeout": 30}
-#         query_string = urllib.parse.urlencode(params)
-#         full_url = f"{url}?{query_string}"
-
-#         req = urllib.request.Request(full_url)
-
-#         with urllib.request.urlopen(req, timeout=35) as response:
-#             data = json.loads(response.read().decode("utf-8"))
-
-#         if data.get("ok"):
-#             return data.get("result", [])
-
-#         return []
-
-#     def _process_update(self, update: dict) -> None:
-#         message = update.get("message")
-#         if not message:
-#             return
-
-#         chat_id = str(message.get("chat", {}).get("id"))
-#         text = message.get("text", "").strip().lower()
-
-#         if chat_id != telegram_chat_id:
-#             logger.warning("Odrzucono wiadomość od nieznanego czatu: %s", chat_id)
-#             return
-
-#         self.command_received.emit(text)
-
-#     def send_response(self, text: str) -> None:
-#         self.telegram_client.send_message(text)
-
-
-# class ApplicationController(QObject):
-#     response_ready = Signal(str)
-
-#     def __init__(
-#         self,
-#         entry_repo: EntryRepository,
-#         gpw_service: GPWService,
-#         llm_service: LLMService,
-#     ) -> None:
-#         super().__init__()
-
-#         self.entry_repo = entry_repo
-#         self.gpw_service = gpw_service
-#         self.llm_service = llm_service
-
-#     def handle_command(self, command: str) -> None:
-#         logger.info("Telegram command: %s", command)
-
-#         if command == "status":
-#             self.response_ready.emit(self.get_status())
-#         else:
-#             logger.warning("Nieznana komenda: %s", command)
-
-#     def get_status(self) -> str:
-#         gpw = self.gpw_service.is_running()
-#         llm = self.llm_service.is_running()
-#         total = self.entry_repo.get_total_number()
-#         pending = self.entry_repo.get_pending_number()
-
-#         return (
-#             "Status aplikacji\n\n"
-#             f"GPW: {'🟢 aktywny' if gpw else '🔴 zatrzymany'}\n"
-#             f"LLM: {'🟢 aktywny' if llm else '🔴 zatrzymany'}\n"
-#             f"Wpisy w bazie: {total}\n"
-#             f"Pending: {pending}\n"
-#         )
-
-
-# class TelegramStateBot:
-#     def __init__(self) -> None:
-#         self.token = config.get("telegram_state_bot_token")
-#         self.chat_id = config.get("telegram_state_chat_id")
-#         self.message_id: int | None = None
-#         self.last_text: str | None = None
-
-#     def _request(self, method: str, payload: dict) -> dict | None:
-#         url = f"https://api.telegram.org/bot{self.token}/{method}"
-#         data = urllib.parse.urlencode(payload).encode("utf-8")
-#         request = urllib.request.Request(url, data=data)
-
-#         try:
-#             with urllib.request.urlopen(request, timeout=10) as response:
-#                 result = json.loads(response.read().decode("utf-8"))
-
-#             if result.get("ok"):
-#                 return result
-
-#             logger.error("State bot API error: %s", result)
-#         except Exception:
-#             logger.exception("State bot HTTP error")
-
-#         return None
-
-#     def update(self, text: str) -> None:
-#         if not self.token or not self.chat_id:
-#             return
-
-#         if text == self.last_text:
-#             return
-
-#         if self.message_id is not None:
-#             result = self._request(
-#                 "editMessageText",
-#                 {
-#                     "chat_id": self.chat_id,
-#                     "message_id": self.message_id,
-#                     "text": text,
-#                 },
-#             )
-
-#             if result is not None:
-#                 self.last_text = text
-#                 return
-
-#             # Jeśli edycja się nie powiedzie, spróbuj utworzyć wiadomość.
-#             self.message_id = None
-
-#         result = self._request(
-#             "sendMessage",
-#             {
-#                 "chat_id": self.chat_id,
-#                 "text": text,
-#             },
-#         )
-
-#         if result is not None:
-#             self.message_id = result["result"]["message_id"]
-#             self.last_text = text
-
-#             self._request(
-#                 "pinChatMessage",
-#                 {
-#                     "chat_id": self.chat_id,
-#                     "message_id": self.message_id,
-#                     "disable_notification": True,
-#                 },
-#             )
-
-
-# class TelegramStateWorker(QThread):
-#     def __init__(self, entry_repo: EntryRepository) -> None:
-#         super().__init__()
-#         self.entry_repo = entry_repo
-#         self.bot = TelegramStateBot()
-#         self._running = True
-
-#     def run(self) -> None:
-#         while self._running:
-#             try:
-#                 pending = self.entry_repo.get_pending_number()
-#                 self.bot.update(f"Pending: {pending}")
-#             except Exception:
-#                 logger.exception("Błąd aktualizacji Scanner State")
-
-#             for _ in range(50):
-#                 if not self._running:
-#                     break
-#                 self.msleep(100)
-
-#     def stop(self) -> None:
-#         self._running = False
-
-
-class Telegram:
+        try:
+            with urllib.request.urlopen(request, timeout=10) as response:
+                result = json.loads(response.read().decode("utf-8"))
+
+            if result.get("ok"):
+                return result
+
+            logger.error("Telegram command API error: %s", result)
+
+        except Exception:
+            if self._running:
+                logger.exception("Telegram command HTTP error")
+
+        return None
+
+    def _send_reply(self, text: str) -> None:
+        self._request(
+            "sendMessage",
+            {
+                "chat_id": self.chat_id,
+                "text": text,
+            },
+        )
+
+    def run(self) -> None:
+        logger.info("Telegram command worker started")
+
+        while self._running:
+            payload = {
+                "timeout": 5,
+                "allowed_updates": json.dumps(["message"]),
+            }
+
+            if self._offset is not None:
+                payload["offset"] = self._offset
+
+            result = self._request("getUpdates", payload)
+
+            if result is None:
+                self.msleep(1000)
+                continue
+
+            for update in result.get("result", []):
+                self._offset = update["update_id"] + 1
+
+                message = update.get("message", {})
+                chat = message.get("chat", {})
+
+                # Obsługuj wyłącznie wiadomości z wybranego czatu.
+                if str(chat.get("id")) != self.chat_id:
+                    continue
+
+                text = message.get("text", "")
+                if not isinstance(text, str):
+                    continue
+
+                if text.strip().lower() == "test":
+                    logger.info("Received Telegram test command")
+                    self._send_reply("test command received")
+
+        logger.info("Telegram command worker stopped")
+
+    def stop(self) -> None:
+        self._running = False
+
+
+class TelegramStateBot:
+    def __init__(self) -> None:
+        config = load_config()
+        self.token = config.get("telegram_state_bot_token")
+        self.chat_id = config.get("telegram_state_chat_id")
+        self.message_id = config.get("telegram_state_pinned_message_id")
+        self.last_text: str | None = None
+
+    def _request(self, method: str, payload: dict) -> dict | None:
+        url = f"https://api.telegram.org/bot{self.token}/{method}"
+        data = urllib.parse.urlencode(payload).encode("utf-8")
+        request = urllib.request.Request(url, data=data)
+
+        try:
+            with urllib.request.urlopen(request, timeout=10) as response:
+                result = json.loads(response.read().decode("utf-8"))
+
+            if result.get("ok"):
+                return result
+
+            logger.error("State bot API error: %s", result)
+        except Exception:
+            logger.exception("State bot HTTP error")
+
+        return None
+
+    def update(self, text: str) -> None:
+        if not self.token or not self.chat_id or not self.message_id:
+            logger.info("No token")
+            return
+
+        if text == self.last_text:
+            return
+
+        result = self._request(
+            "editMessageText",
+            {
+                "chat_id": self.chat_id,
+                "message_id": self.message_id,
+                "text": text,
+            },
+        )
+
+        if result is not None:
+            self.last_text = text
+
+
+class TelegramStateWorker(QThread):
+    def __init__(self, entry_repo: EntryRepository) -> None:
+        super().__init__()
+        self.entry_repo = entry_repo
+        self.bot = TelegramStateBot()
+        self._running = True
+
+    def run(self) -> None:
+        while self._running:
+            logger.info("Telegram worker running")
+            try:
+                pending = self.entry_repo.get_pending_number()
+                logger.info(f"Pending number: {pending}")
+                self.bot.update(f"Pending: {pending}")
+            except Exception:
+                logger.exception("Błąd aktualizacji Scanner State")
+
+            for _ in range(50):
+                if not self._running:
+                    break
+                self.msleep(100)
+
+    def stop(self) -> None:
+        logger.info("Stop telegram worker called")
+        self._running = False
+
+
+class TelegramBot:
     entry_repo: EntryRepository | None = None
-    token: str | None = None
-    chat_id: str | None = None
+    alert_chat_token: str | None = None
+    state_chat_token: str | None = None
+    alert_chat_id: str | None = None
+    state_chat_id: str | None = None
+    telegram_state_worker: TelegramStateWorker
+    command_worker: TelegramCommandWorker
 
     @classmethod
     def init(cls, entry_repo: EntryRepository) -> None:
         config = load_config()
-        cls.token = config.get("telegram_bot_token")
-        cls.chat_id = config.get("telegram_chat_id")
+        cls.alert_chat_token = config.get("telegram_bot_token")
+        cls.state_chat_token = config.get("telegram_state_bot_token")
+        cls.alert_chat_id = config.get("telegram_chat_id")
+        cls.state_chat_id = config.get("telegram_state_chat_id")
+        cls.telegram_state_worker = TelegramStateWorker(entry_repo)
+        cls.telegram_state_worker.start()
+        cls.command_worker = TelegramCommandWorker(cls.state_chat_token, cls.state_chat_id)
+        cls.command_worker.start()
 
         cls.entry_repo = entry_repo
 
@@ -375,13 +227,13 @@ class Telegram:
 
     @classmethod
     def send_message(self, text: str) -> None:
-        if not self.token or not self.chat_id:
+        if not self.alert_chat_token or not self.alert_chat_id:
             logger.warning("Telegram nie jest skonfigurowany.")
             return
 
-        url = f"https://api.telegram.org/bot{self.token}/sendMessage"
+        url = f"https://api.telegram.org/bot{self.alert_chat_token}/sendMessage"
         payload = {
-            "chat_id": self.chat_id,
+            "chat_id": self.alert_chat_id,
             "text": text,
             "parse_mode": "HTML",
             "link_preview_options": json.dumps({"is_disabled": True}),

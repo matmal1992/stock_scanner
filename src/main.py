@@ -11,7 +11,7 @@ from src.stock_scanner.core.paths import configure_environment, configure_loggin
 from src.stock_scanner.download.database import Database
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository
 from src.stock_scanner.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
-from src.stock_scanner.telegram import Telegram
+from src.stock_scanner.telegram import TelegramBot
 from src.stock_scanner.ui.windows.main_window import MainWindow
 
 NORMAL_EXIT_CODE = 42
@@ -26,18 +26,13 @@ def handle_exception(
 
     traceback.print_exception(exc_type, exc_value, exc_traceback)
 
-    # try:
-    #     TelegramService().send_alert(
-    #         f"""💥 **Stock Scanner Crash (Python Exception)**:\n```{exc_value}```\n
-    #         Zobacz plik logów po więcej szczegółów."""
-    #     )
-    # except Exception:
-    #     traceback.print_exc()
+    try:
+        TelegramBot().send_message(f"""💥 **Stock Scanner Crash (Python Exception)**:\n```{exc_value}```""")
+    except Exception:
+        traceback.print_exc()
 
 
 def main() -> None:
-    sys.excepthook = handle_exception
-
     configure_logging()
     configure_environment()
 
@@ -47,28 +42,17 @@ def main() -> None:
     db = Database()
     db.init_db()
 
-    # telegram = TelegramService()
-
     entry_repo = EntryRepository(db)
     tracked_repo = TrackedTickerRepository(db)
 
-    Telegram.init(entry_repo)
-    Telegram.send_message("Telegram alert")
+    TelegramBot.init(entry_repo)
+    TelegramBot.send_message("Telegram alert")
+
+    sys.excepthook = handle_exception
 
     window = MainWindow(entry_repo, tracked_repo)
     window.setWindowFlag(Qt.WindowType.Tool, True)
 
-    # telegram_state_worker = TelegramStateWorker(entry_repo)
-    # telegram_state_worker.start()
-
-    # telegram_controller = ApplicationController(
-    #     entry_repo,
-    #     window.news_tracker_window.news_feed.gpw,
-    #     window.news_tracker_window.news_feed.llm,
-    # )
-    # telegram.listener.command_received.connect(telegram_controller.handle_command)
-    # telegram_controller.response_ready.connect(telegram.listener.send_response)
-    # telegram.start(entry_repo.get_pending_number)
     tray_icon = QSystemTrayIcon()
     tray_icon.setIcon(QIcon(f"{get_assets_dir()}/icon.ico"))
     tray_icon.setToolTip("Stock Scanner")
@@ -93,10 +77,13 @@ def main() -> None:
         window.hide()
 
     def shutdown_application() -> None:
-        # if telegram_state_worker.isRunning():
-        #     telegram_state_worker.stop()
-        pass
-        # telegram.stop()
+        if TelegramBot.telegram_state_worker.isRunning():
+            TelegramBot.telegram_state_worker.stop()
+            TelegramBot.telegram_state_worker.wait()
+
+        if TelegramBot.command_worker.isRunning():
+            TelegramBot.command_worker.stop()
+            TelegramBot.command_worker.wait()
 
     def quit_application() -> None:
         tray_icon.hide()

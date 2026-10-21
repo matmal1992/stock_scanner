@@ -304,3 +304,220 @@
 2026-10-18 22:40:27,050 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
 2026-10-18 22:40:33,676 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
 2026-10-18 22:40:40,331 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: GPW Worker - 5s
+2026-10-21 10:53:06,720 [INFO] root: Logging initialized. Log file: C:\Users\malekm\Desktop\stock_scanner\src\stock_scanner.log
+2026-10-21 10:53:06,722 [INFO] root: Playwright configured. Path: C:\Users\malekm\Desktop\stock_scanner\browsers
+2026-10-21 10:53:06,763 [INFO] src.stock_scanner.download.database: Database path: C:\Users\malekm\Desktop\stock_scanner\data\database.db
+2026-10-21 10:53:06,767 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 10:53:06,769 [INFO] src.stock_scanner.telegram: Pending number: 5
+2026-10-21 10:53:06,769 [INFO] src.stock_scanner.telegram: No token
+2026-10-21 10:53:07,168 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: PAP: start wątku Dummy-8
+2026-10-21 10:53:07,170 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Start workera do scrapowania contentu komunikatu...
+2026-10-21 10:53:07,170 [INFO] src.stock_scanner.strategies.news_tracker.llm_worker: LLM worker started
+2026-10-21 10:53:07,170 [INFO] src.stock_scanner.scrapers.page_content_scraper: Start content scrapera wywołany
+2026-10-21 10:53:07,170 [INFO] src.stock_scanner.core.gemini_prompter: Start sesji gemini
+2026-10-21 10:53:13,195 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 10:53:13,199 [INFO] src.stock_scanner.telegram: Pending number: 5
+2026-10-21 10:53:13,199 [INFO] src.stock_scanner.telegram: No token
+2026-10-21 10:53:14,242 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: PAP: przeglądarka uruchomiona
+2026-10-21 10:53:19,021 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 10:53:19,022 [INFO] src.stock_scanner.telegram: Pending number: 5
+2026-10-21 10:53:19,023 [INFO] src.stock_scanner.telegram: No token
+2026-10-21 10:58:25,420 [INFO] root: Logging initialized. Log file: C:\Users\malekm\Desktop\stock_scanner\src\stock_scanner.log
+2026-10-21 10:58:25,421 [INFO] root: Playwright configured. Path: C:\Users\malekm\Desktop\stock_scanner\browsers
+2026-10-21 10:58:25,457 [INFO] src.stock_scanner.download.database: Database path: C:\Users\malekm\Desktop\stock_scanner\data\database.db
+2026-10-21 10:58:25,463 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 10:58:25,529 [INFO] src.stock_scanner.telegram: Pending number: 5
+2026-10-21 10:58:25,546 [INFO] src.stock_scanner.telegram: No token
+2026-10-21 10:58:25,795 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: PAP: start wątku Dummy-8
+2026-10-21 10:58:25,798 [INFO] src.stock_scanner.strategies.news_tracker.llm_worker: LLM worker started
+2026-10-21 10:58:25,806 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Start workera do scrapowania contentu komunikatu...
+2026-10-21 10:58:25,806 [INFO] src.stock_scanner.core.gemini_prompter: Start sesji gemini
+2026-10-21 10:58:25,807 [INFO] src.stock_scanner.scrapers.page_content_scraper: Start content scrapera wywołany
+2026-10-21 10:58:31,228 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: PAP: przeglądarka uruchomiona
+2026-10-21 10:58:31,837 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 10:58:31,962 [INFO] src.stock_scanner.telegram: Pending number: 5
+2026-10-21 10:58:32,002 [INFO] src.stock_scanner.telegram: No token
+2026-10-21 10:58:37,582 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 10:58:37,585 [INFO] src.stock_scanner.telegram: Pending number: 4
+2026-10-21 10:58:37,585 [INFO] src.stock_scanner.telegram: No token
+2026-10-21 10:58:43,108 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 10:58:43,109 [INFO] src.stock_scanner.telegram: Pending number: 4
+2026-10-21 10:58:43,110 [INFO] src.stock_scanner.telegram: No token
+2026-10-21 10:58:48,653 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 10:58:48,661 [INFO] src.stock_scanner.telegram: Pending number: 4
+2026-10-21 10:58:48,661 [INFO] src.stock_scanner.telegram: No token
+2026-10-21 10:58:54,343 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 10:58:54,345 [INFO] src.stock_scanner.telegram: Pending number: 3
+2026-10-21 10:58:54,345 [INFO] src.stock_scanner.telegram: No token
+2026-10-21 10:58:59,879 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 10:58:59,959 [INFO] src.stock_scanner.telegram: Pending number: 3
+2026-10-21 10:58:59,959 [INFO] src.stock_scanner.telegram: No token
+2026-10-21 10:59:05,396 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 10:59:05,398 [INFO] src.stock_scanner.telegram: Pending number: 2
+2026-10-21 10:59:05,398 [INFO] src.stock_scanner.telegram: No token
+2026-10-21 11:51:48,843 [INFO] root: Logging initialized. Log file: C:\Users\malekm\Desktop\stock_scanner\src\stock_scanner.log
+2026-10-21 11:51:48,845 [INFO] root: Playwright configured. Path: C:\Users\malekm\Desktop\stock_scanner\browsers
+2026-10-21 11:51:48,886 [INFO] src.stock_scanner.download.database: Database path: C:\Users\malekm\Desktop\stock_scanner\data\database.db
+2026-10-21 11:51:48,889 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 11:51:48,891 [INFO] src.stock_scanner.telegram: Pending number: 2
+2026-10-21 11:51:49,266 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: PAP: start wątku Dummy-8
+2026-10-21 11:51:49,266 [INFO] src.stock_scanner.strategies.news_tracker.llm_worker: LLM worker started
+2026-10-21 11:51:49,267 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Start workera do scrapowania contentu komunikatu...
+2026-10-21 11:51:49,269 [INFO] src.stock_scanner.core.gemini_prompter: Start sesji gemini
+2026-10-21 11:51:49,269 [INFO] src.stock_scanner.scrapers.page_content_scraper: Start content scrapera wywołany
+2026-10-21 11:51:55,172 [INFO] src.stock_scanner.telegram: Pinned msg: Pending: 2
+2026-10-21 11:51:55,637 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: PAP: przeglądarka uruchomiona
+2026-10-21 11:52:01,578 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 11:52:01,584 [INFO] src.stock_scanner.telegram: Pending number: 7
+2026-10-21 11:52:07,248 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 11:52:07,252 [INFO] src.stock_scanner.telegram: Pending number: 6
+2026-10-21 11:52:12,937 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 11:52:12,939 [INFO] src.stock_scanner.telegram: Pending number: 6
+2026-10-21 11:52:12,939 [INFO] src.stock_scanner.telegram: No changes in pinned message
+2026-10-21 11:52:18,440 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 11:52:18,442 [INFO] src.stock_scanner.telegram: Pending number: 5
+2026-10-21 11:52:24,077 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 11:52:24,081 [INFO] src.stock_scanner.telegram: Pending number: 5
+2026-10-21 11:52:24,084 [INFO] src.stock_scanner.telegram: No changes in pinned message
+2026-10-21 12:24:20,074 [INFO] root: Logging initialized. Log file: C:\Users\malekm\Desktop\stock_scanner\src\stock_scanner.log
+2026-10-21 12:24:20,075 [INFO] root: Playwright configured. Path: C:\Users\malekm\Desktop\stock_scanner\browsers
+2026-10-21 12:24:20,115 [INFO] src.stock_scanner.download.database: Database path: C:\Users\malekm\Desktop\stock_scanner\data\database.db
+2026-10-21 12:24:20,119 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 12:24:20,124 [INFO] src.stock_scanner.telegram: Pending number: 4
+2026-10-21 12:24:20,441 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: PAP: start wątku Dummy-8
+2026-10-21 12:24:20,442 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Start workera do scrapowania contentu komunikatu...
+2026-10-21 12:24:20,443 [INFO] src.stock_scanner.strategies.news_tracker.llm_worker: LLM worker started
+2026-10-21 12:24:20,443 [INFO] src.stock_scanner.scrapers.page_content_scraper: Start content scrapera wywołany
+2026-10-21 12:24:20,443 [INFO] src.stock_scanner.core.gemini_prompter: Start sesji gemini
+2026-10-21 12:24:26,522 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 12:24:26,534 [INFO] src.stock_scanner.telegram: Pending number: 4
+2026-10-21 12:24:26,991 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: PAP: przeglądarka uruchomiona
+2026-10-21 12:24:32,512 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 12:24:32,515 [INFO] src.stock_scanner.telegram: Pending number: 6
+2026-10-21 12:24:38,017 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 12:24:38,020 [INFO] src.stock_scanner.telegram: Pending number: 6
+2026-10-21 12:24:43,507 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 12:24:43,509 [INFO] src.stock_scanner.telegram: Pending number: 6
+2026-10-21 12:24:48,983 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 12:24:48,984 [INFO] src.stock_scanner.telegram: Pending number: 6
+2026-10-21 12:24:54,406 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 12:24:54,439 [INFO] src.stock_scanner.telegram: Pending number: 6
+2026-10-21 12:24:59,858 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 12:24:59,859 [INFO] src.stock_scanner.telegram: Pending number: 6
+2026-10-21 12:25:05,286 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 12:25:05,288 [INFO] src.stock_scanner.telegram: Pending number: 6
+2026-10-21 12:25:10,717 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 12:25:10,720 [INFO] src.stock_scanner.telegram: Pending number: 6
+2026-10-21 12:25:16,249 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 12:25:16,251 [INFO] src.stock_scanner.telegram: Pending number: 6
+2026-10-21 12:25:21,708 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 12:25:21,709 [INFO] src.stock_scanner.telegram: Pending number: 6
+2026-10-21 12:25:27,210 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 12:25:27,212 [INFO] src.stock_scanner.telegram: Pending number: 6
+2026-10-21 12:25:32,725 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 12:25:32,727 [INFO] src.stock_scanner.telegram: Pending number: 6
+2026-10-21 12:25:38,178 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 12:25:38,180 [INFO] src.stock_scanner.telegram: Pending number: 6
+2026-10-21 12:25:43,633 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 12:25:43,634 [INFO] src.stock_scanner.telegram: Pending number: 6
+2026-10-21 12:25:49,118 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 12:25:49,120 [INFO] src.stock_scanner.telegram: Pending number: 6
+2026-10-21 12:25:54,589 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 12:25:54,590 [INFO] src.stock_scanner.telegram: Pending number: 6
+2026-10-21 12:26:00,049 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 12:26:00,050 [INFO] src.stock_scanner.telegram: Pending number: 6
+2026-10-21 12:26:05,496 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 12:26:05,498 [INFO] src.stock_scanner.telegram: Pending number: 6
+2026-10-21 12:26:11,100 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 12:26:11,101 [INFO] src.stock_scanner.telegram: Pending number: 6
+2026-10-21 12:26:16,693 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 12:26:16,695 [INFO] src.stock_scanner.telegram: Pending number: 6
+2026-10-21 12:26:22,181 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 12:26:22,182 [INFO] src.stock_scanner.telegram: Pending number: 6
+2026-10-21 12:26:27,774 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 12:26:27,778 [INFO] src.stock_scanner.telegram: Pending number: 6
+2026-10-21 12:26:33,305 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 12:26:33,307 [INFO] src.stock_scanner.telegram: Pending number: 6
+2026-10-21 12:26:38,811 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 12:26:38,812 [INFO] src.stock_scanner.telegram: Pending number: 6
+2026-10-21 12:26:44,360 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 12:26:44,362 [INFO] src.stock_scanner.telegram: Pending number: 6
+2026-10-21 12:26:49,862 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 12:26:49,864 [INFO] src.stock_scanner.telegram: Pending number: 6
+2026-10-21 12:26:55,382 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 12:26:55,386 [INFO] src.stock_scanner.telegram: Pending number: 6
+2026-10-21 12:27:00,865 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 12:27:00,867 [INFO] src.stock_scanner.telegram: Pending number: 6
+2026-10-21 12:27:06,362 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 12:27:06,364 [INFO] src.stock_scanner.telegram: Pending number: 6
+2026-10-21 12:27:11,874 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 12:27:11,876 [INFO] src.stock_scanner.telegram: Pending number: 6
+2026-10-21 13:17:38,006 [INFO] root: Logging initialized. Log file: C:\Users\malekm\Desktop\stock_scanner\src\stock_scanner.log
+2026-10-21 13:17:38,008 [INFO] root: Playwright configured. Path: C:\Users\malekm\Desktop\stock_scanner\browsers
+2026-10-21 13:17:38,055 [INFO] src.stock_scanner.download.database: Database path: C:\Users\malekm\Desktop\stock_scanner\data\database.db
+2026-10-21 13:17:38,062 [INFO] src.stock_scanner.telegram: Telegram command worker started
+2026-10-21 13:17:38,062 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 13:17:38,065 [INFO] src.stock_scanner.telegram: Pending number: 6
+2026-10-21 13:17:38,401 [ERROR] src.stock_scanner.telegram: State bot HTTP error
+Traceback (most recent call last):
+  File "C:\Users\malekm\Desktop\stock_scanner\src\stock_scanner\telegram.py", line 329, in _request
+    with urllib.request.urlopen(request, timeout=10) as response:
+         ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\malekm\AppData\Roaming\uv\python\cpython-3.13.12-windows-x86_64-none\Lib\urllib\request.py", line 189, in urlopen
+    return opener.open(url, data, timeout)
+           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\malekm\AppData\Roaming\uv\python\cpython-3.13.12-windows-x86_64-none\Lib\urllib\request.py", line 495, in open
+    response = meth(req, response)
+  File "C:\Users\malekm\AppData\Roaming\uv\python\cpython-3.13.12-windows-x86_64-none\Lib\urllib\request.py", line 604, in http_response
+    response = self.parent.error(
+        'http', request, response, code, msg, hdrs)
+  File "C:\Users\malekm\AppData\Roaming\uv\python\cpython-3.13.12-windows-x86_64-none\Lib\urllib\request.py", line 533, in error
+    return self._call_chain(*args)
+           ~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\malekm\AppData\Roaming\uv\python\cpython-3.13.12-windows-x86_64-none\Lib\urllib\request.py", line 466, in _call_chain
+    result = func(*args)
+  File "C:\Users\malekm\AppData\Roaming\uv\python\cpython-3.13.12-windows-x86_64-none\Lib\urllib\request.py", line 613, in http_error_default
+    raise HTTPError(req.full_url, code, msg, hdrs, fp)
+urllib.error.HTTPError: HTTP Error 400: Bad Request
+2026-10-21 13:17:38,493 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: PAP: start wątku Dummy-10
+2026-10-21 13:17:38,495 [INFO] src.stock_scanner.strategies.news_tracker.llm_worker: LLM worker started
+2026-10-21 13:17:38,499 [INFO] src.stock_scanner.core.gemini_prompter: Start sesji gemini
+2026-10-21 13:17:38,499 [INFO] src.stock_scanner.scrapers.page_scraper_worker: Start workera do scrapowania contentu komunikatu...
+2026-10-21 13:17:38,508 [INFO] src.stock_scanner.scrapers.page_content_scraper: Start content scrapera wywołany
+2026-10-21 13:17:44,474 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 13:17:44,478 [INFO] src.stock_scanner.telegram: Pending number: 6
+2026-10-21 13:17:44,626 [ERROR] src.stock_scanner.telegram: State bot HTTP error
+Traceback (most recent call last):
+  File "C:\Users\malekm\Desktop\stock_scanner\src\stock_scanner\telegram.py", line 329, in _request
+    with urllib.request.urlopen(request, timeout=10) as response:
+         ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\malekm\AppData\Roaming\uv\python\cpython-3.13.12-windows-x86_64-none\Lib\urllib\request.py", line 189, in urlopen
+    return opener.open(url, data, timeout)
+           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\malekm\AppData\Roaming\uv\python\cpython-3.13.12-windows-x86_64-none\Lib\urllib\request.py", line 495, in open
+    response = meth(req, response)
+  File "C:\Users\malekm\AppData\Roaming\uv\python\cpython-3.13.12-windows-x86_64-none\Lib\urllib\request.py", line 604, in http_response
+    response = self.parent.error(
+        'http', request, response, code, msg, hdrs)
+  File "C:\Users\malekm\AppData\Roaming\uv\python\cpython-3.13.12-windows-x86_64-none\Lib\urllib\request.py", line 533, in error
+    return self._call_chain(*args)
+           ~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\malekm\AppData\Roaming\uv\python\cpython-3.13.12-windows-x86_64-none\Lib\urllib\request.py", line 466, in _call_chain
+    result = func(*args)
+  File "C:\Users\malekm\AppData\Roaming\uv\python\cpython-3.13.12-windows-x86_64-none\Lib\urllib\request.py", line 613, in http_error_default
+    raise HTTPError(req.full_url, code, msg, hdrs, fp)
+urllib.error.HTTPError: HTTP Error 400: Bad Request
+2026-10-21 13:17:45,008 [INFO] src.stock_scanner.strategies.news_tracker.gpw_worker: PAP: przeglądarka uruchomiona
+2026-10-21 13:17:50,261 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 13:17:50,263 [INFO] src.stock_scanner.telegram: Pending number: 9
+2026-10-21 13:17:55,872 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 13:17:55,877 [INFO] src.stock_scanner.telegram: Pending number: 8
+2026-10-21 13:18:01,503 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 13:18:01,504 [INFO] src.stock_scanner.telegram: Pending number: 8
+2026-10-21 13:18:06,975 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 13:18:06,977 [INFO] src.stock_scanner.telegram: Pending number: 7
+2026-10-21 13:18:12,063 [INFO] src.stock_scanner.telegram: Received Telegram test command
+2026-10-21 13:18:12,656 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 13:18:12,688 [INFO] src.stock_scanner.telegram: Pending number: 7
+2026-10-21 13:18:18,167 [INFO] src.stock_scanner.telegram: Telegram worker running
+2026-10-21 13:18:18,169 [INFO] src.stock_scanner.telegram: Pending number: 7
