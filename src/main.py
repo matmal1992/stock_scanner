@@ -76,18 +76,9 @@ def main() -> None:
     def hide_window() -> None:
         window.hide()
 
-    def shutdown_application() -> None:
-        if TelegramBot.telegram_state_worker.isRunning():
-            TelegramBot.telegram_state_worker.stop()
-            TelegramBot.telegram_state_worker.wait()
-
-        if TelegramBot.command_worker.isRunning():
-            TelegramBot.command_worker.stop()
-            TelegramBot.command_worker.wait()
-
     def quit_application() -> None:
         tray_icon.hide()
-        shutdown_application()
+        TelegramBot.stop_telegram()
         app.exit(NORMAL_EXIT_CODE)
 
     show_action.triggered.connect(show_window)

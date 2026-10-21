@@ -1,6 +1,7 @@
 import json
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 from src.stock_scanner.core.paths import get_root_dir
 
@@ -8,17 +9,45 @@ BASE_DIR = get_root_dir()
 CONFIG_PATH = BASE_DIR / "config" / "config.json"
 
 
-def load_config() -> dict[str, str]:
+def load_config() -> dict[str, Any]:
     if not CONFIG_PATH.exists():
-        print(f"CONFIG NOT FOUND: {CONFIG_PATH}")
-        return {"path_error": " "}
+        raise FileNotFoundError(f"Nie znaleziono pliku konfiguracyjnego: {CONFIG_PATH}")
 
     try:
         with open(CONFIG_PATH, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception as e:
-        print(f"CONFIG ERROR: {e}")
-        return {"load_error": " "}
+            config = json.load(f)
+    except json.JSONDecodeError as e:
+        raise ValueError(
+            f"Nieprawidłowy format JSON w pliku: {CONFIG_PATH}. Wiersz {e.lineno}, kolumna {e.colno}: {e.msg}"
+        ) from e
+
+    except OSError as e:
+        raise OSError(f"Nie udało się odczytać pliku konfiguracyjnego: {CONFIG_PATH}. Przyczyna: {e}") from e
+
+    if not isinstance(config, dict):
+        raise ValueError(f"Plik konfiguracyjny musi zawierać obiekt JSON: {CONFIG_PATH}")
+
+    validate_json(config)
+
+    return config
+
+
+def validate_json(value: Any, path: str = "") -> None:
+    """Sprawdza rekurencyjnie, czy JSON nie zawiera pustych stringów."""
+    if isinstance(value, str):
+        if not value.strip():
+            raise ValueError(f"Pusta wartość tekstowa w konfiguracji: {path or '<root>'} ({CONFIG_PATH})")
+
+    elif isinstance(value, dict):
+        for key, nested_value in value.items():
+            if isinstance(key, str) and not key.strip():
+                raise ValueError(f"Pusty klucz w konfiguracji: {CONFIG_PATH}")
+
+            validate_json(nested_value, f"{path}.{key}" if path else str(key))
+
+    elif isinstance(value, list):
+        for index, item in enumerate(value):
+            validate_json(item, f"{path}[{index}]")
 
 
 @dataclass
