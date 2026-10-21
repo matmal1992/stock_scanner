@@ -2,7 +2,6 @@ import json
 import logging
 import urllib.parse
 import urllib.request
-from typing import ClassVar
 
 from config.app_config import load_config
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository, NewsEntry
@@ -116,44 +115,6 @@ telegram_chat_id = config.get("telegram_chat_id")
 
 #         if self.listener.isRunning():
 #             self.listener.wait()
-
-#     @classmethod
-#     def send_alert(cls, text: str) -> None:
-#         cls.client.send_message(text)
-
-#     @classmethod
-#     def send_message(cls, entry: NewsEntry) -> None:
-#         message = cls.build_message(entry)
-
-#         if message is None:
-#             return
-
-#         cls.client.send_message(message)
-
-#     @classmethod
-#     def build_message(cls, entry: NewsEntry) -> str | None:
-#         forecast = entry["llm"]
-#         title = entry["title"]
-#         published = entry["published"]
-#         source = entry["source_type"]
-#         url = entry["link"]
-#         justification = entry["justification"]
-
-#         if published is None:
-#             return None
-
-#         published = published[11:]
-
-#         if forecast in {"Wzrost", "Silny wzrost"}:
-#             forecast_display = f"🟩 {forecast}"
-#         elif forecast in {"Spadek", "Silny spadek"}:
-#             forecast_display = f"🟥 {forecast}"
-#         elif forecast == "Neutralny":
-#             forecast_display = f"⬜ {forecast}"
-#         else:
-#             forecast_display = forecast
-
-#         return f'{published} | <a href="{url}">{source}</a>\n{title}\n{forecast_display} - {justification}'
 
 
 # class TelegramBotListener(QThread):
@@ -366,38 +327,29 @@ telegram_chat_id = config.get("telegram_chat_id")
 
 
 class Telegram:
-    client: ClassVar["TelegramClient | None"] = None
-    entry_repo: ClassVar[EntryRepository | None] = None
+    entry_repo: EntryRepository | None = None
+    token: str | None = None
+    chat_id: str | None = None
 
     @classmethod
     def init(cls, entry_repo: EntryRepository) -> None:
-        if cls.client is not None:
-            return
-
         config = load_config()
-        token = config.get("telegram_bot_token")
-        chat_id = config.get("telegram_chat_id")
+        cls.token = config.get("telegram_bot_token")
+        cls.chat_id = config.get("telegram_chat_id")
 
         cls.entry_repo = entry_repo
-        cls.client = TelegramClient(token, chat_id)
 
     @classmethod
-    def send_alert(cls, text: str) -> None:
-        if cls.client is not None:
-            cls.client.send_message(text)
-
-    @classmethod
-    def send_message(cls, entry: NewsEntry) -> None:
-        message = cls.build_message(entry)
+    def send_alert(cls, entry: NewsEntry) -> None:
+        message = cls.build_alert(entry)
 
         if message is None:
             return
 
-        if cls.client is not None:
-            cls.client.send_message(message)
+        cls.send_message(message)
 
     @classmethod
-    def build_message(cls, entry: NewsEntry) -> str | None:
+    def build_alert(cls, entry: NewsEntry) -> str | None:
         forecast = entry["llm"]
         title = entry["title"]
         published = entry["published"]
@@ -421,12 +373,7 @@ class Telegram:
 
         return f'<a href="{url}">{source}</a> | {published}\n{title}\n{forecast_display} - {justification}'
 
-
-class TelegramClient:
-    def __init__(self, token: str | None, chat_id: str | None) -> None:
-        self.token = token
-        self.chat_id = chat_id
-
+    @classmethod
     def send_message(self, text: str) -> None:
         if not self.token or not self.chat_id:
             logger.warning("Telegram nie jest skonfigurowany.")

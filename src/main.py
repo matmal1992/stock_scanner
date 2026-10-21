@@ -53,7 +53,7 @@ def main() -> None:
     tracked_repo = TrackedTickerRepository(db)
 
     Telegram.init(entry_repo)
-    Telegram.send_alert("Telegram alert")
+    Telegram.send_message("Telegram alert")
 
     window = MainWindow(entry_repo, tracked_repo)
     window.setWindowFlag(Qt.WindowType.Tool, True)
@@ -113,7 +113,7 @@ def main() -> None:
 
     tray_icon.show()
     window.hide()
-    # window.start_news_strategy()
+    window.start_news_strategy()
 
     try:
         exit_code = app.exec()
