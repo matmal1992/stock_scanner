@@ -7,6 +7,7 @@ from PySide6.QtCore import QObject, QThread, Signal
 from src.stock_scanner.core.gemini_prompter import GeminiPrompter
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository, NewsEntry
 from src.stock_scanner.telegram import TelegramBot
+from src.stock_scanner.ui.workers.worker_status import WorkerStatus
 
 logger = logging.getLogger(__name__)
 
@@ -19,11 +20,12 @@ class LLMWorker(QObject):
 
     INTERVAL_SECONDS = 1
 
-    def __init__(self, entry_repo: EntryRepository) -> None:
+    def __init__(self, entry_repo: EntryRepository, worker_status: WorkerStatus) -> None:
         super().__init__()
         self.entry_repo = entry_repo
         self.prompter = GeminiPrompter()
         self._stop_event = threading.Event()
+        self.worker_status = worker_status
         self._last_loop: str = ""
 
     def run(self) -> None:
@@ -55,10 +57,8 @@ class LLMWorker(QObject):
 
                 TelegramBot.send_alert(entry)
 
-                # self.result.emit(dict(entry))
-
                 self.prompter.refresh()
-                self._last_loop = datetime.now().strftime("%H:%M:%S")
+                self.worker_status.update("LLM", datetime.now().strftime("%H:%M:%S"))
 
             except Exception as exc:
                 logger.exception("LLM exception: %s", exc)
@@ -97,11 +97,11 @@ class LLMService(QObject):
     finished = Signal()
     result = Signal(NewsEntry)
 
-    def __init__(self, entry_repo: EntryRepository) -> None:
+    def __init__(self, entry_repo: EntryRepository, worker_status: WorkerStatus) -> None:
         super().__init__()
 
         self.entry_repo = entry_repo
-
+        self.worker_status = worker_status
         self._thread: QThread | None = None
         self.worker: LLMWorker | None = None
 
@@ -113,7 +113,7 @@ class LLMService(QObject):
         self.log.emit("Uruchamiam LLM...")
         self._thread = QThread()
 
-        self.worker = LLMWorker(self.entry_repo)
+        self.worker = LLMWorker(self.entry_repo, self.worker_status)
         self.worker.moveToThread(self._thread)
         self.worker.log.connect(self.log)
         self.worker.error.connect(self.error)

@@ -7,6 +7,7 @@ from PySide6.QtCore import QThread
 
 from config.app_config import load_config
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository, NewsEntry
+from src.stock_scanner.ui.workers.worker_status import WorkerStatus
 
 logger = logging.getLogger(__name__)
 
@@ -134,9 +135,10 @@ class TelegramStateBot:
 
 
 class TelegramStateWorker(QThread):
-    def __init__(self, entry_repo: EntryRepository) -> None:
+    def __init__(self, entry_repo: EntryRepository, worker_status: WorkerStatus) -> None:
         super().__init__()
         self.entry_repo = entry_repo
+        self.worker_status = worker_status
         self.bot = TelegramStateBot()
         self._running = True
 
@@ -144,7 +146,14 @@ class TelegramStateWorker(QThread):
         while self._running:
             try:
                 pending = self.entry_repo.get_pending_number()
-                self.bot.update(f"Pending: {pending}")
+                statuses = self.worker_status.snapshot()
+                lines = [f"Pending: {pending}\n"]
+
+                for worker, status in statuses.items():
+                    lines.append(f"{worker}: {status}")
+
+                self.bot.update("\n".join(lines))
+
             except Exception:
                 logger.exception("Błąd aktualizacji Scanner State")
 
@@ -163,8 +172,8 @@ class TelegramBot:
     command_worker: TelegramCommandWorker
 
     @classmethod
-    def init(cls, entry_repo: EntryRepository) -> None:
-        cls.telegram_state_worker = TelegramStateWorker(entry_repo)
+    def init(cls, entry_repo: EntryRepository, worker_status: WorkerStatus) -> None:
+        cls.telegram_state_worker = TelegramStateWorker(entry_repo, worker_status)
         cls.telegram_state_worker.start()
         cls.command_worker = TelegramCommandWorker()
         cls.command_worker.start()

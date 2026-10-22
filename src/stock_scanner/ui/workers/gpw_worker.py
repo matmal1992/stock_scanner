@@ -7,6 +7,7 @@ from PySide6.QtCore import QObject, QThread, Signal
 from src.stock_scanner.scrapers.pap_espi import PapEspiScraper
 from src.stock_scanner.scrapers.playwright import PlaywrightSession
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository, NewsEntry
+from src.stock_scanner.ui.workers.worker_status import WorkerStatus
 
 logger = logging.getLogger(__name__)
 
@@ -19,11 +20,12 @@ class GPWWorker(QThread):
 
     INTERVAL_SECONDS = 5
 
-    def __init__(self, entry_repo: EntryRepository) -> None:
+    def __init__(self, entry_repo: EntryRepository, worker_status: WorkerStatus) -> None:
         super().__init__()
         self.entry_repo = entry_repo
         self.entry_scraper: PapEspiScraper | None = None
         self._stop_event = threading.Event()
+        self.worker_status = worker_status
         self._last_loop: str = ""
 
     def run(self) -> None:
@@ -43,7 +45,7 @@ class GPWWorker(QThread):
 
                 self.entry_scraper.refresh_page()
                 self._scrape_and_save()
-                self._last_loop = datetime.now().strftime("%H:%M:%S")
+                self.worker_status.update("GPW", datetime.now().strftime("%H:%M:%S"))
 
         except Exception as exc:
             logger.exception(f"PAP: błąd podczas inicjalizacji workera: {exc}")
@@ -109,10 +111,11 @@ class GPWService(QObject):
     finished = Signal()
     stop_requested = Signal()
 
-    def __init__(self, entry_repo: EntryRepository) -> None:
+    def __init__(self, entry_repo: EntryRepository, worker_status: WorkerStatus) -> None:
         super().__init__()
 
         self.entry_repo = entry_repo
+        self.worker_status = worker_status
         self._thread: QThread | None = None
         self.worker: GPWWorker | None = None
 
@@ -124,7 +127,7 @@ class GPWService(QObject):
         self.log.emit("Uruchamiam automatyczne pobieranie PAP")
 
         self._thread = QThread()
-        self.worker = GPWWorker(self.entry_repo)
+        self.worker = GPWWorker(self.entry_repo, self.worker_status)
 
         self.worker.moveToThread(self._thread)
         self.stop_requested.connect(self.worker.stop)

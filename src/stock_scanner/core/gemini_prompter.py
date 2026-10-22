@@ -22,13 +22,13 @@ class GeminiPrompter:
     def restart(self) -> None:
         logger.info("Restartowanie sesji Gemini...")
         self.session.close()
-        self.session.start(self.URL, headless=True, context=False)
+        self.session.start(self.URL, headless=False, context=False)
         self._handle_cookie_banner()
         self._wait_for_prompt_input()
 
     def start(self) -> None:
         logger.info("Start sesji gemini")
-        self.session.start(self.URL, headless=True, context=False)
+        self.session.start(self.URL, headless=False, context=False)
         self._handle_cookie_banner()
         self._wait_for_prompt_input()
 
