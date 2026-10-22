@@ -11,12 +11,12 @@ from src.stock_scanner.core.paths import configure_environment, configure_loggin
 from src.stock_scanner.download.database import Database
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository
 from src.stock_scanner.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
-from src.stock_scanner.telegram import TelegramBot
 from src.stock_scanner.ui.windows.main_window import MainWindow
-from src.stock_scanner.ui.workers.gpw_worker import GPWService
-from src.stock_scanner.ui.workers.llm_worker import LLMService
-from src.stock_scanner.ui.workers.page_scraper_worker import ContentScrapeService
-from src.stock_scanner.ui.workers.worker_status import WorkerStatus
+from src.stock_scanner.workers.gpw_worker import GPWService
+from src.stock_scanner.workers.llm_worker import LLMService
+from src.stock_scanner.workers.page_scraper_worker import ContentScrapeService
+from src.stock_scanner.workers.telegram import TelegramBot
+from src.stock_scanner.workers.worker_status import WorkerStatus
 
 NORMAL_EXIT_CODE = 42
 

@@ -4,10 +4,10 @@ from datetime import datetime
 
 from PySide6.QtCore import QObject, QThread, Signal
 
-from src.stock_scanner.scrapers.pap_espi import PapEspiScraper
-from src.stock_scanner.scrapers.playwright import PlaywrightSession
+from src.stock_scanner.playwright.pap_espi_scraper import PapEspiScraper
+from src.stock_scanner.playwright.playwright_session import PlaywrightSession
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository, NewsEntry
-from src.stock_scanner.ui.workers.worker_status import WorkerStatus
+from src.stock_scanner.workers.worker_status import WorkerStatus
 
 logger = logging.getLogger(__name__)
 
@@ -39,13 +39,13 @@ class GPWWorker(QThread):
             self._scrape_and_save()
 
             while not self._stop_event.wait(self.INTERVAL_SECONDS):
+                self.worker_status.update("GPW", datetime.now().strftime("%H:%M:%S"))
                 if self._stop_event.is_set():
                     logger.info("GPW Worker - STOP invoked")
                     break
 
                 self.entry_scraper.refresh_page()
                 self._scrape_and_save()
-                self.worker_status.update("GPW", datetime.now().strftime("%H:%M:%S"))
 
         except Exception as exc:
             logger.exception(f"PAP: błąd podczas inicjalizacji workera: {exc}")

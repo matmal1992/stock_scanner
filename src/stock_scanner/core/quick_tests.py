@@ -3,7 +3,7 @@ import threading
 import traceback
 
 from src.stock_scanner.core.paths import configure_environment
-from src.stock_scanner.scrapers.playwright import PlaywrightSession
+from src.stock_scanner.playwright.playwright_session import PlaywrightSession
 
 logger = logging.getLogger(__name__)
 

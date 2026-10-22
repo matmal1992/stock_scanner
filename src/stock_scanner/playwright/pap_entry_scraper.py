@@ -1,12 +1,12 @@
 import logging
 
-from src.stock_scanner.scrapers.config import Config
-from src.stock_scanner.scrapers.playwright import PlaywrightSession
+from config.playwright_config import Config
+from src.stock_scanner.playwright.playwright_session import PlaywrightSession
 
 logger = logging.getLogger(__name__)
 
 
-class PageContentScraper:
+class PAPEntryContentScraper:
     BASE_URL = "https://espiebi.pap.pl/"
 
     def __init__(self, session: PlaywrightSession) -> None:

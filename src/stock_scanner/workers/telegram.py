@@ -7,7 +7,7 @@ from PySide6.QtCore import QThread
 
 from config.app_config import load_config
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository, NewsEntry
-from src.stock_scanner.ui.workers.worker_status import WorkerStatus
+from src.stock_scanner.workers.worker_status import WorkerStatus
 
 logger = logging.getLogger(__name__)
 
@@ -120,6 +120,8 @@ class TelegramStateBot:
     def update(self, text: str) -> None:
         if text == self.last_text:
             return
+
+        logger.info("Telegram text: %r", text)
 
         result = self._request(
             "editMessageText",

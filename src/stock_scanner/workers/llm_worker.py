@@ -4,20 +4,15 @@ from datetime import datetime
 
 from PySide6.QtCore import QObject, QThread, Signal
 
-from src.stock_scanner.core.gemini_prompter import GeminiPrompter
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository, NewsEntry
-from src.stock_scanner.telegram import TelegramBot
-from src.stock_scanner.ui.workers.worker_status import WorkerStatus
+from src.stock_scanner.strategies.news_tracker.gemini_prompter import GeminiPrompter
+from src.stock_scanner.workers.telegram import TelegramBot
+from src.stock_scanner.workers.worker_status import WorkerStatus
 
 logger = logging.getLogger(__name__)
 
 
 class LLMWorker(QObject):
-    finished = Signal()
-    error = Signal(str)
-    log = Signal(str)
-    result = Signal(NewsEntry)
-
     INTERVAL_SECONDS = 1
 
     def __init__(self, entry_repo: EntryRepository, worker_status: WorkerStatus) -> None:
@@ -26,7 +21,6 @@ class LLMWorker(QObject):
         self.prompter = GeminiPrompter()
         self._stop_event = threading.Event()
         self.worker_status = worker_status
-        self._last_loop: str = ""
 
     def run(self) -> None:
         logger.info("LLM worker started")
@@ -38,6 +32,7 @@ class LLMWorker(QObject):
             return
 
         while not self._stop_event.wait(self.INTERVAL_SECONDS):
+            self.worker_status.update("LLM", datetime.now().strftime("%H:%M:%S"))
             if self._stop_event.is_set():
                 logger.info("LLM Worker - STOP invoked")
                 break
@@ -56,9 +51,8 @@ class LLMWorker(QObject):
                 entry["justification"] = response["justification"]
 
                 TelegramBot.send_alert(entry)
-
+                self.worker_status.update("LLM last processed", datetime.now().strftime("%H:%M:%S"))
                 self.prompter.refresh()
-                self.worker_status.update("LLM", datetime.now().strftime("%H:%M:%S"))
 
             except Exception as exc:
                 logger.exception("LLM exception: %s", exc)
@@ -88,13 +82,8 @@ class LLMWorker(QObject):
         except Exception:
             logger.exception("Błąd podczas zamykania LLM promptera")
 
-        self.finished.emit()
-
 
 class LLMService(QObject):
-    log = Signal(str)
-    error = Signal(str)
-    finished = Signal()
     result = Signal(NewsEntry)
 
     def __init__(self, entry_repo: EntryRepository, worker_status: WorkerStatus) -> None:
@@ -107,18 +96,12 @@ class LLMService(QObject):
 
     def start(self) -> bool:
         if self._thread is not None and self._thread.isRunning():
-            self.log.emit("LLM już działa")
             return False
 
-        self.log.emit("Uruchamiam LLM...")
         self._thread = QThread()
 
         self.worker = LLMWorker(self.entry_repo, self.worker_status)
         self.worker.moveToThread(self._thread)
-        self.worker.log.connect(self.log)
-        self.worker.error.connect(self.error)
-        self.worker.finished.connect(self._thread.quit)
-        self.worker.result.connect(self.result)
 
         self._thread.started.connect(self.worker.run)
         self._thread.finished.connect(self.worker.deleteLater)
@@ -139,5 +122,3 @@ class LLMService(QObject):
     def _on_thread_finished(self) -> None:
         self._thread = None
         self.worker = None
-
-        self.finished.emit()

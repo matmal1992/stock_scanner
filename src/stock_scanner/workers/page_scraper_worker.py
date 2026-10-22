@@ -4,10 +4,10 @@ from datetime import datetime
 
 from PySide6.QtCore import QObject, QThread, Signal
 
-from src.stock_scanner.scrapers.page_content_scraper import PageContentScraper
-from src.stock_scanner.scrapers.playwright import PlaywrightSession
+from src.stock_scanner.playwright.pap_entry_scraper import PAPEntryContentScraper
+from src.stock_scanner.playwright.playwright_session import PlaywrightSession
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository
-from src.stock_scanner.ui.workers.worker_status import WorkerStatus
+from src.stock_scanner.workers.worker_status import WorkerStatus
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ class ScraperWorker(QObject):
     def __init__(self, entry_repo: EntryRepository, worker_status: WorkerStatus) -> None:
         super().__init__()
         self.entry_repo = entry_repo
-        self.page_content_scraper = PageContentScraper(PlaywrightSession())
+        self.page_content_scraper = PAPEntryContentScraper(PlaywrightSession())
         self._stop_event = threading.Event()
         self.worker_status = worker_status
         self._last_loop: str = ""
@@ -34,6 +34,7 @@ class ScraperWorker(QObject):
             self.page_content_scraper.start()
 
             while not self._stop_event.wait(self.INTERVAL_SECONDS):
+                self.worker_status.update("Scraper", datetime.now().strftime("%H:%M:%S"))
                 if self._stop_event.is_set():
                     logger.info("Content Scraper Worker - STOP invoked")
                     break
@@ -46,7 +47,6 @@ class ScraperWorker(QObject):
                 entry = entries[0]
                 content = self.page_content_scraper.scrape_content(entry["link"])
                 self.entry_repo.update_content(entry["id"], content)
-                self.worker_status.update("LLM", datetime.now().strftime("%H:%M:%S"))
 
         except Exception as exc:
             logger.exception(f"Content scraper exception: {exc}")

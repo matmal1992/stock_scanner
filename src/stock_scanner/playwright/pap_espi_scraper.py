@@ -5,8 +5,8 @@ from typing import Optional
 from playwright.sync_api import Locator
 from PySide6.QtCore import QObject
 
-from src.stock_scanner.scrapers.config import Config, has_keywords
-from src.stock_scanner.scrapers.playwright import PlaywrightSession
+from config.playwright_config import Config, has_keywords
+from src.stock_scanner.playwright.playwright_session import PlaywrightSession
 from src.stock_scanner.strategies.news_tracker.entry_repo import NewsEntry
 
 logger = logging.getLogger(__name__)
@@ -29,9 +29,6 @@ class PapEspiScraper(QObject):
         refresh_button = self.session.page.locator("#refreshHomeId a.refreshButton")
         refresh_button.wait_for(state="visible", timeout=Config.page_load_timeout)
         refresh_button.click()
-
-        # refresh_datetime = self.session.page.locator("#refreshHomeId .refreshDateTime").inner_text().strip()
-        # logger.info("PAP: dane pobrano: %s", refresh_datetime)
 
     def scrape_entries(self) -> list[NewsEntry]:
         day_blocks = self.session.page.locator(".view-report-listing div.day")

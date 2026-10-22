@@ -2,8 +2,8 @@ import json
 import logging
 import time
 
-from src.stock_scanner.scrapers.config import Config
-from src.stock_scanner.scrapers.playwright import PlaywrightSession
+from config.playwright_config import Config
+from src.stock_scanner.playwright.playwright_session import PlaywrightSession
 from src.stock_scanner.strategies.news_tracker.entry_repo import LLMResponse, NewsEntry
 
 logger = logging.getLogger(__name__)
@@ -12,7 +12,6 @@ logger = logging.getLogger(__name__)
 # zdefiniować locatory jako zmienne, oraz dodać do nich diagnostykę - screenshoty,
 # aby w razie zmiany gemini, szybko zidentyfikować, który z nich jest nieaktualny
 # Przejrzeć lokatory i dać precyzyjne odniesienia, a nie jeden z kilku
-# Dodatkowo - optymalizacja i zabezpieczenie algorytmu - timeouty itp
 class GeminiPrompter:
     URL = "https://gemini.google.com/"
 
@@ -22,13 +21,13 @@ class GeminiPrompter:
     def restart(self) -> None:
         logger.info("Restartowanie sesji Gemini...")
         self.session.close()
-        self.session.start(self.URL, headless=False, context=False)
+        self.session.start(self.URL, headless=True, context=False)
         self._handle_cookie_banner()
         self._wait_for_prompt_input()
 
     def start(self) -> None:
         logger.info("Start sesji gemini")
-        self.session.start(self.URL, headless=False, context=False)
+        self.session.start(self.URL, headless=True, context=False)
         self._handle_cookie_banner()
         self._wait_for_prompt_input()
 
