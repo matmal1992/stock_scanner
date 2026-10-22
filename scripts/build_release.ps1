@@ -40,6 +40,7 @@ Write-Host "Building Watchdog..." -ForegroundColor Cyan
 
 python -m uv run pyinstaller `
     --onedir `
+    --console `
     --name watchdog `
     --paths "$projectRoot/src" `
     --distpath build/release/dist `

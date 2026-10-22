@@ -66,6 +66,7 @@ class NewsFeedList(QWidget):
         layout = QVBoxLayout()
         layout.addWidget(self.feed_list)
         self.setLayout(layout)
+        self._update_list
 
     def set_items(self, items: Sequence[tuple[dict, int | None]]) -> None:
         self.feed_list.setRowCount(0)

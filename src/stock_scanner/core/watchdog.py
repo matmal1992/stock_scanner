@@ -1,3 +1,4 @@
+import ctypes
 import subprocess
 import sys
 import time
@@ -6,6 +7,12 @@ from pathlib import Path
 from stock_scanner.core.paths import configure_logging, print_paths
 
 NORMAL_EXIT_CODE = 42
+
+
+def minimize_console() -> None:
+    hwnd = ctypes.windll.kernel32.GetConsoleWindow()
+    if hwnd:
+        ctypes.windll.user32.ShowWindow(hwnd, 6)
 
 
 def main() -> None:
@@ -34,6 +41,7 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    minimize_console()
     configure_logging()
     print_paths()
     main()

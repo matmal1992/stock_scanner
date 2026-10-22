@@ -1,6 +1,5 @@
 import logging
 
-# import threading
 from src.stock_scanner.scrapers.config import Config
 from src.stock_scanner.scrapers.playwright import PlaywrightSession
 
