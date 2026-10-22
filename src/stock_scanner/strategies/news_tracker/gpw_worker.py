@@ -1,5 +1,6 @@
 import logging
 import threading
+from datetime import datetime
 
 from PySide6.QtCore import QObject, QThread, Signal
 
@@ -10,7 +11,7 @@ from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository
 logger = logging.getLogger(__name__)
 
 
-class GPWWorker(QObject):
+class GPWWorker(QThread):
     result = Signal(bool)
     error = Signal(str)
     log = Signal(str)
@@ -23,6 +24,7 @@ class GPWWorker(QObject):
         self.entry_repo = entry_repo
         self.entry_scraper: PapEspiScraper | None = None
         self._stop_event = threading.Event()
+        self._last_loop: str = ""
 
     def run(self) -> None:
         try:
@@ -41,6 +43,7 @@ class GPWWorker(QObject):
 
                 self.entry_scraper.refresh_page()
                 self._scrape_and_save()
+                self._last_loop = datetime.now().strftime("%H:%M:%S")
 
         except Exception as exc:
             logger.exception(f"PAP: błąd podczas inicjalizacji workera: {exc}")

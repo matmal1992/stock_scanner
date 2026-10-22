@@ -10,12 +10,10 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.stock_scanner.scrapers.page_scraper_worker import ContentScrapeService
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository, NewsEntry
-from src.stock_scanner.strategies.news_tracker.gpw_worker import GPWService
-from src.stock_scanner.strategies.news_tracker.llm_worker import LLMService
 from src.stock_scanner.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
-from src.stock_scanner.telegram import TelegramBot
+
+# from src.stock_scanner.telegram import TelegramBot
 
 logger = logging.getLogger(__name__)
 
@@ -31,24 +29,7 @@ class NewsFeedList(QWidget):
     def __init__(self, entry_repo: EntryRepository, tracked_repo: TrackedTickerRepository) -> None:
         super().__init__()
         self.entry_repo = entry_repo
-
-        self.gpw = GPWService(entry_repo)
-        self.gpw.result.connect(self.on_gpw_result)
-        self.gpw.log.connect(self.on_gpw_log)
-        self.gpw.error.connect(self.on_gpw_error)
-        self.gpw.finished.connect(self.on_gpw_finished)
-
-        self.llm = LLMService(entry_repo)
-        self.llm.log.connect(self.on_llm_log)
-        self.llm.error.connect(self.on_llm_error)
-        self.llm.finished.connect(self.on_llm_finished)
-        self.llm.result.connect(self.on_llm_result)
-
-        self.content = ContentScrapeService(entry_repo)
-        self.content.log.connect(self.on_content_log)
-        self.content.error.connect(self.on_content_error)
-        self.content.finished.connect(self.on_content_finished)
-        self.content.result.connect(self.on_content_result)
+        self.entry_repo.changed.connect(self._update_list)
 
         self._ids: list[int | None] = []
         self.selected_entry_id: int | None = None
@@ -118,49 +99,3 @@ class NewsFeedList(QWidget):
     def _update_list(self) -> None:
         rows = self.entry_repo.get_all_entries()
         self.set_items(self.format_rows(rows))
-
-    def on_llm_log(self, text: str) -> None:
-        self.notify.emit(text, "neutral")
-
-    def on_llm_error(self, text: str) -> None:
-        logger.error(f"LLM ERROR: {text}")
-        self.notify.emit(text, "error")
-
-    def on_llm_finished(self) -> None:
-        logger.info("Kolejka LLM zakończona")
-        self.notify.emit("Kolejka LLM zakończona", "ok")
-
-    def on_llm_result(self, entry: NewsEntry) -> None:
-        self._update_list()
-        TelegramBot.send_alert(entry)
-
-    def on_gpw_result(self, has_new_entries: bool) -> None:
-        self._update_list()
-
-        if has_new_entries:
-            self.notify.emit("Pobrano nowe komunikaty gpw", "ok")
-        else:
-            self.notify.emit("Brak nowych komunikatów gpw", "neutral")
-
-    def on_gpw_log(self, text: str) -> None:
-        self.notify.emit(text, "neutral")
-
-    def on_gpw_error(self, text: str) -> None:
-        logger.error(f"GPW ERROR: {text}")
-        self.notify.emit(f"Błąd GPW: {text}", "error")
-
-    def on_gpw_finished(self) -> None:
-        self.notify.emit("Pojedyncze pobieranie GPW zakończone", "ok")
-
-    def on_content_result(self) -> None:
-        self._update_list()
-
-    def on_content_log(self, text: str) -> None:
-        self.notify.emit(text, "neutral")
-
-    def on_content_error(self, text: str) -> None:
-        logger.error(f"Content scraper error: {text}")
-        self.notify.emit(f"Content scraper error: {text}", "error")
-
-    def on_content_finished(self) -> None:
-        self.notify.emit("Content scraper zakończone", "ok")

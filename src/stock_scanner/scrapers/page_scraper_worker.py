@@ -1,5 +1,6 @@
 import logging
 import threading
+from datetime import datetime
 
 from PySide6.QtCore import QObject, QThread, Signal
 
@@ -23,6 +24,7 @@ class ScraperWorker(QObject):
         self.entry_repo = entry_repo
         self.page_content_scraper = PageContentScraper(PlaywrightSession())
         self._stop_event = threading.Event()
+        self._last_loop: str = ""
 
     def run(self) -> None:
         try:
@@ -41,8 +43,8 @@ class ScraperWorker(QObject):
 
                 entry = entries[0]
                 content = self.page_content_scraper.scrape_content(entry["link"])
-                logger.debug(f"HTML: {content}")
                 self.entry_repo.update_content(entry["id"], content)
+                self._last_loop = datetime.now().strftime("%H:%M:%S")
 
         except Exception as exc:
             logger.exception(f"Content scraper exception: {exc}")

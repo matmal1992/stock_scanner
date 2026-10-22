@@ -9,7 +9,10 @@ from PySide6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
 from src.stock_scanner.core.paths import configure_environment, configure_logging, get_assets_dir
 from src.stock_scanner.download.database import Database
+from src.stock_scanner.scrapers.page_scraper_worker import ContentScrapeService
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository
+from src.stock_scanner.strategies.news_tracker.gpw_worker import GPWService
+from src.stock_scanner.strategies.news_tracker.llm_worker import LLMService
 from src.stock_scanner.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
 from src.stock_scanner.telegram import TelegramBot
 from src.stock_scanner.ui.windows.main_window import MainWindow
@@ -47,6 +50,10 @@ def main() -> None:
 
     TelegramBot.init(entry_repo)
     TelegramBot.send_message("Telegram alert")
+
+    gpw = GPWService(entry_repo)
+    llm = LLMService(entry_repo)
+    content = ContentScrapeService(entry_repo)
 
     sys.excepthook = handle_exception
 
@@ -91,7 +98,10 @@ def main() -> None:
 
     tray_icon.show()
     window.hide()
-    window.start_news_strategy()
+
+    gpw.start()
+    llm.start()
+    content.start()
 
     try:
         exit_code = app.exec()

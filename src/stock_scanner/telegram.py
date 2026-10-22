@@ -159,7 +159,6 @@ class TelegramStateWorker(QThread):
 
 
 class TelegramBot:
-    entry_repo: EntryRepository | None = None
     telegram_state_worker: TelegramStateWorker
     command_worker: TelegramCommandWorker
 
@@ -169,8 +168,6 @@ class TelegramBot:
         cls.telegram_state_worker.start()
         cls.command_worker = TelegramCommandWorker()
         cls.command_worker.start()
-
-        cls.entry_repo = entry_repo
 
     @classmethod
     def send_alert(cls, entry: NewsEntry) -> None:
@@ -207,7 +204,7 @@ class TelegramBot:
         return f'<a href="{url}">{source}</a> | {published}\n{title}\n{forecast_display} - {justification}'
 
     @classmethod
-    def send_message(self, text: str) -> None:
+    def send_message(cls, text: str) -> None:
         url = f"https://api.telegram.org/bot{alert_chat_token}/sendMessage"
         payload = {
             "chat_id": alert_chat_id,
@@ -233,14 +230,14 @@ class TelegramBot:
             logger.exception("Nie udało się wysłać wiadomości Telegram.")
 
     @classmethod
-    def stop_telegram(self) -> None:
-        if self.telegram_state_worker.isRunning():
-            self.telegram_state_worker.stop()
-            self.telegram_state_worker.wait()
+    def stop_telegram(cls) -> None:
+        if cls.telegram_state_worker.isRunning():
+            cls.telegram_state_worker.stop()
+            cls.telegram_state_worker.wait()
 
-        if self.command_worker.isRunning():
-            self.command_worker.stop()
-            self.command_worker.wait()
+        if cls.command_worker.isRunning():
+            cls.command_worker.stop()
+            cls.command_worker.wait()
 
 
 # diagnostyka: stan aplikacji: ilosc pending, finished, skipped, wszystkich, errorow

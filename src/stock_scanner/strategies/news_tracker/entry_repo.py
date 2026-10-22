@@ -1,6 +1,8 @@
 import logging
 from typing import Any, TypedDict
 
+from PySide6.QtCore import QObject, Signal
+
 from src.stock_scanner.download.database import Database
 
 logger = logging.getLogger(__name__)
@@ -24,8 +26,11 @@ class LLMResponse(TypedDict):
     justification: str
 
 
-class EntryRepository:
+class EntryRepository(QObject):
+    changed = Signal()
+
     def __init__(self, db: Database):
+        super().__init__()
         self.db = db
 
     def save(self, entry: NewsEntry) -> bool:
@@ -50,7 +55,12 @@ class EntryRepository:
                         entry["content"],
                     ),
                 )
-                return cursor.rowcount > 0
+                if cursor.rowcount > 0:
+                    self.changed.emit()
+                    return True
+
+                return False
+
         except Exception:
             logger.exception("Save failed")
             return False
@@ -110,8 +120,11 @@ class EntryRepository:
                         entry_id,
                     ),
                 )
+                if cur.rowcount > 0:
+                    self.changed.emit()
+                    return True
 
-            return cur.rowcount > 0
+                return False
 
         except Exception:
             logger.exception("DB ERROR podczas aktualizacji LLM dla entry %s", entry_id)
@@ -133,7 +146,10 @@ class EntryRepository:
 
     def clear_all(self) -> None:
         with self.db.connect() as conn:
-            conn.execute("DELETE FROM entries")
+            cursor = conn.execute("DELETE FROM entries")
+
+        if cursor.rowcount > 0:
+            self.changed.emit()
 
     def get_last_pending(self) -> NewsEntry | None:
         with self.db.connect() as conn:
@@ -199,7 +215,11 @@ class EntryRepository:
                     (content, entry_id),
                 )
 
-            return cur.rowcount > 0
+            if cur.rowcount > 0:
+                self.changed.emit()
+                return True
+
+            return False
 
         except Exception:
             logger.exception(

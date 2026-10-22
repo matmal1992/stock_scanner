@@ -15,7 +15,7 @@ class PageContentScraper:
 
     def start(self) -> None:
         logger.info("Start content scrapera wywołany")
-        self.session.start(self.BASE_URL, headless=False)
+        self.session.start(self.BASE_URL, headless=True)
 
     def close(self) -> None:
         self.session.close()

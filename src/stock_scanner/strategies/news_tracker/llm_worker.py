@@ -1,10 +1,12 @@
 import logging
 import threading
+from datetime import datetime
 
 from PySide6.QtCore import QObject, QThread, Signal
 
 from src.stock_scanner.core.gemini_prompter import GeminiPrompter
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository, NewsEntry
+from src.stock_scanner.telegram import TelegramBot
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +24,7 @@ class LLMWorker(QObject):
         self.entry_repo = entry_repo
         self.prompter = GeminiPrompter()
         self._stop_event = threading.Event()
+        self._last_loop: str = ""
 
     def run(self) -> None:
         logger.info("LLM worker started")
@@ -50,9 +53,12 @@ class LLMWorker(QObject):
                 entry["llm"] = response["forecast"]
                 entry["justification"] = response["justification"]
 
-                self.result.emit(dict(entry))
+                TelegramBot.send_alert(entry)
+
+                # self.result.emit(dict(entry))
 
                 self.prompter.refresh()
+                self._last_loop = datetime.now().strftime("%H:%M:%S")
 
             except Exception as exc:
                 logger.exception("LLM exception: %s", exc)
