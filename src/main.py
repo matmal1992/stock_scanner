@@ -1,7 +1,5 @@
-import logging
 import sys
 import traceback
-from pathlib import Path
 from types import TracebackType
 from typing import Type
 
@@ -9,34 +7,18 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction, QIcon
 from PySide6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
-from src.stock_scanner.core.paths import (
-    application_dir,
-    configure_environment,
-    configure_logging,
-    get_assets_dir,
-)
-from src.stock_scanner.core.telegram import send_telegram_alert
-from src.stock_scanner.download.database import Database
+from src.stock_scanner.core.database import Database
+from src.stock_scanner.core.paths import configure_environment, configure_logging, get_assets_dir
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository
 from src.stock_scanner.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
 from src.stock_scanner.ui.windows.main_window import MainWindow
+from src.stock_scanner.workers.gpw_worker import GPWService
+from src.stock_scanner.workers.llm_worker import LLMService
+from src.stock_scanner.workers.page_scraper_worker import ContentScrapeService
+from src.stock_scanner.workers.telegram import TelegramBot
+from src.stock_scanner.workers.worker_status import WorkerStatus
 
 NORMAL_EXIT_CODE = 42
-LOGS_DIR = Path(application_dir() / "logs")
-CRASH_DUMPS_DIR = LOGS_DIR / "dumps"
-
-
-def setup_file_logger() -> None:
-    """Dodatkowa obsługa zapisu wyjątków do dedykowanego pliku logów crashy."""
-    LOGS_DIR.mkdir(parents=True, exist_ok=True)
-    crash_log_file = LOGS_DIR / "crash_history.log"
-    handler = logging.FileHandler(crash_log_file, encoding="utf-8")
-    formatter = logging.Formatter("[%(asctime)s] %(levelname)s - %(message)s")
-    handler.setFormatter(formatter)
-
-    logger = logging.getLogger("CrashLogger")
-    logger.setLevel(logging.ERROR)
-    logger.addHandler(handler)
 
 
 def handle_exception(
@@ -46,37 +28,37 @@ def handle_exception(
         sys.__excepthook__(exc_type, exc_value, exc_traceback)
         return
 
-    tb_text = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback))
-
-    crash_logger = logging.getLogger("CrashLogger")
-    crash_logger.error(f"Nieobsłużony wyjątek Python:\n{tb_text}")
-
     traceback.print_exception(exc_type, exc_value, exc_traceback)
 
     try:
-        send_telegram_alert(
-            f"""💥 **Stock Scanner Crash (Python Exception)**:\n```{exc_value}```\n
-            Zobacz plik logów po więcej szczegółów."""
-        )
+        TelegramBot().send_message(f"""💥 **Stock Scanner Crash (Python Exception)**:\n```{exc_value}```""")
     except Exception:
         traceback.print_exc()
 
 
 def main() -> None:
-    setup_file_logger()
-    sys.excepthook = handle_exception
-
     configure_logging()
     configure_environment()
-    send_telegram_alert("🟢 Stock Scanner uruchomiony.")
 
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)
 
     db = Database()
     db.init_db()
+
     entry_repo = EntryRepository(db)
     tracked_repo = TrackedTickerRepository(db)
+    worker_status = WorkerStatus()
+
+    TelegramBot.init(entry_repo, worker_status)
+    TelegramBot.send_message("Telegram alert")
+
+    gpw = GPWService(entry_repo, worker_status)
+    llm = LLMService(entry_repo, worker_status)
+    content = ContentScrapeService(entry_repo, worker_status)
+
+    sys.excepthook = handle_exception
+
     window = MainWindow(entry_repo, tracked_repo)
     window.setWindowFlag(Qt.WindowType.Tool, True)
 
@@ -105,6 +87,7 @@ def main() -> None:
 
     def quit_application() -> None:
         tray_icon.hide()
+        TelegramBot.stop_telegram()
         app.exit(NORMAL_EXIT_CODE)
 
     show_action.triggered.connect(show_window)
@@ -117,7 +100,10 @@ def main() -> None:
 
     tray_icon.show()
     window.hide()
-    window.start_news_strategy()
+
+    gpw.start()
+    llm.start()
+    content.start()
 
     try:
         exit_code = app.exec()

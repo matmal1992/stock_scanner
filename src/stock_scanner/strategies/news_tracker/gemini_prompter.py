@@ -2,8 +2,9 @@ import json
 import logging
 import time
 
-from src.stock_scanner.scrapers.playwright import PlaywrightSession
-from src.stock_scanner.strategies.news_tracker.entry_repo import LLMResponse
+from config.playwright_config import Config
+from src.stock_scanner.playwright.playwright_session import PlaywrightSession
+from src.stock_scanner.strategies.news_tracker.entry_repo import LLMResponse, NewsEntry
 
 logger = logging.getLogger(__name__)
 
@@ -11,20 +12,8 @@ logger = logging.getLogger(__name__)
 # zdefiniować locatory jako zmienne, oraz dodać do nich diagnostykę - screenshoty,
 # aby w razie zmiany gemini, szybko zidentyfikować, który z nich jest nieaktualny
 # Przejrzeć lokatory i dać precyzyjne odniesienia, a nie jeden z kilku
-# Dodatkowo - optymalizacja i zabezpieczenie algorytmu - timeouty itp
 class GeminiPrompter:
     URL = "https://gemini.google.com/"
-
-    PAGE_LOAD_TIMEOUT = 15_000
-    PROMPT_TIMEOUT = 30_000
-
-    VALID_FORECASTS = {
-        "Silny spadek",
-        "Spadek",
-        "Neutralny",
-        "Wzrost",
-        "Silny wzrost",
-    }
 
     def __init__(self) -> None:
         self.session = PlaywrightSession()
@@ -32,43 +21,40 @@ class GeminiPrompter:
     def restart(self) -> None:
         logger.info("Restartowanie sesji Gemini...")
         self.session.close()
-        self.session.start(self.URL, headless=False, context=True)
+        self.session.start(self.URL, headless=True, context=False)
         self._handle_cookie_banner()
         self._wait_for_prompt_input()
 
     def start(self) -> None:
-        self.session.start(self.URL, headless=False, context=True)
+        logger.info("Start sesji gemini")
+        self.session.start(self.URL, headless=True, context=False)
         self._handle_cookie_banner()
         self._wait_for_prompt_input()
 
-    def send_prompt(self, prompt: str) -> LLMResponse:
+    def send_prompt(self, prompt: str) -> None:
         prompt_input = self.session.page.locator("#prompt-textarea, div[contenteditable='true']").first
-        prompt_input.wait_for(state="visible", timeout=self.PROMPT_TIMEOUT)
+        prompt_input.wait_for(state="visible", timeout=Config.prompt_timeout)
         prompt_input.click()
-        prompt_input.fill(prompt)
+        prompt_input.fill(prompt, timeout=Config.page_load_timeout)
         prompt_input.press("Enter")
-
-        stable_response = self._wait_for_stable_response()
-        parsed_response = self._parse_response(stable_response)
-
-        return parsed_response
 
     def _wait_for_prompt_input(self) -> None:
         prompt_input = self.session.page.locator("#prompt-textarea, div[contenteditable='true']").first
-        prompt_input.wait_for(state="visible", timeout=self.PAGE_LOAD_TIMEOUT)
+        prompt_input.wait_for(state="visible", timeout=Config.page_load_timeout)
 
     def refresh(self) -> None:
-        self.session.page.goto(self.URL)
+        self.session.page.goto(
+            self.URL,
+            timeout=Config.page_load_timeout,
+            wait_until="domcontentloaded",
+        )
 
         try:
             self._handle_cookie_banner()
             self._wait_for_prompt_input()
 
         except Exception as exc:
-            logger.warning(
-                "Gemini: strona została odświeżona, ale interfejs nie jest gotowy: %s",
-                exc,
-            )
+            logger.warning("Gemini: błąd cookie albo input niegotowy: %s", exc)
 
     def screenshot(self, name: str) -> None:
         self.session.screenshot(name)
@@ -88,12 +74,12 @@ class GeminiPrompter:
             logger.debug("Baner cookies nie został wykryty.")
 
     def _wait_for_stable_response(self) -> str:
-        deadline = time.monotonic() + self.PROMPT_TIMEOUT
+        deadline = time.monotonic() + Config.prompt_timeout
 
         response = self.session.page.locator("message-content .markdown").last
 
         try:
-            response.wait_for(state="visible", timeout=self.PROMPT_TIMEOUT)
+            response.wait_for(state="visible", timeout=Config.prompt_timeout)
         except TimeoutError as exc:
             raise TimeoutError("Gemini nie utworzył elementu odpowiedzi w wyznaczonym czasie.") from exc
 
@@ -105,6 +91,7 @@ class GeminiPrompter:
             is_valid, validation_error = self._validate_response(last_text)
 
             if is_valid:
+                self.session.page.wait_for_timeout(500)
                 return last_text
 
             last_validation_error = validation_error
@@ -132,7 +119,7 @@ class GeminiPrompter:
         if set(parsed) != {"forecast", "justification"}:
             return False, "JSON ma nieprawidłowy zestaw pól"
 
-        if parsed["forecast"] not in cls.VALID_FORECASTS:
+        if parsed["forecast"] not in Config.valid_forecasts:
             return False, "nieprawidłowa wartość forecast"
 
         if not isinstance(parsed["justification"], str):
@@ -153,3 +140,14 @@ class GeminiPrompter:
             "forecast": forecast,
             "justification": justification,
         }
+
+    def process_entry(self, entry: NewsEntry) -> LLMResponse:
+        content = entry["content"]
+
+        full_prompt = f"{Config.gpw_prompt} \nFragment html do analizy: {content}"
+        self.send_prompt(full_prompt)
+
+        stable_response = self._wait_for_stable_response()
+        parsed_response = self._parse_response(stable_response)
+
+        return parsed_response

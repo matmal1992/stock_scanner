@@ -3,20 +3,14 @@ from typing import Sequence
 
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
-    QHBoxLayout,
     QHeaderView,
-    QPushButton,
     QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
     QWidget,
 )
 
-from src.stock_scanner.core.telegram import send_telegram_message
-from src.stock_scanner.core.utils import get_actual_time
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository, NewsEntry
-from src.stock_scanner.strategies.news_tracker.gpw_worker import GPWService
-from src.stock_scanner.strategies.news_tracker.llm_worker import LLMService
 from src.stock_scanner.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
 
 logger = logging.getLogger(__name__)
@@ -33,18 +27,7 @@ class NewsFeedList(QWidget):
     def __init__(self, entry_repo: EntryRepository, tracked_repo: TrackedTickerRepository) -> None:
         super().__init__()
         self.entry_repo = entry_repo
-
-        self.gpw = GPWService(entry_repo)
-        self.gpw.result.connect(self.on_gpw_result)
-        self.gpw.log.connect(self.on_gpw_log)
-        self.gpw.error.connect(self.on_gpw_error)
-        self.gpw.finished.connect(self.on_gpw_finished)
-
-        self.llm = LLMService(entry_repo)
-        self.llm.log.connect(self.on_llm_log)
-        self.llm.error.connect(self.on_llm_error)
-        self.llm.finished.connect(self.on_llm_finished)
-        self.llm.result.connect(self.on_llm_result)
+        self.entry_repo.changed.connect(self._update_list)
 
         self._ids: list[int | None] = []
         self.selected_entry_id: int | None = None
@@ -73,25 +56,15 @@ class NewsFeedList(QWidget):
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.Fixed)
         header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
         header.setSectionResizeMode(3, QHeaderView.ResizeMode.Fixed)
-        header.setSectionResizeMode(4, QHeaderView.ResizeMode.Fixed)
         self.feed_list.setColumnWidth(0, 120)
         self.feed_list.setColumnWidth(1, 80)
+        self.feed_list.setColumnWidth(2, 90)
         self.feed_list.setColumnWidth(3, 90)
-        self.feed_list.setColumnWidth(4, 90)
-
-        self.load_data_btn = QPushButton("Load data")
-        self.clear_database_btn = QPushButton("Clear database")
-
-        self.load_data_btn.clicked.connect(self._update_list)
-
-        test_buttons_box = QHBoxLayout()
-        test_buttons_box.addWidget(self.load_data_btn)
 
         layout = QVBoxLayout()
-        layout.addLayout(test_buttons_box)
         layout.addWidget(self.feed_list)
-
         self.setLayout(layout)
+        self._update_list
 
     def set_items(self, items: Sequence[tuple[dict, int | None]]) -> None:
         self.feed_list.setRowCount(0)
@@ -125,37 +98,3 @@ class NewsFeedList(QWidget):
     def _update_list(self) -> None:
         rows = self.entry_repo.get_all_entries()
         self.set_items(self.format_rows(rows))
-
-    def on_llm_log(self, text: str) -> None:
-        self.notify.emit(text, "neutral")
-
-    def on_llm_error(self, text: str) -> None:
-        logger.error(f"{get_actual_time()} - LLM ERROR: {text}")
-        self.notify.emit(text, "error")
-
-    def on_llm_finished(self) -> None:
-        logger.info(f"{get_actual_time()} - Kolejka LLM zakończona")
-        self.notify.emit("Kolejka LLM zakończona", "ok")
-
-    def on_llm_result(self, entry: NewsEntry) -> None:
-        self._update_list()
-        send_telegram_message(entry)
-
-    def on_gpw_result(self, has_new_entries: bool) -> None:
-        self._update_list()
-
-        if has_new_entries:
-            self.notify.emit("Pobrano nowe komunikaty gpw", "ok")
-            self.llm.wake()
-        else:
-            self.notify.emit("Brak nowych komunikatów gpw", "neutral")
-
-    def on_gpw_log(self, text: str) -> None:
-        self.notify.emit(text, "neutral")
-
-    def on_gpw_error(self, text: str) -> None:
-        logger.error(f"{get_actual_time()} - GPW ERROR: {text}")
-        self.notify.emit(f"{get_actual_time()} Błąd GPW: {text}", "error")
-
-    def on_gpw_finished(self) -> None:
-        self.notify.emit("Pojedyncze pobieranie GPW zakończone", "ok")
