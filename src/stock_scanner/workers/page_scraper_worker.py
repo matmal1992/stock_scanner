@@ -1,6 +1,5 @@
 import logging
 import threading
-from datetime import datetime
 
 from PySide6.QtCore import QObject, QThread, Signal
 
@@ -33,7 +32,7 @@ class ScraperWorker(QObject):
             self.page_content_scraper.start()
 
             while not self._stop_event.wait(self.INTERVAL_SECONDS):
-                self.worker_status.update("Scraper", datetime.now().strftime("%H:%M:%S"))
+                self.worker_status.update("GPW entry scraper", "Loop")
                 if self._stop_event.is_set():
                     logger.info("Content Scraper Worker - STOP invoked")
                     break
@@ -46,6 +45,7 @@ class ScraperWorker(QObject):
                 entry = entries[0]
                 content = self.page_content_scraper.scrape_content(entry["link"])
                 self.entry_repo.update_content(entry["id"], content)
+                self.worker_status.update("GPW entry scraper", "Last scrape")
 
         except Exception as exc:
             logger.exception(f"Content scraper exception: {exc}")

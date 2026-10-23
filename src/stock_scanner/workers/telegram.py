@@ -148,15 +148,10 @@ class TelegramStateWorker(QThread):
     def run(self) -> None:
         while self._running:
             try:
-                # pending = self.entry_repo.get_pending_number()
-                statuses = self.worker_status.snapshot()
                 last_update = datetime.now().strftime("%H:%M:%S")
-                lines = [f"Last update: {last_update}\n"]
+                text = self.worker_status.format_message(last_update)
 
-                for worker, status in statuses.items():
-                    lines.append(f"{worker}: {status}")
-
-                self.bot.update("\n".join(lines))
+                self.bot.update(text)
 
             except Exception:
                 logger.exception("Błąd aktualizacji Scanner State")

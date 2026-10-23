@@ -1,6 +1,5 @@
 import logging
 import threading
-from datetime import datetime
 
 from PySide6.QtCore import QObject, QThread, Signal
 
@@ -30,8 +29,6 @@ class GPWWorker(QThread):
 
     def run(self) -> None:
         try:
-            logger.info("PAP: start wątku %s", threading.current_thread().name)
-
             self.entry_scraper = PapEspiScraper(PlaywrightSession())
             self.entry_scraper.start()
 
@@ -39,7 +36,7 @@ class GPWWorker(QThread):
             self._scrape_and_save()
 
             while not self._stop_event.wait(self.INTERVAL_SECONDS):
-                self.worker_status.update("GPW", datetime.now().strftime("%H:%M:%S"))
+                self.worker_status.update("GPW", "Loop")
                 if self._stop_event.is_set():
                     logger.info("GPW Worker - STOP invoked")
                     break

@@ -1,6 +1,5 @@
 import logging
 import threading
-from datetime import datetime
 
 from PySide6.QtCore import QObject, QThread, Signal
 
@@ -32,7 +31,10 @@ class LLMWorker(QObject):
             return
 
         while not self._stop_event.wait(self.INTERVAL_SECONDS):
-            self.worker_status.update("LLM", datetime.now().strftime("%H:%M:%S"))
+            total_pending = self.entry_repo.get_pending_number()
+            self.worker_status.update("LLM", "Loop")
+            self.worker_status.update("LLM", "Pending", str(total_pending))
+
             if self._stop_event.is_set():
                 logger.info("LLM Worker - STOP invoked")
                 break
@@ -51,7 +53,7 @@ class LLMWorker(QObject):
                 entry["justification"] = response["justification"]
 
                 TelegramBot.send_alert(entry)
-                self.worker_status.update("LLM last processed", datetime.now().strftime("%H:%M:%S"))
+                self.worker_status.update("LLM", "Last processed")
                 self.prompter.refresh()
 
             except Exception as exc:
