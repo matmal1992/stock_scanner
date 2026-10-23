@@ -26,7 +26,6 @@ class ScraperWorker(QObject):
         self.page_content_scraper = PAPEntryContentScraper(PlaywrightSession())
         self._stop_event = threading.Event()
         self.worker_status = worker_status
-        self._last_loop: str = ""
 
     def run(self) -> None:
         try:

@@ -7,8 +7,8 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction, QIcon
 from PySide6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
+from src.stock_scanner.core.database import Database
 from src.stock_scanner.core.paths import configure_environment, configure_logging, get_assets_dir
-from src.stock_scanner.download.database import Database
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository
 from src.stock_scanner.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
 from src.stock_scanner.ui.windows.main_window import MainWindow

@@ -13,8 +13,6 @@ from PySide6.QtWidgets import (
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository, NewsEntry
 from src.stock_scanner.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
 
-# from src.stock_scanner.telegram import TelegramBot
-
 logger = logging.getLogger(__name__)
 
 # dodać listę spółek z perspektywicznych sektorów: medyczny, obronny, dronowy hitech, kosmiczny...

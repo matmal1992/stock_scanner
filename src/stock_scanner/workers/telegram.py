@@ -2,6 +2,7 @@ import json
 import logging
 import urllib.parse
 import urllib.request
+from datetime import datetime
 
 from PySide6.QtCore import QThread
 
@@ -147,9 +148,10 @@ class TelegramStateWorker(QThread):
     def run(self) -> None:
         while self._running:
             try:
-                pending = self.entry_repo.get_pending_number()
+                # pending = self.entry_repo.get_pending_number()
                 statuses = self.worker_status.snapshot()
-                lines = [f"Pending: {pending}\n"]
+                last_update = datetime.now().strftime("%H:%M:%S")
+                lines = [f"Last update: {last_update}\n"]
 
                 for worker, status in statuses.items():
                     lines.append(f"{worker}: {status}")
@@ -253,7 +255,6 @@ class TelegramBot:
 
 # diagnostyka: stan aplikacji: ilosc pending, finished, skipped, wszystkich, errorow
 # screeny z exceptionow
-# stan workerow
 # data i godzina ostatniego scrapowania espi, ostatniego przetworzenia LLM
 # exception w formie traceback
 # osobny kanał dla alertów, osobny dla logów, osobny dla debugowania

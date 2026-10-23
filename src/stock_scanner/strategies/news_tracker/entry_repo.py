@@ -3,7 +3,7 @@ from typing import Any, TypedDict
 
 from PySide6.QtCore import QObject, Signal
 
-from src.stock_scanner.download.database import Database
+from src.stock_scanner.core.database import Database
 
 logger = logging.getLogger(__name__)
 

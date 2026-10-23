@@ -19,8 +19,6 @@ class NewsTrackerWindow(QWidget):
         self.notifications = StatusLabel(text="No notifications")
         self.tracked_tickers = TrackedTickersList(tracked_repo)
         self.news_feed = NewsFeedList(entry_repo, tracked_repo)
-        self.news_feed.notify.connect(self.on_notify)
-        self.tracked_tickers.notify.connect(self.on_notify)
 
         self.setup_window_layout()
 
@@ -31,11 +29,3 @@ class NewsTrackerWindow(QWidget):
         self.content_layout.addWidget(self.tracked_tickers)
         self.content_layout.addWidget(self.news_feed, stretch=1)
         self.content_layout.addWidget(self.notifications)
-
-    def on_notify(self, text: str, level: str) -> None:
-        if level == "ok":
-            self.notifications.set_ok(text)
-        elif level == "error":
-            self.notifications.set_error(text)
-        else:
-            self.notifications.setText(text)
