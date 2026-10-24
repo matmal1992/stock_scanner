@@ -19,12 +19,11 @@ class GPWWorker(QThread):
 
     INTERVAL_SECONDS = 5
 
-    def __init__(self, entry_repo: EntryRepository, worker_status: WorkerStatus) -> None:
+    def __init__(self, entry_repo: EntryRepository) -> None:
         super().__init__()
         self.entry_repo = entry_repo
         self.entry_scraper: PapEspiScraper | None = None
         self._stop_event = threading.Event()
-        self.worker_status = worker_status
         self._last_loop: str = ""
 
     def run(self) -> None:
@@ -36,7 +35,7 @@ class GPWWorker(QThread):
             self._scrape_and_save()
 
             while not self._stop_event.wait(self.INTERVAL_SECONDS):
-                self.worker_status.update("GPW", "Loop")
+                WorkerStatus.update("GPW", "Loop")
                 if self._stop_event.is_set():
                     logger.info("GPW Worker - STOP invoked")
                     break
@@ -108,11 +107,10 @@ class GPWService(QObject):
     finished = Signal()
     stop_requested = Signal()
 
-    def __init__(self, entry_repo: EntryRepository, worker_status: WorkerStatus) -> None:
+    def __init__(self, entry_repo: EntryRepository) -> None:
         super().__init__()
 
         self.entry_repo = entry_repo
-        self.worker_status = worker_status
         self._thread: QThread | None = None
         self.worker: GPWWorker | None = None
 
@@ -124,7 +122,7 @@ class GPWService(QObject):
         self.log.emit("Uruchamiam automatyczne pobieranie PAP")
 
         self._thread = QThread()
-        self.worker = GPWWorker(self.entry_repo, self.worker_status)
+        self.worker = GPWWorker(self.entry_repo)
 
         self.worker.moveToThread(self._thread)
         self.stop_requested.connect(self.worker.stop)

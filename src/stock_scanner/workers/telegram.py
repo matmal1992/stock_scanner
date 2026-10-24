@@ -138,10 +138,10 @@ class TelegramStateBot:
 
 
 class TelegramStateWorker(QThread):
-    def __init__(self, entry_repo: EntryRepository, worker_status: WorkerStatus) -> None:
+    def __init__(self, entry_repo: EntryRepository) -> None:
         super().__init__()
         self.entry_repo = entry_repo
-        self.worker_status = worker_status
+
         self.bot = TelegramStateBot()
         self._running = True
 
@@ -149,7 +149,7 @@ class TelegramStateWorker(QThread):
         while self._running:
             try:
                 last_update = datetime.now().strftime("%H:%M:%S")
-                text = self.worker_status.format_message(last_update)
+                text = WorkerStatus.format_message(last_update)
 
                 self.bot.update(text)
 
@@ -171,8 +171,8 @@ class TelegramBot:
     command_worker: TelegramCommandWorker
 
     @classmethod
-    def init(cls, entry_repo: EntryRepository, worker_status: WorkerStatus) -> None:
-        cls.telegram_state_worker = TelegramStateWorker(entry_repo, worker_status)
+    def init(cls, entry_repo: EntryRepository) -> None:
+        cls.telegram_state_worker = TelegramStateWorker(entry_repo)
         cls.telegram_state_worker.start()
         cls.command_worker = TelegramCommandWorker()
         cls.command_worker.start()

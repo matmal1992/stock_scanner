@@ -14,12 +14,11 @@ logger = logging.getLogger(__name__)
 class LLMWorker(QObject):
     INTERVAL_SECONDS = 1
 
-    def __init__(self, entry_repo: EntryRepository, worker_status: WorkerStatus) -> None:
+    def __init__(self, entry_repo: EntryRepository) -> None:
         super().__init__()
         self.entry_repo = entry_repo
         self.prompter = GeminiPrompter()
         self._stop_event = threading.Event()
-        self.worker_status = worker_status
 
     def run(self) -> None:
         logger.info("LLM worker started")
@@ -32,8 +31,8 @@ class LLMWorker(QObject):
 
         while not self._stop_event.wait(self.INTERVAL_SECONDS):
             total_pending = self.entry_repo.get_pending_number()
-            self.worker_status.update("LLM", "Loop")
-            self.worker_status.update("LLM", "Pending", str(total_pending))
+            WorkerStatus.update("LLM", "Loop")
+            WorkerStatus.update("LLM", "Pending", str(total_pending))
 
             if self._stop_event.is_set():
                 logger.info("LLM Worker - STOP invoked")
@@ -47,13 +46,17 @@ class LLMWorker(QObject):
 
                 entry = pending[0]
                 response = self.prompter.process_entry(entry)
+                if response is None:
+                    self.prompter.refresh()
+                    continue
+
                 self.entry_repo.update_llm(entry["id"], response)
 
                 entry["llm"] = response["forecast"]
                 entry["justification"] = response["justification"]
 
                 TelegramBot.send_alert(entry)
-                self.worker_status.update("LLM", "Last processed")
+                WorkerStatus.update("LLM", "Last processed")
                 self.prompter.refresh()
 
             except Exception as exc:
@@ -88,11 +91,10 @@ class LLMWorker(QObject):
 class LLMService(QObject):
     result = Signal(NewsEntry)
 
-    def __init__(self, entry_repo: EntryRepository, worker_status: WorkerStatus) -> None:
+    def __init__(self, entry_repo: EntryRepository) -> None:
         super().__init__()
 
         self.entry_repo = entry_repo
-        self.worker_status = worker_status
         self._thread: QThread | None = None
         self.worker: LLMWorker | None = None
 
@@ -102,7 +104,7 @@ class LLMService(QObject):
 
         self._thread = QThread()
 
-        self.worker = LLMWorker(self.entry_repo, self.worker_status)
+        self.worker = LLMWorker(self.entry_repo)
         self.worker.moveToThread(self._thread)
 
         self._thread.started.connect(self.worker.run)

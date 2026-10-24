@@ -48,14 +48,14 @@ def main() -> None:
 
     entry_repo = EntryRepository(db)
     tracked_repo = TrackedTickerRepository(db)
-    worker_status = WorkerStatus()
+    WorkerStatus.init()
 
-    TelegramBot.init(entry_repo, worker_status)
+    TelegramBot.init(entry_repo)
     TelegramBot.send_message("Telegram alert")
 
-    gpw = GPWService(entry_repo, worker_status)
-    llm = LLMService(entry_repo, worker_status)
-    content = ContentScrapeService(entry_repo, worker_status)
+    gpw = GPWService(entry_repo)
+    llm = LLMService(entry_repo)
+    content = ContentScrapeService(entry_repo)
 
     sys.excepthook = handle_exception
 

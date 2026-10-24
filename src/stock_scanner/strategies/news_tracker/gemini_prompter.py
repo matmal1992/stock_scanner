@@ -5,6 +5,7 @@ import time
 from config.playwright_config import Config
 from src.stock_scanner.playwright.playwright_session import PlaywrightSession
 from src.stock_scanner.strategies.news_tracker.entry_repo import LLMResponse, NewsEntry
+from src.stock_scanner.workers.worker_status import WorkerStatus
 
 logger = logging.getLogger(__name__)
 
@@ -73,15 +74,17 @@ class GeminiPrompter:
         except Exception:
             logger.debug("Baner cookies nie został wykryty.")
 
-    def _wait_for_stable_response(self) -> str:
-        deadline = time.monotonic() + Config.prompt_timeout
+    def _wait_for_stable_response(self) -> bool:
+        deadline = time.monotonic() + 60
 
         response = self.session.page.locator("message-content .markdown").last
 
         try:
             response.wait_for(state="visible", timeout=Config.prompt_timeout)
-        except TimeoutError as exc:
-            raise TimeoutError("Gemini nie utworzył elementu odpowiedzi w wyznaczonym czasie.") from exc
+        except TimeoutError:
+            WorkerStatus.update("LLM", "Last error")
+            logger.error("Gemini nie utworzył elementu odpowiedzi w wyznaczonym czasie.")
+            return False
 
         last_text = ""
         last_validation_error = ""
@@ -89,22 +92,35 @@ class GeminiPrompter:
         while time.monotonic() < deadline:
             last_text = response.inner_text().strip()
             is_valid, validation_error = self._validate_response(last_text)
+            is_generating = self._is_generating()
 
-            if is_valid:
-                self.session.page.wait_for_timeout(500)
-                return last_text
+            if is_valid and not is_generating:
+                return True
+
+            if not is_valid and not is_generating:
+                WorkerStatus.update("LLM", "Last error")
+                logger.error("Gemini wygenerował błędną odpowiedź: %r", last_text[:2000])
+                logger.error("Gemini validation_error: %s", last_validation_error)
+                return False
 
             last_validation_error = validation_error
-
             self.session.page.wait_for_timeout(500)
 
-        logger.error("Gemini timeout. Ostatnia odpowiedź: %r", last_text[:2000])
-        logger.error("Gemini timeout. Powód odrzucenia odpowiedzi: %s", last_validation_error)
+        WorkerStatus.update("LLM", "Last error")
+        logger.error("Gemini nie dał odpowiedzi w czasie 60s.")
+        return False
 
-        raise TimeoutError(
-            "Gemini nie zwrócił poprawnego JSON w wyznaczonym czasie. "
-            f"Ostatnia odpowiedź: {last_text[:1000]!r}"
+    def _is_generating(self) -> bool:
+        stop_button = self.session.page.locator(
+            'button[aria-label*="Stop"], button[aria-label*="stop"], button[data-test-id*="stop"]'
         )
+
+        try:
+            return any(stop_button.nth(i).is_visible() for i in range(stop_button.count()))
+        except Exception:
+            logger.exception("Gemini: nie udało się ustalić stanu generowania.")
+
+            return True
 
     @classmethod
     def _validate_response(cls, response: str) -> tuple[bool, str]:
@@ -141,13 +157,16 @@ class GeminiPrompter:
             "justification": justification,
         }
 
-    def process_entry(self, entry: NewsEntry) -> LLMResponse:
+    def process_entry(self, entry: NewsEntry) -> LLMResponse | None:
         content = entry["content"]
 
         full_prompt = f"{Config.gpw_prompt} \nFragment html do analizy: {content}"
         self.send_prompt(full_prompt)
 
-        stable_response = self._wait_for_stable_response()
-        parsed_response = self._parse_response(stable_response)
+        if not self._wait_for_stable_response():
+            return None
+
+        response = self.session.page.locator("message-content .markdown").last.inner_text().strip()
+        parsed_response = self._parse_response(response)
 
         return parsed_response

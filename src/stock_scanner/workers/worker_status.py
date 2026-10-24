@@ -8,6 +8,7 @@ class WorkerStatus:
             "Pending",
             "Loop",
             "Last processed",
+            "Last error",
         ],
         "GPW": [
             "Loop",
@@ -19,30 +20,36 @@ class WorkerStatus:
         ],
     }
 
-    def __init__(self) -> None:
-        self._statuses: dict[str, dict[str, str]] = {}
-        self._lock = Lock()
+    _statuses: dict[str, dict[str, str]] = {}
+    _lock = Lock()
+
+    @classmethod
+    def init(cls) -> None:
+        cls._statuses = {}
 
     @staticmethod
     def _now() -> str:
         return datetime.now().strftime("%H:%M:%S")
 
-    def update(self, group: str, field: str, status: str | None = None) -> None:
+    @classmethod
+    def update(cls, group: str, field: str, status: str | None = None) -> None:
         if status is None:
-            status = self._now()
+            status = cls._now()
 
-        with self._lock:
-            self._statuses.setdefault(group, {})[field] = status
+        with cls._lock:
+            cls._statuses.setdefault(group, {})[field] = status
 
-    def snapshot(self) -> dict[str, dict[str, str]]:
-        with self._lock:
-            return {group: fields.copy() for group, fields in self._statuses.items()}
+    @classmethod
+    def snapshot(cls) -> dict[str, dict[str, str]]:
+        with cls._lock:
+            return {group: fields.copy() for group, fields in cls._statuses.items()}
 
-    def format_message(self, last_update: str) -> str:
-        statuses = self.snapshot()
+    @classmethod
+    def format_message(cls, last_update: str) -> str:
+        statuses = cls.snapshot()
         sections = [f"Stock Scanner\nLast update: {last_update}"]
 
-        for group, field_order in self.FIELD_ORDER.items():
+        for group, field_order in cls.FIELD_ORDER.items():
             fields = statuses.get(group, {})
 
             if not fields:

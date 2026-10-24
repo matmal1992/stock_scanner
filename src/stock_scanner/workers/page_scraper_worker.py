@@ -19,12 +19,11 @@ class ScraperWorker(QObject):
 
     INTERVAL_SECONDS = 1
 
-    def __init__(self, entry_repo: EntryRepository, worker_status: WorkerStatus) -> None:
+    def __init__(self, entry_repo: EntryRepository) -> None:
         super().__init__()
         self.entry_repo = entry_repo
         self.page_content_scraper = PAPEntryContentScraper(PlaywrightSession())
         self._stop_event = threading.Event()
-        self.worker_status = worker_status
 
     def run(self) -> None:
         try:
@@ -32,7 +31,7 @@ class ScraperWorker(QObject):
             self.page_content_scraper.start()
 
             while not self._stop_event.wait(self.INTERVAL_SECONDS):
-                self.worker_status.update("GPW entry scraper", "Loop")
+                WorkerStatus.update("GPW entry scraper", "Loop")
                 if self._stop_event.is_set():
                     logger.info("Content Scraper Worker - STOP invoked")
                     break
@@ -45,7 +44,7 @@ class ScraperWorker(QObject):
                 entry = entries[0]
                 content = self.page_content_scraper.scrape_content(entry["link"])
                 self.entry_repo.update_content(entry["id"], content)
-                self.worker_status.update("GPW entry scraper", "Last scrape")
+                WorkerStatus.update("GPW entry scraper", "Last scrape")
 
         except Exception as exc:
             logger.exception(f"Content scraper exception: {exc}")
@@ -70,11 +69,10 @@ class ContentScrapeService(QObject):
     log = Signal(str)
     finished = Signal()
 
-    def __init__(self, entry_repo: EntryRepository, worker_status: WorkerStatus) -> None:
+    def __init__(self, entry_repo: EntryRepository) -> None:
         super().__init__()
 
         self.entry_repo = entry_repo
-        self.worker_status = worker_status
         self._thread: QThread | None = None
         self.worker: ScraperWorker | None = None
 
@@ -86,7 +84,7 @@ class ContentScrapeService(QObject):
         self.log.emit("Uruchamiam content scrape worker")
         self._thread = QThread()
 
-        self.worker = ScraperWorker(self.entry_repo, self.worker_status)
+        self.worker = ScraperWorker(self.entry_repo)
         self.worker.moveToThread(self._thread)
         self.worker.log.connect(self.log)
         self.worker.error.connect(self._on_worker_error)
