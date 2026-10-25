@@ -15,8 +15,10 @@ logger = logging.getLogger(__name__)
 config = load_config()
 alert_chat_token = config.get("alert_chat_token")
 state_chat_token = config.get("state_chat_token")
+debug_chat_token = config.get("debug_chat_token")
 alert_chat_id = config.get("alert_chat_id")
 state_chat_id = config.get("state_chat_id")
+debug_chat_id = config.get("debug_chat_id")
 state_chat_pinned_message_id = config.get("state_chat_pinned_message_id")
 
 
@@ -27,7 +29,7 @@ class TelegramCommandWorker(QThread):
         self._offset: int | None = None
 
     def _request(self, method: str, payload: dict) -> dict | None:
-        url = f"https://api.telegram.org/bot{state_chat_token}/{method}"
+        url = f"https://api.telegram.org/bot{debug_chat_token}/{method}"
         data = urllib.parse.urlencode(payload).encode("utf-8")
         request = urllib.request.Request(url, data=data)
 
@@ -50,7 +52,7 @@ class TelegramCommandWorker(QThread):
         self._request(
             "sendMessage",
             {
-                "chat_id": state_chat_id,
+                "chat_id": debug_chat_id,
                 "text": text,
             },
         )
@@ -79,7 +81,7 @@ class TelegramCommandWorker(QThread):
                 message = update.get("message", {})
                 chat = message.get("chat", {})
 
-                if str(chat.get("id")) != state_chat_id:
+                if str(chat.get("id")) != debug_chat_id:
                     continue
 
                 text = message.get("text", "")
@@ -90,10 +92,52 @@ class TelegramCommandWorker(QThread):
                     logger.info("Received Telegram test command")
                     self._send_reply("test command received")
 
+                # if text.strip().lower() == "llmscr":
+                #     screen = self._take_screenshot()
+                #     if screen is not None:
+                #         self._send_photo(screen)
+
         logger.info("Telegram command worker stopped")
 
     def stop(self) -> None:
         self._running = False
+
+    def _send_photo(self, photo_data: bytes) -> None:
+        url = f"https://api.telegram.org/bot{state_chat_token}/sendPhoto"
+
+        boundary = "----TelegramBoundary"
+
+        body = (
+            (
+                f"--{boundary}\r\n"
+                f'Content-Disposition: form-data; name="chat_id"\r\n\r\n'
+                f"{state_chat_id}\r\n"
+                f"--{boundary}\r\n"
+                f'Content-Disposition: form-data; name="photo"; filename="llm.png"\r\n'
+                f"Content-Type: image/png\r\n\r\n"
+            ).encode("utf-8")
+            + photo_data
+            + f"\r\n--{boundary}--\r\n".encode("utf-8")
+        )
+
+        request = urllib.request.Request(
+            url,
+            data=body,
+            headers={
+                "Content-Type": f"multipart/form-data; boundary={boundary}",
+            },
+            method="POST",
+        )
+
+        try:
+            with urllib.request.urlopen(request, timeout=30) as response:
+                result = json.loads(response.read().decode("utf-8"))
+
+            if not result.get("ok"):
+                logger.error("Telegram sendPhoto error: %s", result)
+
+        except Exception:
+            logger.exception("Nie udało się wysłać screenshotu na Telegram")
 
 
 class TelegramStateBot:

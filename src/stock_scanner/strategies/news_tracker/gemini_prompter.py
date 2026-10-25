@@ -18,6 +18,7 @@ class GeminiPrompter:
 
     def __init__(self) -> None:
         self.session = PlaywrightSession()
+        self._screenshot: bytes
 
     def restart(self) -> None:
         logger.info("Restartowanie sesji Gemini...")
@@ -57,8 +58,8 @@ class GeminiPrompter:
         except Exception as exc:
             logger.warning("Gemini: błąd cookie albo input niegotowy: %s", exc)
 
-    def screenshot(self, name: str) -> None:
-        self.session.screenshot(name)
+    def prompter_screenshot(self) -> None:
+        self._screenshot = self.session.page.screenshot(full_page=True)
 
     def close(self) -> None:
         self.session.close()

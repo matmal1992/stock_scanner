@@ -1,7 +1,7 @@
 import logging
 import threading
 
-from PySide6.QtCore import QObject, QThread
+from PySide6.QtCore import QThread
 
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository
 from src.stock_scanner.strategies.news_tracker.gemini_prompter import GeminiPrompter
@@ -11,7 +11,7 @@ from src.stock_scanner.workers.worker_status import WorkerStatus
 logger = logging.getLogger(__name__)
 
 
-class LLMWorker(QObject):
+class LLMWorker(QThread):
     INTERVAL_SECONDS = 1
 
     def __init__(self, entry_repo: EntryRepository) -> None:
@@ -87,6 +87,12 @@ class LLMWorker(QObject):
         except Exception:
             logger.exception("Błąd podczas zamykania LLM promptera")
 
+    def take_screenshot(self) -> None:
+        self.prompter.prompter_screenshot()
+
+    def get_screenshot(self) -> bytes:
+        return self.prompter._screenshot
+
 
 class LLMService:
     _thread: QThread | None
@@ -115,3 +121,12 @@ class LLMService:
     def _on_thread_finished(cls) -> None:
         cls._thread = None
         cls._worker = None
+
+    @classmethod
+    def take_screenshot(cls) -> bytes | None:
+        if cls._worker is not None:
+            cls._worker.take_screenshot()
+
+            return cls._worker.get_screenshot()
+
+        return None
