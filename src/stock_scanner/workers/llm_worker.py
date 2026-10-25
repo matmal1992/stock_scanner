@@ -1,9 +1,9 @@
 import logging
 import threading
 
-from PySide6.QtCore import QObject, QThread, Signal
+from PySide6.QtCore import QObject, QThread
 
-from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository, NewsEntry
+from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository
 from src.stock_scanner.strategies.news_tracker.gemini_prompter import GeminiPrompter
 from src.stock_scanner.workers.telegram import TelegramBot
 from src.stock_scanner.workers.worker_status import WorkerStatus
@@ -88,41 +88,30 @@ class LLMWorker(QObject):
             logger.exception("Błąd podczas zamykania LLM promptera")
 
 
-class LLMService(QObject):
-    result = Signal(NewsEntry)
+class LLMService:
+    _thread: QThread | None
+    _worker: LLMWorker | None
 
-    def __init__(self, entry_repo: EntryRepository) -> None:
-        super().__init__()
+    @classmethod
+    def start(cls, entry_repo: EntryRepository) -> None:
+        cls._thread = QThread()
+        cls._worker = LLMWorker(entry_repo)
+        cls._worker.moveToThread(cls._thread)
 
-        self.entry_repo = entry_repo
-        self._thread: QThread | None = None
-        self.worker: LLMWorker | None = None
+        cls._thread.started.connect(cls._worker.run)
+        cls._thread.finished.connect(cls._worker.deleteLater)
+        cls._thread.finished.connect(cls._thread.deleteLater)
+        cls._thread.finished.connect(cls._on_thread_finished)
 
-    def start(self) -> bool:
-        if self._thread is not None and self._thread.isRunning():
-            return False
+        cls._thread.start()
 
-        self._thread = QThread()
-
-        self.worker = LLMWorker(self.entry_repo)
-        self.worker.moveToThread(self._thread)
-
-        self._thread.started.connect(self.worker.run)
-        self._thread.finished.connect(self.worker.deleteLater)
-        self._thread.finished.connect(self._thread.deleteLater)
-        self._thread.finished.connect(self._on_thread_finished)
-
-        self._thread.start()
-
-        return True
-
-    def stop(self) -> None:
-        if self.worker is None or not self.is_running():
+    @classmethod
+    def stop(cls) -> None:
+        thread_running = cls._thread is not None and cls._thread.isRunning()
+        if cls._worker is None or not thread_running:
             return
 
-    def is_running(self) -> bool:
-        return self._thread is not None and self._thread.isRunning()
-
-    def _on_thread_finished(self) -> None:
-        self._thread = None
-        self.worker = None
+    @classmethod
+    def _on_thread_finished(cls) -> None:
+        cls._thread = None
+        cls._worker = None

@@ -53,10 +53,6 @@ def main() -> None:
     TelegramBot.init(entry_repo)
     TelegramBot.send_message("Telegram alert")
 
-    gpw = GPWService(entry_repo)
-    llm = LLMService(entry_repo)
-    content = ContentScrapeService(entry_repo)
-
     sys.excepthook = handle_exception
 
     window = MainWindow(entry_repo, tracked_repo)
@@ -101,9 +97,9 @@ def main() -> None:
     tray_icon.show()
     window.hide()
 
-    gpw.start()
-    llm.start()
-    content.start()
+    GPWService.start(entry_repo)
+    LLMService.start(entry_repo)
+    ContentScrapeService.start(entry_repo)
 
     try:
         exit_code = app.exec()

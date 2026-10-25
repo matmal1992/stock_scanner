@@ -1,7 +1,7 @@
 import logging
 import threading
 
-from PySide6.QtCore import QObject, QThread, Signal
+from PySide6.QtCore import QThread
 
 from src.stock_scanner.playwright.pap_espi_scraper import PapEspiScraper
 from src.stock_scanner.playwright.playwright_session import PlaywrightSession
@@ -12,11 +12,6 @@ logger = logging.getLogger(__name__)
 
 
 class GPWWorker(QThread):
-    result = Signal(bool)
-    error = Signal(str)
-    log = Signal(str)
-    finished = Signal()
-
     INTERVAL_SECONDS = 5
 
     def __init__(self, entry_repo: EntryRepository) -> None:
@@ -31,7 +26,7 @@ class GPWWorker(QThread):
             self.entry_scraper = PapEspiScraper(PlaywrightSession())
             self.entry_scraper.start()
 
-            logger.info("PAP: przeglądarka uruchomiona")
+            logger.info("GPW: przeglądarka uruchomiona")
             self._scrape_and_save()
 
             while not self._stop_event.wait(self.INTERVAL_SECONDS):
@@ -44,11 +39,10 @@ class GPWWorker(QThread):
                 self._scrape_and_save()
 
         except Exception as exc:
-            logger.exception(f"PAP: błąd podczas inicjalizacji workera: {exc}")
+            logger.exception(f"GPW: błąd podczas inicjalizacji workera: {exc}")
 
         finally:
             self._cleanup()
-            self.finished.emit()
 
     def _scrape_and_save(self) -> None:
         if self.entry_scraper is None:
@@ -63,12 +57,10 @@ class GPWWorker(QThread):
                     new_entries += 1
 
             except Exception as exc:
-                self.log.emit(f"Błąd zapisu: {exc}")
+                logger.error(f"GPW: Błąd zapisu: {exc}")
 
         if new_entries > 0:
-            self.log.emit(f"PAP: znaleziono {new_entries} komunikatów")
-
-        self.result.emit(new_entries > 0)
+            logger.info(f"GPW: znaleziono {new_entries} komunikatów")
 
     def _save_entries(self, entries: list[NewsEntry]) -> bool:
         found_new = False
@@ -76,14 +68,10 @@ class GPWWorker(QThread):
         for entry in entries:
             try:
                 if self.entry_repo.save(entry):
-                    # if entry["skipped"] == 0:
-                    #     send_telegram_message(entry)
-                    # else:
-                    #     logger.info(f"GPW: skipped: {entry['title']}")
                     found_new = True
 
             except Exception as exc:
-                self.log.emit(f"PAP: błąd zapisu: {exc}")
+                logger.error(f"GPW: błąd zapisu: {exc}")
 
         return found_new
 
@@ -100,70 +88,30 @@ class GPWWorker(QThread):
                 self.entry_scraper = None
 
 
-class GPWService(QObject):
-    result = Signal(bool)
-    error = Signal(str)
-    log = Signal(str)
-    finished = Signal()
-    stop_requested = Signal()
+class GPWService:
+    _thread: QThread | None
+    _worker: GPWWorker | None
 
-    def __init__(self, entry_repo: EntryRepository) -> None:
-        super().__init__()
+    @classmethod
+    def start(cls, entry_repo: EntryRepository) -> None:
+        cls._thread = QThread()
+        cls._worker = GPWWorker(entry_repo)
+        cls._worker.moveToThread(cls._thread)
 
-        self.entry_repo = entry_repo
-        self._thread: QThread | None = None
-        self.worker: GPWWorker | None = None
+        cls._thread.started.connect(cls._worker.run)
+        cls._thread.finished.connect(cls._worker.deleteLater)
+        cls._thread.finished.connect(cls._thread.deleteLater)
+        cls._thread.finished.connect(cls._on_thread_finished)
 
-    def start(self) -> bool:
-        if self._thread is not None and self._thread.isRunning():
-            self.log.emit("Automatyczne pobieranie PAP już działa")
-            return False
+        cls._thread.start()
 
-        self.log.emit("Uruchamiam automatyczne pobieranie PAP")
-
-        self._thread = QThread()
-        self.worker = GPWWorker(self.entry_repo)
-
-        self.worker.moveToThread(self._thread)
-        self.stop_requested.connect(self.worker.stop)
-        self.worker.result.connect(self._on_worker_result)
-        self.worker.error.connect(self._on_worker_error)
-        self.worker.log.connect(self.log)
-        self.worker.finished.connect(self._on_worker_finished)
-        self._thread.finished.connect(self._thread.deleteLater)
-        self._thread.finished.connect(self._on_thread_finished)
-        self._thread.started.connect(self.worker.run)
-        self._thread.start()
-
-        return True
-
-    def stop(self) -> None:
-        if self.worker is None:
-            self.log.emit("Automatyczne pobieranie PAP nie działa")
+    @classmethod
+    def stop(cls) -> None:
+        thread_running = cls._thread is not None and cls._thread.isRunning()
+        if cls._worker is None or not thread_running:
             return
 
-        self.log.emit("PAP: zatrzymywanie automatycznego pobierania...")
-        self.worker.stop()
-
-    def is_running(self) -> bool:
-        return self._thread is not None and self._thread.isRunning()
-
-    def _on_worker_result(self, has_new: bool) -> None:
-        self.result.emit(has_new)
-
-    def _on_worker_error(self, message: str) -> None:
-        self.error.emit(message)
-
-    def _on_worker_finished(self) -> None:
-        if self._thread is not None:
-            self._thread.quit()
-
-    def _on_thread_finished(self) -> None:
-        if self.worker is not None:
-            self.worker.deleteLater()
-
-        self._thread = None
-        self.worker = None
-
-        self.log.emit("Automatyczne pobieranie PAP zatrzymane")
-        self.finished.emit()
+    @classmethod
+    def _on_thread_finished(cls) -> None:
+        cls._thread = None
+        cls._worker = None

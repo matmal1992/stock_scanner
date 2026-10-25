@@ -1,7 +1,7 @@
 import logging
 import threading
 
-from PySide6.QtCore import QObject, QThread, Signal
+from PySide6.QtCore import QThread
 
 from src.stock_scanner.playwright.pap_entry_scraper import PAPEntryContentScraper
 from src.stock_scanner.playwright.playwright_session import PlaywrightSession
@@ -11,12 +11,7 @@ from src.stock_scanner.workers.worker_status import WorkerStatus
 logger = logging.getLogger(__name__)
 
 
-class ScraperWorker(QObject):
-    result = Signal(bool)
-    error = Signal(str)
-    log = Signal(str)
-    finished = Signal()
-
+class ScraperWorker(QThread):
     INTERVAL_SECONDS = 1
 
     def __init__(self, entry_repo: EntryRepository) -> None:
@@ -51,7 +46,7 @@ class ScraperWorker(QObject):
             self._finish()
 
     def stop(self) -> None:
-        self.log.emit("Zatrzymywanie workera...")
+        logger.info("Entry scraper - Zatrzymywanie workera...")
         self._finish()
 
     def _finish(self) -> None:
@@ -60,64 +55,31 @@ class ScraperWorker(QObject):
         except Exception:
             logger.exception("Błąd podczas zamykania scrapera")
 
-        self.finished.emit()
 
+class ContentScrapeService:
+    _thread: QThread | None
+    _worker: ScraperWorker | None
 
-class ContentScrapeService(QObject):
-    result = Signal()
-    error = Signal(str)
-    log = Signal(str)
-    finished = Signal()
+    @classmethod
+    def start(cls, entry_repo: EntryRepository) -> None:
+        cls._thread = QThread()
+        cls._worker = ScraperWorker(entry_repo)
+        cls._worker.moveToThread(cls._thread)
 
-    def __init__(self, entry_repo: EntryRepository) -> None:
-        super().__init__()
+        cls._thread.started.connect(cls._worker.run)
+        cls._thread.finished.connect(cls._worker.deleteLater)
+        cls._thread.finished.connect(cls._thread.deleteLater)
+        cls._thread.finished.connect(cls._on_thread_finished)
 
-        self.entry_repo = entry_repo
-        self._thread: QThread | None = None
-        self.worker: ScraperWorker | None = None
+        cls._thread.start()
 
-    def start(self) -> bool:
-        if self._thread is not None and self._thread.isRunning():
-            self.log.emit("Content scrape worker już działa")
-            return False
-
-        self.log.emit("Uruchamiam content scrape worker")
-        self._thread = QThread()
-
-        self.worker = ScraperWorker(self.entry_repo)
-        self.worker.moveToThread(self._thread)
-        self.worker.log.connect(self.log)
-        self.worker.error.connect(self._on_worker_error)
-        self.worker.result.connect(self._on_worker_result)
-        self.worker.finished.connect(self._on_worker_finished)
-
-        self._thread.started.connect(self.worker.run)
-        self._thread.finished.connect(self.worker.deleteLater)
-        self._thread.finished.connect(self._thread.deleteLater)
-        self._thread.finished.connect(self._on_thread_finished)
-
-        self._thread.start()
-
-        return True
-
-    def stop(self) -> None:
-        if self.worker is None or not self.is_running():
+    @classmethod
+    def stop(cls) -> None:
+        thread_running = cls._thread is not None and cls._thread.isRunning()
+        if cls._worker is None or not thread_running:
             return
 
-    def is_running(self) -> bool:
-        return self._thread is not None and self._thread.isRunning()
-
-    def _on_worker_result(self) -> None:
-        self.result.emit("Content scraping successful")
-
-    def _on_worker_error(self, message: str) -> None:
-        self.error.emit(message)
-
-    def _on_worker_finished(self) -> None:
-        if self._thread is not None:
-            self._thread.quit()
-
-    def _on_thread_finished(self) -> None:
-        self.worker = None
-        self._thread = None
-        self.finished.emit()
+    @classmethod
+    def _on_thread_finished(cls) -> None:
+        cls._thread = None
+        cls._worker = None

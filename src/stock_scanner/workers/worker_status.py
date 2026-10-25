@@ -25,7 +25,7 @@ class WorkerStatus:
 
     @classmethod
     def init(cls) -> None:
-        cls._statuses = {}
+        cls._statuses = {group: {field: "-" for field in fields} for group, fields in cls.FIELD_ORDER.items()}
 
     @staticmethod
     def _now() -> str:
