@@ -1,5 +1,6 @@
 import json
 import logging
+import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import datetime
@@ -12,14 +13,21 @@ from src.stock_scanner.workers.worker_status import WorkerStatus
 
 logger = logging.getLogger(__name__)
 
+# https://api.telegram.org/bot<chat_token>/getUpdates
+# https://api.telegram.org/bot<TWOJ_TOKEN>/getChat?chat_id=<CHAT_ID>
+
 config = load_config()
 alert_chat_token = config.get("alert_chat_token")
 state_chat_token = config.get("state_chat_token")
 debug_chat_token = config.get("debug_chat_token")
+
 alert_chat_id = config.get("alert_chat_id")
 state_chat_id = config.get("state_chat_id")
 debug_chat_id = config.get("debug_chat_id")
+
 state_chat_pinned_message_id = config.get("state_chat_pinned_message_id")
+llm_pinned_error_msg_id = config.get("llm_pinned_error_msg_id")
+llm_pinned_error_screen_msg_id = config.get("llm_pinned_error_screen_msg_id")
 
 
 class TelegramCommandWorker(QThread):
@@ -92,32 +100,109 @@ class TelegramCommandWorker(QThread):
                     logger.info("Received Telegram test command")
                     self._send_reply("test command received")
 
-                # if text.strip().lower() == "llmscr":
-                #     screen = self._take_screenshot()
-                #     if screen is not None:
-                #         self._send_photo(screen)
-
         logger.info("Telegram command worker stopped")
 
     def stop(self) -> None:
         self._running = False
 
-    def _send_photo(self, photo_data: bytes) -> None:
-        url = f"https://api.telegram.org/bot{state_chat_token}/sendPhoto"
+
+class TelegramStateBot:
+    def __init__(self) -> None:
+        self.last_text: str | None = None
+        self.last_error_text: str | None = None
+        self.last_screen: bytes | None = None
+
+    def _request(self, method: str, payload: dict, chat_token: str) -> dict | None:
+        url = f"https://api.telegram.org/bot{chat_token}/{method}"
+        data = urllib.parse.urlencode(payload).encode("utf-8")
+        request = urllib.request.Request(url, data=data)
+
+        try:
+            with urllib.request.urlopen(request, timeout=10) as response:
+                result = json.loads(response.read().decode("utf-8"))
+
+            if result.get("ok"):
+                return result
+
+            logger.error("State bot API error: %s", result)
+        except urllib.error.HTTPError as exc:
+            error_body = exc.read().decode("utf-8", errors="replace")
+            logger.error(
+                "Telegram HTTP error: method=%s, status=%s, response=%s",
+                method,
+                exc.code,
+                error_body,
+            )
+
+        return None
+
+    def update_app_state(self, text: str) -> None:
+        if text == self.last_text:
+            return
+
+        chat_token = str(state_chat_token)
+
+        result = self._request(
+            "editMessageText",
+            {
+                "chat_id": state_chat_id,
+                "message_id": state_chat_pinned_message_id,
+                "text": text,
+            },
+            chat_token,
+        )
+
+        if result is not None:
+            self.last_text = text
+
+    def update_llm_error_status(self, error_status_text: str) -> None:
+        if error_status_text == self.last_error_text:
+            return
+
+        chat_token = str(debug_chat_token)
+
+        result = self._request(
+            "editMessageText",
+            {
+                "chat_id": debug_chat_id,
+                "message_id": llm_pinned_error_msg_id,
+                "text": error_status_text,
+            },
+            chat_token,
+        )
+
+        if result is not None:
+            self.last_error_text = error_status_text
+
+    def update_llm_status_screen(self, image: bytes) -> None:
+        if not image:
+            return
+
+        if image == self.last_screen:
+            return
+
+        url = f"https://api.telegram.org/bot{debug_chat_token}/editMessageMedia"
 
         boundary = "----TelegramBoundary"
+        media = json.dumps({"type": "photo", "media": "attach://photo"})
 
         body = (
             (
                 f"--{boundary}\r\n"
-                f'Content-Disposition: form-data; name="chat_id"\r\n\r\n'
-                f"{state_chat_id}\r\n"
+                'Content-Disposition: form-data; name="chat_id"\r\n\r\n'
+                f"{debug_chat_id}\r\n"
                 f"--{boundary}\r\n"
-                f'Content-Disposition: form-data; name="photo"; filename="llm.png"\r\n'
-                f"Content-Type: image/png\r\n\r\n"
+                'Content-Disposition: form-data; name="message_id"\r\n\r\n'
+                f"{llm_pinned_error_screen_msg_id}\r\n"
+                f"--{boundary}\r\n"
+                'Content-Disposition: form-data; name="media"\r\n\r\n'
+                f"{media}\r\n"
+                f"--{boundary}\r\n"
+                'Content-Disposition: form-data; name="photo"; filename="llm.png"\r\n'
+                "Content-Type: image/png\r\n\r\n"
             ).encode("utf-8")
-            + photo_data
-            + f"\r\n--{boundary}--\r\n".encode("utf-8")
+            + image
+            + (f"\r\n--{boundary}--\r\n").encode("utf-8")
         )
 
         request = urllib.request.Request(
@@ -133,52 +218,16 @@ class TelegramCommandWorker(QThread):
             with urllib.request.urlopen(request, timeout=30) as response:
                 result = json.loads(response.read().decode("utf-8"))
 
-            if not result.get("ok"):
-                logger.error("Telegram sendPhoto error: %s", result)
-
-        except Exception:
-            logger.exception("Nie udało się wysłać screenshotu na Telegram")
-
-
-class TelegramStateBot:
-    def __init__(self) -> None:
-        self.last_text: str | None = None
-
-    def _request(self, method: str, payload: dict) -> dict | None:
-        url = f"https://api.telegram.org/bot{state_chat_token}/{method}"
-        data = urllib.parse.urlencode(payload).encode("utf-8")
-        request = urllib.request.Request(url, data=data)
-
-        try:
-            with urllib.request.urlopen(request, timeout=10) as response:
-                result = json.loads(response.read().decode("utf-8"))
-
             if result.get("ok"):
-                return result
+                self.last_screen = image
+            else:
+                logger.error(
+                    "Telegram editMessageMedia error: %s",
+                    result,
+                )
 
-            logger.error("State bot API error: %s", result)
         except Exception:
-            logger.exception("State bot HTTP error")
-
-        return None
-
-    def update(self, text: str) -> None:
-        if text == self.last_text:
-            return
-
-        logger.info("Telegram text: %r", text)
-
-        result = self._request(
-            "editMessageText",
-            {
-                "chat_id": state_chat_id,
-                "message_id": state_chat_pinned_message_id,
-                "text": text,
-            },
-        )
-
-        if result is not None:
-            self.last_text = text
+            logger.exception("Nie udało się zaktualizować screenshotu na Telegram")
 
 
 class TelegramStateWorker(QThread):
@@ -193,12 +242,16 @@ class TelegramStateWorker(QThread):
         while self._running:
             try:
                 last_update = datetime.now().strftime("%H:%M:%S")
-                text = WorkerStatus.format_message(last_update)
+                app_status_text = WorkerStatus.format_message(last_update)
+                llm_error_text = WorkerStatus._llm_error
+                # llm_error_screen = WorkerStatus._llm_error_screen
 
-                self.bot.update(text)
+                self.bot.update_app_state(app_status_text)
+                self.bot.update_llm_error_status(llm_error_text)
+                # self.bot.update_llm_status_screen(llm_error_screen)
 
-            except Exception:
-                logger.exception("Błąd aktualizacji Scanner State")
+            except Exception as exc:
+                logger.exception(f"Błąd aktualizacji Scanner State: {exc}")
 
             for _ in range(50):
                 if not self._running:

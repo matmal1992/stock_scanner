@@ -22,6 +22,8 @@ class WorkerStatus:
 
     _statuses: dict[str, dict[str, str]] = {}
     _lock = Lock()
+    _llm_error: str = "no error"
+    _llm_error_screen: bytes = b""
 
     @classmethod
     def init(cls) -> None:
@@ -38,6 +40,11 @@ class WorkerStatus:
 
         with cls._lock:
             cls._statuses.setdefault(group, {})[field] = status
+
+    @classmethod
+    def update_llm_error_status(cls, error_msg: str, screenshot: bytes) -> None:
+        cls._llm_error = error_msg
+        cls._llm_error_screen = screenshot
 
     @classmethod
     def snapshot(cls) -> dict[str, dict[str, str]]:
