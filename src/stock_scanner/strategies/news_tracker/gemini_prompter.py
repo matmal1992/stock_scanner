@@ -19,7 +19,7 @@ class GeminiPrompter:
     def __init__(self) -> None:
         self.session = PlaywrightSession()
         self._screenshot: bytes
-        self._error_msg: str
+        self._error_msg: str = "placeholder"
 
     def restart(self) -> None:
         logger.info("Restartowanie sesji Gemini...")
@@ -31,8 +31,7 @@ class GeminiPrompter:
     def start(self) -> None:
         logger.info("Start sesji gemini")
         self.session.start(self.URL, headless=False, context=False)
-        self._handle_cookie_banner()
-        self._wait_for_prompt_input()
+        self.refresh()
 
     def send_prompt(self, prompt: str) -> None:
         try:
@@ -76,6 +75,7 @@ class GeminiPrompter:
                 return
 
             if accept_button.is_visible():
+                self._screenshot = self.session.page.screenshot(full_page=True)
                 accept_button.click()
                 accept_button.wait_for(state="hidden", timeout=5000)
                 logger.info("Baner cookies obsłużony")
