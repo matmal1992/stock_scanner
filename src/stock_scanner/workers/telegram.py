@@ -32,6 +32,25 @@ llm_pinned_error_screen_msg_id = config.get("llm_pinned_error_screen_msg_id")
 llm_error_log_file_id = config.get("llm_error_log_file_id")
 
 
+def _execute_request(request: urllib.request.Request, timeout: int) -> dict | None:
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            result = json.loads(response.read().decode("utf-8"))
+
+        if result.get("ok"):
+            return result
+
+        logger.error("Telegram API error: %s", result)
+
+    except urllib.error.HTTPError as exc:
+        logger.error(
+            "Telegram HTTP error: status=%s, response=%s",
+            exc.code,
+            exc.read().decode("utf-8", errors="replace"),
+        )
+    return None
+
+
 class TelegramCommandWorker(QThread):
     def __init__(self) -> None:
         super().__init__()
@@ -43,20 +62,9 @@ class TelegramCommandWorker(QThread):
         data = urllib.parse.urlencode(payload).encode("utf-8")
         request = urllib.request.Request(url, data=data)
 
-        try:
-            with urllib.request.urlopen(request, timeout=10) as response:
-                result = json.loads(response.read().decode("utf-8"))
+        result = _execute_request(request, timeout=10)
 
-            if result.get("ok"):
-                return result
-
-            logger.error("Telegram command API error: %s", result)
-
-        except Exception:
-            if self._running:
-                logger.exception("Telegram command HTTP error")
-
-        return None
+        return result
 
     def _send_logs(self) -> None:
         url = f"https://api.telegram.org/bot{alert_chat_token}/sendDocument"
@@ -152,25 +160,9 @@ class TelegramStateBot:
         url = f"https://api.telegram.org/bot{chat_token}/{method}"
         data = urllib.parse.urlencode(payload).encode("utf-8")
         request = urllib.request.Request(url, data=data)
+        result = _execute_request(request, timeout=10)
 
-        try:
-            with urllib.request.urlopen(request, timeout=10) as response:
-                result = json.loads(response.read().decode("utf-8"))
-
-            if result.get("ok"):
-                return result
-
-            logger.error("State bot API error: %s", result)
-        except urllib.error.HTTPError as exc:
-            error_body = exc.read().decode("utf-8", errors="replace")
-            logger.error(
-                "Telegram HTTP error: method=%s, status=%s, response=%s",
-                method,
-                exc.code,
-                error_body,
-            )
-
-        return None
+        return result
 
     def update_app_state(self, text: str) -> None:
         if text == self.last_text:
@@ -276,7 +268,7 @@ class TelegramStateBot:
             {
                 "type": "document",
                 "media": "attach://error_log.txt",
-                "caption": "🔄 Log zaktualizowany: błąd w toku / najnowszy stan",
+                "caption": "",
             }
         )
 
@@ -415,15 +407,10 @@ class TelegramBot:
             method="POST",
         )
 
-        try:
-            with urllib.request.urlopen(request, timeout=10) as response:
-                result = json.loads(response.read().decode("utf-8"))
+        result = _execute_request(request, timeout=10)
 
-            if not result.get("ok"):
-                logger.error("Telegram API error: %s", result)
-
-        except Exception:
-            logger.exception("Nie udało się wysłać wiadomości Telegram.")
+        if not result:
+            pass
 
     @classmethod
     def stop_telegram(cls) -> None:
