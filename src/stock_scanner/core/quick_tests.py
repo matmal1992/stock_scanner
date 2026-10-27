@@ -156,9 +156,7 @@ def test_telegram() -> None:
 
 
 def main() -> None:
-    # get_latest_message_info("8879102362:AAHk5sthC3sYR2Mw6-LZUz0yreI49wTtJbc")
-    # send_both_messages("8879102362:AAHk5sthC3sYR2Mw6-LZUz0yreI49wTtJbc", "6754660292")
-    send_initial_log_file("8879102362:AAHk5sthC3sYR2Mw6-LZUz0yreI49wTtJbc", "6754660292", "test log")
+    pass
 
 
 if __name__ == "__main__":

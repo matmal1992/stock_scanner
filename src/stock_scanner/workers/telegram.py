@@ -8,6 +8,7 @@ from datetime import datetime
 from PySide6.QtCore import QThread
 
 from config.app_config import load_config
+from src.stock_scanner.core.paths import get_log_file_path
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository, NewsEntry
 from src.stock_scanner.workers.worker_status import WorkerStatus
 
@@ -38,7 +39,7 @@ class TelegramCommandWorker(QThread):
         self._offset: int | None = None
 
     def _request(self, method: str, payload: dict) -> dict | None:
-        url = f"https://api.telegram.org/bot{debug_chat_token}/{method}"
+        url = f"https://api.telegram.org/bot{alert_chat_token}/{method}"
         data = urllib.parse.urlencode(payload).encode("utf-8")
         request = urllib.request.Request(url, data=data)
 
@@ -57,14 +58,47 @@ class TelegramCommandWorker(QThread):
 
         return None
 
-    def _send_reply(self, text: str) -> None:
-        self._request(
-            "sendMessage",
-            {
-                "chat_id": debug_chat_id,
-                "text": text,
-            },
-        )
+    def _send_logs(self) -> None:
+        url = f"https://api.telegram.org/bot{alert_chat_token}/sendDocument"
+        boundary = "----TelegramBoundaryLog"
+
+        try:
+            log_file_path = get_log_file_path()
+
+            with open(log_file_path, "rb") as log_file:
+                file_bytes = log_file.read()
+
+            body = (
+                (
+                    f"--{boundary}\r\n"
+                    f'Content-Disposition: form-data; name="chat_id"\r\n\r\n'
+                    f"{alert_chat_id}\r\n"
+                    f"--{boundary}\r\n"
+                    f'Content-Disposition: form-data; name="caption"\r\n\r\n'
+                    f"\r\n"
+                    f"--{boundary}\r\n"
+                    f'Content-Disposition: form-data; name="document"; filename="logs.txt"\r\n'
+                    f"Content-Type: text/plain\r\n\r\n"
+                ).encode("utf-8")
+                + file_bytes
+                + f"\r\n--{boundary}--\r\n".encode("utf-8")
+            )
+
+            request = urllib.request.Request(
+                url,
+                data=body,
+                headers={"Content-Type": f"multipart/form-data; boundary={boundary}"},
+                method="POST",
+            )
+
+            with urllib.request.urlopen(request, timeout=30) as response:
+                result = json.loads(response.read().decode("utf-8"))
+
+            if not result.get("ok"):
+                logger.error(f"Telegram API error: {result}")
+
+        except Exception as e:
+            logger.exception(f"Błąd wysyłania pliku logu: {e}")
 
     def run(self) -> None:
         logger.info("Telegram command worker started")
@@ -97,9 +131,9 @@ class TelegramCommandWorker(QThread):
                 if not isinstance(text, str):
                     continue
 
-                if text.strip().lower() == "test":
+                if text.strip().lower() == "logs":
                     logger.info("Received Telegram test command")
-                    self._send_reply("test command received")
+                    self._send_logs()
 
         logger.info("Telegram command worker stopped")
 
@@ -402,13 +436,6 @@ class TelegramBot:
             cls.command_worker.wait()
 
 
-# diagnostyka: stan aplikacji: ilosc pending, finished, skipped, wszystkich, errorow
-# screeny z exceptionow
-# data i godzina ostatniego scrapowania espi, ostatniego przetworzenia LLM
-# exception w formie traceback
-# osobny kanał dla alertów, osobny dla logów, osobny dla debugowania
-# sterowanie aplikacją przez telegram: start/stop scrapowania, start/stop LLM, restart Gemini, aplikacji
 # zostawić tylko wzrost i silny wzrost. Wyjatek to tracked_tickers
 # add to tracked tickers - wpisz ticker, a będzie on dodany do bazy
-# alert, że jeśli jest pending, a llm nie running.
 # detekcja braku internetu - info po przywróceniu połączenia
