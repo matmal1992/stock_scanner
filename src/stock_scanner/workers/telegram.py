@@ -28,6 +28,7 @@ debug_chat_id = config.get("debug_chat_id")
 state_chat_pinned_message_id = config.get("state_chat_pinned_message_id")
 llm_pinned_error_msg_id = config.get("llm_pinned_error_msg_id")
 llm_pinned_error_screen_msg_id = config.get("llm_pinned_error_screen_msg_id")
+llm_error_log_file_id = config.get("llm_error_log_file_id")
 
 
 class TelegramCommandWorker(QThread):
@@ -108,9 +109,10 @@ class TelegramCommandWorker(QThread):
 
 class TelegramStateBot:
     def __init__(self) -> None:
-        self.last_text: str | None = None
-        self.last_error_text: str | None = None
-        self.last_screen: bytes | None = None
+        self.last_text: str = "No app state text"
+        self.last_error_text: str = "No error text"
+        self.last_screen: bytes = b""
+        self.last_error_log: str = "No log"
 
     def _request(self, method: str, payload: dict, chat_token: str) -> dict | None:
         url = f"https://api.telegram.org/bot{chat_token}/{method}"
@@ -157,6 +159,7 @@ class TelegramStateBot:
 
     def update_llm_error_status(self, error_status_text: str) -> None:
         if error_status_text == self.last_error_text:
+            print("error status bez zmian")
             return
 
         chat_token = str(debug_chat_token)
@@ -175,9 +178,6 @@ class TelegramStateBot:
             self.last_error_text = error_status_text
 
     def update_llm_status_screen(self, image: bytes) -> None:
-        if not image:
-            return
-
         if image == self.last_screen:
             return
 
@@ -229,6 +229,61 @@ class TelegramStateBot:
         except Exception:
             logger.exception("Nie udało się zaktualizować screenshotu na Telegram")
 
+    def update_log_file(self, log_content: str) -> None:
+        if log_content == self.last_error_log:
+            return
+
+        url = f"https://api.telegram.org/bot{debug_chat_token}/editMessageMedia"
+        boundary = "----TelegramBoundaryLogUpdate"
+
+        file_bytes = log_content.encode("utf-8")
+
+        media_json = json.dumps(
+            {
+                "type": "document",
+                "media": "attach://error_log.txt",
+                "caption": "🔄 Log zaktualizowany: błąd w toku / najnowszy stan",
+            }
+        )
+
+        body = (
+            (
+                f"--{boundary}\r\n"
+                f'Content-Disposition: form-data; name="chat_id"\r\n\r\n'
+                f"{debug_chat_id}\r\n"
+                f"--{boundary}\r\n"
+                f'Content-Disposition: form-data; name="message_id"\r\n\r\n'
+                f"{llm_error_log_file_id}\r\n"
+                f"--{boundary}\r\n"
+                f'Content-Disposition: form-data; name="media"\r\n\r\n'
+                f"{media_json}\r\n"
+                f"--{boundary}\r\n"
+                f'Content-Disposition: form-data; name="error_log.txt"; filename="error_log.txt"\r\n'
+                f"Content-Type: text/plain\r\n\r\n"
+            ).encode("utf-8")
+            + file_bytes
+            + f"\r\n--{boundary}--\r\n".encode("utf-8")
+        )
+
+        request = urllib.request.Request(
+            url,
+            data=body,
+            headers={"Content-Type": f"multipart/form-data; boundary={boundary}"},
+            method="POST",
+        )
+
+        try:
+            with urllib.request.urlopen(request, timeout=30) as response:
+                result = json.loads(response.read().decode("utf-8"))
+
+                if result.get("ok"):
+                    self.last_error_log = log_content
+                else:
+                    logger.error("Telegram editMessageMedia error: %s", result)
+
+        except Exception:
+            logger.exception("Nie udało się zaktualizować log file na Telegram")
+
 
 class TelegramStateWorker(QThread):
     def __init__(self, entry_repo: EntryRepository) -> None:
@@ -244,11 +299,13 @@ class TelegramStateWorker(QThread):
                 last_update = datetime.now().strftime("%H:%M:%S")
                 app_status_text = WorkerStatus.format_message(last_update)
                 llm_error_text = WorkerStatus._llm_error
-                # llm_error_screen = WorkerStatus._llm_error_screen
+                llm_error_screen = WorkerStatus._llm_error_screen
+                llm_full_error_log = WorkerStatus._llm_full_error_log
 
                 self.bot.update_app_state(app_status_text)
                 self.bot.update_llm_error_status(llm_error_text)
-                # self.bot.update_llm_status_screen(llm_error_screen)
+                self.bot.update_llm_status_screen(llm_error_screen)
+                self.bot.update_log_file(llm_full_error_log)
 
             except Exception as exc:
                 logger.exception(f"Błąd aktualizacji Scanner State: {exc}")

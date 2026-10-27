@@ -1,6 +1,8 @@
 from datetime import datetime
 from threading import Lock
 
+from src.stock_scanner.core.paths import get_assets_dir
+
 
 class WorkerStatus:
     FIELD_ORDER = {
@@ -22,12 +24,16 @@ class WorkerStatus:
 
     _statuses: dict[str, dict[str, str]] = {}
     _lock = Lock()
-    _llm_error: str = "no error"
-    _llm_error_screen: bytes = b""
+    _llm_error: str
+    _llm_error_screen: bytes
+    _llm_full_error_log: str
 
     @classmethod
     def init(cls) -> None:
         cls._statuses = {group: {field: "-" for field in fields} for group, fields in cls.FIELD_ORDER.items()}
+        cls._llm_error = "Initial error title"
+        cls._llm_error_screen = cls.load_init_icon()
+        cls._llm_full_error_log = "Initial full log content"
 
     @staticmethod
     def _now() -> str:
@@ -42,9 +48,10 @@ class WorkerStatus:
             cls._statuses.setdefault(group, {})[field] = status
 
     @classmethod
-    def update_llm_error_status(cls, error_msg: str, screenshot: bytes) -> None:
-        cls._llm_error = error_msg
+    def update_llm_error_status(cls, error_msg: str, full_log: str, screenshot: bytes) -> None:
+        cls._llm_error = cls._now() + " | " + error_msg
         cls._llm_error_screen = screenshot
+        cls._llm_full_error_log = full_log
 
     @classmethod
     def snapshot(cls) -> dict[str, dict[str, str]]:
@@ -75,3 +82,15 @@ class WorkerStatus:
             sections.append("\n".join(lines))
 
         return "\n\n".join(sections)
+
+    @classmethod
+    def load_init_icon(self) -> bytes:
+        image_path = get_assets_dir() / "input_icon.png"
+
+        try:
+            with open(image_path, "rb") as f:
+                image_bytes = f.read()
+        except Exception:
+            return b""
+
+        return image_bytes

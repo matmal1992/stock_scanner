@@ -18,8 +18,6 @@ class GeminiPrompter:
 
     def __init__(self) -> None:
         self.session = PlaywrightSession()
-        self._screenshot: bytes
-        self._error_msg: str = "placeholder"
 
     def restart(self) -> None:
         logger.info("Restartowanie sesji Gemini...")
@@ -41,14 +39,14 @@ class GeminiPrompter:
             prompt_input.fill(prompt, timeout=Config.page_load_timeout)
             prompt_input.press("Enter")
         except Exception as exc:
-            self._handle_error(f"Gemini: Nie udało się wysłać prompta: {exc}")
+            self._handle_error("Gemini: Nie udało się wysłać prompta", str(exc))
 
     def _wait_for_prompt_input(self) -> None:
         try:
             prompt_input = self.session.page.locator("#prompt-textarea, div[contenteditable='true']").first
             prompt_input.wait_for(state="visible", timeout=Config.page_load_timeout)
         except Exception as exc:
-            self._handle_error(f"Gemini: Input niegotowy: {exc}")
+            self._handle_error("Gemini: Input niegotowy", str(exc))
 
     def refresh(self) -> None:
         self.session.page.goto(
@@ -83,7 +81,7 @@ class GeminiPrompter:
 
             time.sleep(0.1)
 
-        self._handle_error("Gemini: Błąd cookie - przekroczono timeout")
+        self._handle_error("Gemini: Błąd cookie - przekroczono timeout", "No exception")
 
     def _wait_for_stable_response(self) -> bool:
         deadline = time.monotonic() + 60
@@ -92,8 +90,8 @@ class GeminiPrompter:
 
         try:
             response.wait_for(state="visible", timeout=Config.prompt_timeout)
-        except TimeoutError:
-            self._handle_error("Gemini nie utworzył elementu odpowiedzi w wyznaczonym czasie.")
+        except TimeoutError as exc:
+            self._handle_error("Gemini nie utworzył elementu odpowiedzi w wyznaczonym czasie.", str(exc))
             return False
 
         last_text = ""
@@ -107,20 +105,19 @@ class GeminiPrompter:
                 return True
 
             if not is_valid and not is_generating:
-                self._handle_error(f"Gemini wygenerował błędną odpowiedź: {last_text[:2000]}")
+                self._handle_error("Gemini wygenerował błędną odpowiedź", last_text[:2000])
                 return False
 
             self.session.page.wait_for_timeout(500)
 
-        self._handle_error("Gemini nie dał odpowiedzi w czasie 60s.")
+        self._handle_error("Gemini nie dał odpowiedzi w czasie 60s.", "No exception")
         return False
 
-    def _handle_error(self, message: str) -> None:
-        self._screenshot = self.session.page.screenshot(full_page=True)
-        self._error_msg = message
+    def _handle_error(self, message: str, full_log: str) -> None:
+        screenshot = self.session.page.screenshot(full_page=True)
         WorkerStatus.update("LLM", "Last error")
-        WorkerStatus.update_llm_error_status(self._error_msg, self._screenshot)
-        logger.error(self._error_msg)
+        WorkerStatus.update_llm_error_status(message, full_log, screenshot)
+        logger.error(message + "\n" + full_log)
         self.refresh()
 
     def _is_generating(self) -> bool:
@@ -130,8 +127,8 @@ class GeminiPrompter:
 
         try:
             return any(stop_button.nth(i).is_visible() for i in range(stop_button.count()))
-        except Exception:
-            self._handle_error("Gemini: nie udało się ustalić stanu generowania.")
+        except Exception as exc:
+            self._handle_error("Gemini: nie udało się ustalić stanu generowania.", str(exc))
             return False
 
     def _validate_response(self, response: str) -> bool:
