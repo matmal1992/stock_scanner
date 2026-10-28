@@ -87,9 +87,6 @@ class LLMWorker(QThread):
         except Exception:
             logger.exception("Błąd podczas zamykania LLM promptera")
 
-    def get_screenshot(self) -> bytes:
-        return self.prompter._screenshot
-
 
 class LLMService:
     _thread: QThread | None

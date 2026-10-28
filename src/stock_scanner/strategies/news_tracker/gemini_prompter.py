@@ -22,14 +22,15 @@ class GeminiPrompter:
     def restart(self) -> None:
         logger.info("Restartowanie sesji Gemini...")
         self.session.close()
-        self.session.start(self.URL, headless=False, context=False)
+        self.session.start(self.URL, headless=True, context=False)
         self._handle_cookie_banner()
         self._wait_for_prompt_input()
 
     def start(self) -> None:
         logger.info("Start sesji gemini")
-        self.session.start(self.URL, headless=False, context=False)
-        self.refresh()
+        self.session.start(self.URL, headless=True, context=False)
+        self._handle_cookie_banner()
+        self._wait_for_prompt_input()
 
     def send_prompt(self, prompt: str) -> None:
         try:
@@ -55,33 +56,22 @@ class GeminiPrompter:
             wait_until="domcontentloaded",
         )
 
-        self._handle_cookie_banner()
         self._wait_for_prompt_input()
 
     def close(self) -> None:
         self.session.close()
 
     def _handle_cookie_banner(self) -> None:
-        prompt_input = self.session.page.locator("#prompt-textarea, div[contenteditable='true']").first
         accept_button = self.session.page.locator('button[data-test-id="accept-button"]')
 
-        timeout = 5.0
-        start_time = time.monotonic()
+        try:
+            accept_button.wait_for(state="visible", timeout=5000)
+            accept_button.click(timeout=5000)
+            accept_button.wait_for(state="hidden", timeout=5000)
+            logger.info("Baner cookies obsłużony")
 
-        while time.monotonic() - start_time < timeout:
-            if prompt_input.is_visible():
-                return
-
-            if accept_button.is_visible():
-                self._screenshot = self.session.page.screenshot(full_page=True)
-                accept_button.click()
-                accept_button.wait_for(state="hidden", timeout=5000)
-                logger.info("Baner cookies obsłużony")
-                return
-
-            time.sleep(0.1)
-
-        self._handle_error("Gemini: Błąd cookie - przekroczono timeout", "No exception")
+        except Exception as exc:
+            self._handle_error("Gemini: Błąd cookie - przekroczono timeout", str(exc))
 
     def _wait_for_stable_response(self) -> bool:
         deadline = time.monotonic() + 60
@@ -99,18 +89,13 @@ class GeminiPrompter:
         while time.monotonic() < deadline:
             last_text = response.inner_text().strip()
             is_valid = self._validate_response(last_text)
-            is_generating = self._is_generating()
-
-            if is_valid and not is_generating:
-                return True
-
-            if not is_valid and not is_generating:
-                self._handle_error("Gemini wygenerował błędną odpowiedź", last_text[:2000])
-                return False
-
             self.session.page.wait_for_timeout(500)
 
-        self._handle_error("Gemini nie dał odpowiedzi w czasie 60s.", "No exception")
+            if is_valid:
+                self.session.page.wait_for_timeout(100)
+                return True
+
+        self._handle_error("Gemini nie dał odpowiedzi w czasie 60s.", f"wygenerowana odpowiedź: {last_text}")
         return False
 
     def _handle_error(self, message: str, full_log: str) -> None:
