@@ -52,7 +52,7 @@ python -m uv run pyinstaller `
     --distpath build/debug/dist `
     --workpath build/debug/work `
     --specpath build/debug/spec `
-    src/stock_scanner/core/watchdog.py
+    src/watchdog.py
 
 if ($LASTEXITCODE -ne 0) {
     throw "Watchdog DEBUG build failed with exit code $LASTEXITCODE"

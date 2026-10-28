@@ -46,7 +46,7 @@ python -m uv run pyinstaller `
     --distpath build/release/dist `
     --workpath build/release/work `
     --specpath build/release/spec `
-    src/stock_scanner/core/watchdog.py
+    src/watchdog.py
 
 $timer.Stop()
 
