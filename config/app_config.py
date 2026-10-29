@@ -8,6 +8,9 @@ from src.stock_scanner.core.paths import get_root_dir
 BASE_DIR = get_root_dir()
 CONFIG_PATH = BASE_DIR / "config" / "config.json"
 
+# https://api.telegram.org/bot<chat_token>/getUpdates
+# https://api.telegram.org/bot<TWOJ_TOKEN>/getChat?chat_id=<CHAT_ID>
+
 
 def load_config() -> dict[str, Any]:
     if not CONFIG_PATH.exists():
@@ -48,6 +51,42 @@ def validate_json(value: Any, path: str = "") -> None:
     elif isinstance(value, list):
         for index, item in enumerate(value):
             validate_json(item, f"{path}[{index}]")
+
+
+@dataclass(frozen=True)
+class ConfigKeys:
+    """Klasa przechowująca konfigurację aplikacji (niemutowalna)."""
+
+    alert_chat_token: str
+    state_chat_token: str
+    debug_chat_token: str
+
+    alert_chat_id: str
+    state_chat_id: str
+    debug_chat_id: str
+
+    state_chat_pinned_message_id: str
+    llm_pinned_error_msg_id: str
+    llm_pinned_error_screen_msg_id: str
+    llm_error_log_file_id: str
+
+    @classmethod
+    def from_json(cls) -> "ConfigKeys":
+        """Fabryka ładująca konfigurację z pliku JSON i mapująca ją na dataclass."""
+        config = load_config()
+
+        return cls(
+            alert_chat_token=str(config["alert_chat_token"]),
+            state_chat_token=str(config["state_chat_token"]),
+            debug_chat_token=str(config["debug_chat_token"]),
+            alert_chat_id=str(config["alert_chat_id"]),
+            state_chat_id=str(config["state_chat_id"]),
+            debug_chat_id=str(config["debug_chat_id"]),
+            state_chat_pinned_message_id=str(config["state_chat_pinned_message_id"]),
+            llm_pinned_error_msg_id=str(config["llm_pinned_error_msg_id"]),
+            llm_pinned_error_screen_msg_id=str(config["llm_pinned_error_screen_msg_id"]),
+            llm_error_log_file_id=str(config["llm_error_log_file_id"]),
+        )
 
 
 @dataclass

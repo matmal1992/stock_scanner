@@ -37,7 +37,7 @@ class GeminiPrompter:
             prompt_input = self.session.page.locator("#prompt-textarea, div[contenteditable='true']").first
             prompt_input.wait_for(state="visible", timeout=Config.prompt_timeout)
             prompt_input.click()
-            prompt_input.fill(prompt, timeout=Config.page_load_timeout)
+            prompt_input.fill(prompt, timeout=Config.prompt_load_timeout)
             prompt_input.press("Enter")
         except Exception as exc:
             self._handle_error("Gemini: Nie udało się wysłać prompta", str(exc))
@@ -80,7 +80,7 @@ class GeminiPrompter:
 
         try:
             response.wait_for(state="visible", timeout=Config.prompt_timeout)
-        except TimeoutError as exc:
+        except Exception as exc:
             self._handle_error("Gemini nie utworzył elementu odpowiedzi w wyznaczonym czasie.", str(exc))
             return False
 

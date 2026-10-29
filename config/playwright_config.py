@@ -5,6 +5,7 @@ from dataclasses import dataclass
 class Config:
     page_load_timeout: float = 15_000
     prompt_timeout: float = 30_000
+    prompt_load_timeout: float = 30_000
 
     gpw_substrings: tuple[str, ...] = (
         "waln",
