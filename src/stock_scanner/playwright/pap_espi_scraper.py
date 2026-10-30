@@ -68,6 +68,10 @@ class PapEspiScraper(QObject):
         abs_url = self._absolute_url(link)
         is_skipped = has_keywords(title, Config.gpw_substrings)
 
+        if has_keywords(title, Config.gpw_exceptions):
+            logger.info("Exception ticker detected - dont skip")
+            is_skipped = False
+
         return {
             "id": 0,
             "title": title,
