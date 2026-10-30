@@ -9,9 +9,11 @@ __pycache__/
 # data files
 *.parquet
 *.txt
+*.log
 !first_tier_list.txt
 *.html
 *.db
+*.db-journal
 config.json
 *.db-shm
 *db-wal

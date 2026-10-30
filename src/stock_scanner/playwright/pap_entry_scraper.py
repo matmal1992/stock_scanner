@@ -1,0 +1,33 @@
+import logging
+
+from config.playwright_config import Config
+from src.stock_scanner.playwright.playwright_session import PlaywrightSession
+
+logger = logging.getLogger(__name__)
+
+
+class PAPEntryContentScraper:
+    BASE_URL = "https://espiebi.pap.pl/"
+
+    def __init__(self, session: PlaywrightSession) -> None:
+        self.session = session
+
+    def start(self) -> None:
+        logger.info("Start content scrapera wywołany")
+        self.session.start(self.BASE_URL, headless=True)
+
+    def close(self) -> None:
+        self.session.close()
+
+    def scrape_content(self, url: str) -> str:
+        content: str = "invalid content"
+        page = self.session.page
+
+        page.goto(url, timeout=Config.page_load_timeout, wait_until="domcontentloaded")
+        container = page.locator("div.field-body-xml-content")
+        container.wait_for(state="attached", timeout=Config.page_load_timeout)
+
+        if container.count() > 0:
+            content = container.evaluate("(element) => element.outerHTML")
+
+        return content

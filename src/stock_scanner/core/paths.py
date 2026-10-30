@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 def get_root_dir() -> Path:
     if getattr(sys, "frozen", False):
-        return Path(sys.executable).resolve().parent.parent.parent.parent
+        return Path(sys.executable).resolve().parent.parent.parent.parent.parent
     else:
         return Path(__file__).resolve().parent.parent.parent.parent
 
@@ -49,10 +49,10 @@ def internal_dir() -> Path:
 def configure_environment() -> None:
     browsers_path = internal_dir() / "browsers"
 
-    # ctypes.windll.user32.SetProcessDPIAware()
-
     os.environ["PLAYWRIGHT_BROWSERS_PATH"] = str(browsers_path)
     logging.info(f"Playwright configured. Path: {browsers_path}")
+
+    print_paths()
 
 
 def get_log_file_path() -> Path:
