@@ -10,6 +10,7 @@ from PySide6.QtCore import QThread
 from config.app_config import ConfigKeys
 from src.stock_scanner.core.paths import get_log_file_path
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository, NewsEntry
+from src.stock_scanner.workers.worker_manager import ServiceManager
 from src.stock_scanner.workers.worker_status import WorkerStatus
 
 logger = logging.getLogger(__name__)
@@ -57,7 +58,7 @@ class TelegramCommandWorker(QThread):
         self._offset: int | None = None
 
     def _request(self, method: str, payload: dict) -> dict | None:
-        url = f"https://api.telegram.org/bot{Keys.alert_chat_token}/{method}"
+        url = f"https://api.telegram.org/bot{Keys.debug_chat_token}/{method}"
         data = urllib.parse.urlencode(payload).encode("utf-8")
         request = urllib.request.Request(url, data=data)
 
@@ -65,7 +66,7 @@ class TelegramCommandWorker(QThread):
         return result
 
     def _send_logs(self) -> None:
-        url = f"https://api.telegram.org/bot{Keys.alert_chat_token}/sendDocument"
+        url = f"https://api.telegram.org/bot{Keys.debug_chat_token}/sendDocument"
         boundary = "----TelegramBoundaryLog"
         headers = {"Content-Type": f"multipart/form-data; boundary={boundary}"}
 
@@ -78,7 +79,7 @@ class TelegramCommandWorker(QThread):
             (
                 f"--{boundary}\r\n"
                 f'Content-Disposition: form-data; name="chat_id"\r\n\r\n'
-                f"{Keys.alert_chat_id}\r\n"
+                f"{Keys.debug_chat_id}\r\n"
                 f"--{boundary}\r\n"
                 f'Content-Disposition: form-data; name="caption"\r\n\r\n'
                 f"\r\n"
@@ -105,7 +106,7 @@ class TelegramCommandWorker(QThread):
             result = self._request("getUpdates", payload)
 
             if result is None:
-                self.msleep(1000)
+                self.msleep(5000)
                 continue
 
             for update in result.get("result", []):
@@ -156,8 +157,8 @@ class TelegramStateBot:
             return
 
         self.last_error_text = error_status_text
-        payload = build_payload(error_status_text, Keys.debug_chat_id, Keys.llm_pinned_error_msg_id)
-        self._request("editMessageText", payload, Keys.debug_chat_token)
+        payload = build_payload(error_status_text, Keys.debug_chat_id)
+        self._request("sendMessage", payload, Keys.debug_chat_token)
 
     def update_llm_status_screen(self, image: bytes) -> None:
         if image == self.last_screen:
@@ -165,26 +166,18 @@ class TelegramStateBot:
 
         self.last_screen = image
 
-        url = f"https://api.telegram.org/bot{Keys.debug_chat_token}/editMessageMedia"
-
+        url = f"https://api.telegram.org/bot{Keys.debug_chat_token}/sendPhoto"
         boundary = "----TelegramBoundary"
-        media = json.dumps({"type": "photo", "media": "attach://photo"})
         headers = {"Content-Type": f"multipart/form-data; boundary={boundary}"}
 
         body = (
             (
                 f"--{boundary}\r\n"
-                'Content-Disposition: form-data; name="chat_id"\r\n\r\n'
+                f'Content-Disposition: form-data; name="chat_id"\r\n\r\n'
                 f"{Keys.debug_chat_id}\r\n"
                 f"--{boundary}\r\n"
-                'Content-Disposition: form-data; name="message_id"\r\n\r\n'
-                f"{Keys.llm_pinned_error_screen_msg_id}\r\n"
-                f"--{boundary}\r\n"
-                'Content-Disposition: form-data; name="media"\r\n\r\n'
-                f"{media}\r\n"
-                f"--{boundary}\r\n"
-                'Content-Disposition: form-data; name="photo"; filename="llm.png"\r\n'
-                "Content-Type: image/png\r\n\r\n"
+                f'Content-Disposition: form-data; name="photo"; filename="llm.png"\r\n'
+                f"Content-Type: image/png\r\n\r\n"
             ).encode("utf-8")
             + image
             + (f"\r\n--{boundary}--\r\n").encode("utf-8")
@@ -199,10 +192,9 @@ class TelegramStateBot:
 
         self.last_error_log = log_content
 
-        url = f"https://api.telegram.org/bot{Keys.debug_chat_token}/editMessageMedia"
+        url = f"https://api.telegram.org/bot{Keys.debug_chat_token}/sendDocument"
         boundary = "----TelegramBoundaryLogUpdate"
         file_bytes = log_content.encode("utf-8")
-        media_json = json.dumps({"type": "document", "media": "attach://error_log.txt"})
         headers = {"Content-Type": f"multipart/form-data; boundary={boundary}"}
 
         body = (
@@ -211,13 +203,7 @@ class TelegramStateBot:
                 f'Content-Disposition: form-data; name="chat_id"\r\n\r\n'
                 f"{Keys.debug_chat_id}\r\n"
                 f"--{boundary}\r\n"
-                f'Content-Disposition: form-data; name="message_id"\r\n\r\n'
-                f"{Keys.llm_error_log_file_id}\r\n"
-                f"--{boundary}\r\n"
-                f'Content-Disposition: form-data; name="media"\r\n\r\n'
-                f"{media_json}\r\n"
-                f"--{boundary}\r\n"
-                f'Content-Disposition: form-data; name="error_log.txt"; filename="error_log.txt"\r\n'
+                f'Content-Disposition: form-data; name="document"; filename="error_log.txt"\r\n'
                 f"Content-Type: text/plain\r\n\r\n"
             ).encode("utf-8")
             + file_bytes
@@ -253,32 +239,32 @@ class TelegramStateWorker(QThread):
             except Exception as exc:
                 logger.exception(f"Błąd aktualizacji Scanner State: {exc}")
 
-            for _ in range(50):
-                if not self._running:
-                    break
-                self.msleep(100)
+            self.msleep(10000)
 
 
 class TelegramBot:
-    telegram_state_worker: TelegramStateWorker
-    command_worker: TelegramCommandWorker
+    telegram_state_worker: TelegramStateWorker | None
+    command_worker: TelegramCommandWorker | None
 
     @classmethod
     def init(cls, entry_repo: EntryRepository) -> None:
+        cls.close_telegram()
         cls.telegram_state_worker = TelegramStateWorker(entry_repo)
         cls.telegram_state_worker.start()
         cls.command_worker = TelegramCommandWorker()
         cls.command_worker.start()
 
+        ServiceManager.register(cls.close_telegram)
+
     @classmethod
     def send_alert(cls, entry: NewsEntry) -> None:
-        message = cls.build_alert(entry)
+        message = cls._build_alert(entry)
 
         if message:
             cls.send_message(message)
 
     @classmethod
-    def build_alert(cls, entry: NewsEntry) -> str | None:
+    def _build_alert(cls, entry: NewsEntry) -> str | None:
         forecast = entry["llm"]
         title = entry["title"]
         published = entry["published"]
@@ -312,16 +298,22 @@ class TelegramBot:
         _execute_request(request, timeout=10)
 
     @classmethod
-    def stop_telegram(cls) -> None:
-        if cls.telegram_state_worker.isRunning():
-            cls.telegram_state_worker._running = False
-            cls.telegram_state_worker.wait()
+    def close_telegram(cls) -> None:
+        if getattr(cls, "telegram_state_worker", None) is not None:
+            if cls.telegram_state_worker is not None and cls.telegram_state_worker.isRunning():
+                cls.telegram_state_worker._running = False
+                cls.telegram_state_worker.wait()
 
-        if cls.command_worker.isRunning():
-            cls.command_worker._running = False
-            cls.command_worker.wait()
+            cls.telegram_state_worker = None
+            logger.info("Telegram state worker closed")
 
-        logger.info("Telegram workers stopped")
+        if getattr(cls, "command_worker", None) is not None:
+            if cls.command_worker is not None and cls.command_worker.isRunning():
+                cls.command_worker._running = False
+                cls.command_worker.wait()
+
+            cls.command_worker = None
+            logger.info("Telegram command worker closed")
 
 
 # zostawić tylko wzrost i silny wzrost. Wyjatek to tracked_tickers

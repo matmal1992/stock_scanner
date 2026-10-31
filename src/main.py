@@ -32,6 +32,7 @@ def handle_exception(
 
     try:
         TelegramBot().send_message(f"""💥 **Stock Scanner Crash (Python Exception)**:\n```{exc_value}```""")
+        TelegramBot.close_telegram()
     except Exception:
         traceback.print_exc()
 
@@ -83,7 +84,7 @@ def main() -> None:
 
     def quit_application() -> None:
         tray_icon.hide()
-        TelegramBot.stop_telegram()
+        TelegramBot.close_telegram()
         app.exit(NORMAL_EXIT_CODE)
 
     show_action.triggered.connect(show_window)
@@ -97,9 +98,9 @@ def main() -> None:
     tray_icon.show()
     window.hide()
 
-    GPWService.start(entry_repo)
-    LLMService.start(entry_repo)
-    ContentScrapeService.start(entry_repo)
+    GPWService.init(entry_repo)
+    LLMService.init(entry_repo)
+    ContentScrapeService.init(entry_repo)
 
     try:
         exit_code = app.exec()

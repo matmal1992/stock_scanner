@@ -6,6 +6,7 @@ from PySide6.QtCore import QThread
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository
 from src.stock_scanner.strategies.news_tracker.gemini_prompter import GeminiPrompter
 from src.stock_scanner.workers.telegram import TelegramBot
+from src.stock_scanner.workers.worker_manager import ServiceManager
 from src.stock_scanner.workers.worker_status import WorkerStatus
 
 logger = logging.getLogger(__name__)
@@ -33,10 +34,6 @@ class LLMWorker(QThread):
             total_pending = self.entry_repo.get_pending_number()
             WorkerStatus.update("LLM", "Loop")
             WorkerStatus.update("LLM", "Pending", str(total_pending))
-
-            if self._stop_event.is_set():
-                logger.info("LLM Worker - STOP invoked")
-                break
 
             try:
                 pending = self.entry_repo.get_pending_with_content(limit=1)
@@ -67,51 +64,28 @@ class LLMWorker(QThread):
                     logger.exception("Nie udało się odświeżyć LLM po błędzie")
                 continue
 
-    def _cleanup(self) -> None:
-        if self.prompter is not None:
-            try:
-                self.prompter.close()
-            except Exception:
-                logger.exception("LLM: błąd zamykania promptera")
-            finally:
-                self.prompter.close()
-
     def stop(self) -> None:
         logger.info("Zatrzymywanie LLM workera...")
+        self.prompter.close()
         self._stop_event.set()
-        self._finish()
-
-    def _finish(self) -> None:
-        try:
-            self.prompter.close()
-        except Exception:
-            logger.exception("Błąd podczas zamykania LLM promptera")
 
 
 class LLMService:
-    _thread: QThread | None
-    _worker: LLMWorker | None
+    _worker: LLMWorker | None = None
 
     @classmethod
-    def start(cls, entry_repo: EntryRepository) -> None:
-        cls._thread = QThread()
+    def init(cls, entry_repo: EntryRepository) -> None:
+        cls.close_worker()
         cls._worker = LLMWorker(entry_repo)
-        cls._worker.moveToThread(cls._thread)
-
-        cls._thread.started.connect(cls._worker.run)
-        cls._thread.finished.connect(cls._worker.deleteLater)
-        cls._thread.finished.connect(cls._thread.deleteLater)
-        cls._thread.finished.connect(cls._on_thread_finished)
-
-        cls._thread.start()
+        cls._worker.start()
+        ServiceManager.register(cls.close_worker)
 
     @classmethod
-    def stop(cls) -> None:
-        thread_running = cls._thread is not None and cls._thread.isRunning()
-        if cls._worker is None or not thread_running:
-            return
+    def close_worker(cls) -> None:
+        if getattr(cls, "_worker", None) is not None:
+            if cls._worker is not None and cls._worker.isRunning():
+                cls._worker.stop()
+                cls._worker.wait()
 
-    @classmethod
-    def _on_thread_finished(cls) -> None:
-        cls._thread = None
-        cls._worker = None
+            cls._worker = None
+            logger.info("LLM worker closed")
