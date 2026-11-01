@@ -9,8 +9,8 @@ logger = logging.getLogger(__name__)
 class PAPEntryContentScraper:
     BASE_URL = "https://espiebi.pap.pl/"
 
-    def __init__(self, session: PlaywrightSession) -> None:
-        self.session = session
+    def __init__(self) -> None:
+        self.session = PlaywrightSession()
 
     def start(self) -> None:
         logger.info("Start content scrapera wywołany")

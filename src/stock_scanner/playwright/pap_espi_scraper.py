@@ -15,9 +15,9 @@ logger = logging.getLogger(__name__)
 class PapEspiScraper(QObject):
     BASE_URL = "https://espiebi.pap.pl/"
 
-    def __init__(self, session: PlaywrightSession) -> None:
+    def __init__(self) -> None:
         super().__init__()
-        self.session = session
+        self.session = PlaywrightSession()
 
     def start(self) -> None:
         self.session.start(self.BASE_URL, headless=True)

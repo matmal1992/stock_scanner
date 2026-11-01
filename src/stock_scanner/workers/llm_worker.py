@@ -18,14 +18,14 @@ class LLMWorker(QThread):
     def __init__(self, entry_repo: EntryRepository) -> None:
         super().__init__()
         self.entry_repo = entry_repo
-        self.prompter = GeminiPrompter()
+        self._session = GeminiPrompter()
         self._stop_event = threading.Event()
 
     def run(self) -> None:
         logger.info("LLM worker started")
 
         try:
-            self.prompter.start()
+            self._session.start()
         except Exception:
             logger.exception("LLM: błąd uruchamiania promptera")
             return
@@ -42,9 +42,9 @@ class LLMWorker(QThread):
                     continue
 
                 entry = pending[0]
-                response = self.prompter.process_entry(entry)
+                response = self._session.process_entry(entry)
                 if response is None:
-                    self.prompter.refresh()
+                    self._session.refresh()
                     continue
 
                 self.entry_repo.update_llm(entry["id"], response)
@@ -54,19 +54,18 @@ class LLMWorker(QThread):
 
                 TelegramBot.send_alert(entry)
                 WorkerStatus.update("LLM", "Last processed")
-                self.prompter.refresh()
+                self._session.refresh()
 
             except Exception as exc:
                 logger.exception("LLM exception: %s", exc)
                 try:
-                    self.prompter.refresh()
+                    self._session.refresh()
                 except Exception:
                     logger.exception("Nie udało się odświeżyć LLM po błędzie")
                 continue
 
     def stop(self) -> None:
-        logger.info("Zatrzymywanie LLM workera...")
-        self.prompter.close()
+        self._session.close()
         self._stop_event.set()
 
 
@@ -82,10 +81,13 @@ class LLMService:
 
     @classmethod
     def close_worker(cls) -> None:
-        if getattr(cls, "_worker", None) is not None:
-            if cls._worker is not None and cls._worker.isRunning():
+        if cls._worker is not None:
+            if cls._worker.isRunning():
                 cls._worker.stop()
                 cls._worker.wait()
 
+            cls._worker.deleteLater()
             cls._worker = None
             logger.info("LLM worker closed")
+        else:
+            logger.info("Closing LLM worker - worker already closed")

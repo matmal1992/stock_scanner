@@ -4,7 +4,6 @@ import threading
 from PySide6.QtCore import QThread
 
 from src.stock_scanner.playwright.pap_entry_scraper import PAPEntryContentScraper
-from src.stock_scanner.playwright.playwright_session import PlaywrightSession
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository
 from src.stock_scanner.workers.worker_manager import ServiceManager
 from src.stock_scanner.workers.worker_status import WorkerStatus
@@ -18,13 +17,13 @@ class ScraperWorker(QThread):
     def __init__(self, entry_repo: EntryRepository) -> None:
         super().__init__()
         self.entry_repo = entry_repo
-        self.page_content_scraper = PAPEntryContentScraper(PlaywrightSession())
+        self._session = PAPEntryContentScraper()
         self._stop_event = threading.Event()
 
     def run(self) -> None:
         try:
             logger.info("Start workera do scrapowania contentu komunikatu...")
-            self.page_content_scraper.start()
+            self._session.start()
 
             while not self._stop_event.wait(self.INTERVAL_SECONDS):
                 WorkerStatus.update("GPW entry scraper", "Loop")
@@ -34,7 +33,7 @@ class ScraperWorker(QThread):
                     continue
 
                 entry = entries[0]
-                content = self.page_content_scraper.scrape_content(entry["link"])
+                content = self._session.scrape_content(entry["link"])
                 self.entry_repo.update_content(entry["id"], content)
                 WorkerStatus.update("GPW entry scraper", "Last scrape")
 
@@ -42,8 +41,7 @@ class ScraperWorker(QThread):
             logger.exception(f"Content scraper exception: {exc}")
 
     def stop(self) -> None:
-        logger.info("Entry scraper - Zatrzymywanie workera...")
-        self.page_content_scraper.close()
+        self._session.close()
         self._stop_event.set()
 
 
@@ -59,10 +57,13 @@ class ContentScrapeService:
 
     @classmethod
     def close_worker(cls) -> None:
-        if getattr(cls, "_worker", None) is not None:
-            if cls._worker is not None and cls._worker.isRunning():
+        if cls._worker is not None:
+            if cls._worker.isRunning():
                 cls._worker.stop()
                 cls._worker.wait()
 
+            cls._worker.deleteLater()
             cls._worker = None
-            logger.info("GPW entry scrape worker closed")
+            logger.info("Entry scraper worker closed")
+        else:
+            logger.info("Closing Entry scraper worker - worker already closed")
