@@ -21,8 +21,10 @@ class BaseWorker(QThread):
         self._stop_event.set()
 
         # if hasattr(self._session, "close"):
+        #     logger.info("Close session entered")
         #     self._session.close()
 
         self.quit()
         self.wait()
         logger.info(f"{self._worker_name} worker closed")
+        # wyprintować stan wątku

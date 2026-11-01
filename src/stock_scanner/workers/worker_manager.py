@@ -14,9 +14,9 @@ class ServiceManager:
     @classmethod
     def stop_all(cls) -> None:
         for stop_func in cls._services:
-            try:
-                stop_func()
-            except Exception as e:
-                logger.exception(f"Błąd podczas zamykania serwisu: {e}")
+            # try:
+            stop_func()
+        # except Exception as e:
+        # logger.exception(f"Błąd podczas zamykania serwisu: {e}")
         cls._services.clear()
         logger.info("Wszystkie zarejestrowane workery zostały zamknięte.")
