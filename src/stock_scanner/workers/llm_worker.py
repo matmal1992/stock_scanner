@@ -1,25 +1,21 @@
 import logging
-import threading
-
-from PySide6.QtCore import QThread
 
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository
 from src.stock_scanner.strategies.news_tracker.gemini_prompter import GeminiPrompter
+from src.stock_scanner.workers.base_worker import BaseWorker
 from src.stock_scanner.workers.telegram import TelegramBot
-from src.stock_scanner.workers.worker_manager import ServiceManager
 from src.stock_scanner.workers.worker_status import WorkerStatus
 
 logger = logging.getLogger(__name__)
 
 
-class LLMWorker(QThread):
+class LLMWorker(BaseWorker):
     INTERVAL_SECONDS = 1
 
     def __init__(self, entry_repo: EntryRepository) -> None:
-        super().__init__()
-        self.entry_repo = entry_repo
         self._session = GeminiPrompter()
-        self._stop_event = threading.Event()
+        self.entry_repo = entry_repo
+        super().__init__(self._session, "LLM")
 
     def run(self) -> None:
         logger.info("LLM worker started")
@@ -64,30 +60,4 @@ class LLMWorker(QThread):
                     logger.exception("Nie udało się odświeżyć LLM po błędzie")
                 continue
 
-    def stop(self) -> None:
-        self._session.close()
-        self._stop_event.set()
-
-
-class LLMService:
-    _worker: LLMWorker | None = None
-
-    @classmethod
-    def init(cls, entry_repo: EntryRepository) -> None:
-        cls.close_worker()
-        cls._worker = LLMWorker(entry_repo)
-        cls._worker.start()
-        ServiceManager.register(cls.close_worker)
-
-    @classmethod
-    def close_worker(cls) -> None:
-        if cls._worker is not None:
-            if cls._worker.isRunning():
-                cls._worker.stop()
-                cls._worker.wait()
-
-            cls._worker.deleteLater()
-            cls._worker = None
-            logger.info("LLM worker closed")
-        else:
-            logger.info("Closing LLM worker - worker already closed")
+        logger.exception("Stop event invoked")
