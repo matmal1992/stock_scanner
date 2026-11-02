@@ -10,7 +10,8 @@ from PySide6.QtCore import QThread
 from config.app_config import ConfigKeys
 from src.stock_scanner.core.paths import get_log_file_path
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository, NewsEntry
-from src.stock_scanner.workers.worker_manager import ServiceManager
+
+# from src.stock_scanner.workers.worker_manager import ServiceManager
 from src.stock_scanner.workers.worker_status import WorkerStatus
 
 logger = logging.getLogger(__name__)
@@ -254,7 +255,7 @@ class TelegramBot:
         cls.command_worker = TelegramCommandWorker()
         cls.command_worker.start()
 
-        ServiceManager.register(cls.close_telegram)
+        # ServiceManager.register(cls.close_telegram)
 
     @classmethod
     def send_alert(cls, entry: NewsEntry) -> None:

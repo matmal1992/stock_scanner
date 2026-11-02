@@ -12,12 +12,8 @@ from src.stock_scanner.core.paths import configure_environment, configure_loggin
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository
 from src.stock_scanner.strategies.news_tracker.tracked_ticker_repo import TrackedTickerRepository
 from src.stock_scanner.ui.windows.main_window import MainWindow
-from src.stock_scanner.workers.gpw_worker import GPWService
-from src.stock_scanner.workers.llm_worker import LLMWorker
-from src.stock_scanner.workers.page_scraper_worker import ContentScrapeService
 from src.stock_scanner.workers.telegram import TelegramBot
 from src.stock_scanner.workers.worker_manager import ServiceManager
-from src.stock_scanner.workers.worker_status import WorkerStatus
 
 NORMAL_EXIT_CODE = 42
 
@@ -34,7 +30,7 @@ def handle_exception(
     try:
         TelegramBot().send_message(f"""💥 **Stock Scanner Crash (Python Exception)**:\n```{exc_value}```""")
         TelegramBot.close_telegram()
-        ServiceManager.stop_all()
+        ServiceManager.close_all()
     except Exception:
         traceback.print_exc()
 
@@ -51,10 +47,6 @@ def main() -> None:
 
     entry_repo = EntryRepository(db)
     tracked_repo = TrackedTickerRepository(db)
-    WorkerStatus.init()
-
-    TelegramBot.init(entry_repo)
-    TelegramBot.send_message("Telegram alert")
 
     sys.excepthook = handle_exception
 
@@ -87,7 +79,7 @@ def main() -> None:
     def quit_application() -> None:
         tray_icon.hide()
         TelegramBot.close_telegram()
-        ServiceManager.stop_all()
+        ServiceManager.close_all()
         app.exit(NORMAL_EXIT_CODE)
 
     show_action.triggered.connect(show_window)
@@ -101,10 +93,8 @@ def main() -> None:
     tray_icon.show()
     window.hide()
 
-    GPWService.init(entry_repo)
-    llm_worker = LLMWorker(entry_repo)
-    llm_worker.start()
-    ContentScrapeService.init(entry_repo)
+    ServiceManager.init_all(entry_repo)
+    TelegramBot.send_message("Stock Scanner started")
 
     try:
         exit_code = app.exec()

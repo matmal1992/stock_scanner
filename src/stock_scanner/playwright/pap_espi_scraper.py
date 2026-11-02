@@ -20,6 +20,7 @@ class PapEspiScraper(QObject):
         self.session = PlaywrightSession()
 
     def start(self) -> None:
+        logger.info("Start sesji GPW ESPI scraper")
         self.session.start(self.BASE_URL, headless=True)
 
     def close(self) -> None:

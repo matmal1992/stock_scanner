@@ -13,7 +13,7 @@ class PAPEntryContentScraper:
         self.session = PlaywrightSession()
 
     def start(self) -> None:
-        logger.info("Start content scrapera wywołany")
+        logger.info("Start sesji PAP entry content scraper")
         self.session.start(self.BASE_URL, headless=True)
 
     def close(self) -> None:

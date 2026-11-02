@@ -22,42 +22,44 @@ class LLMWorker(BaseWorker):
 
         try:
             self._session.start()
-        except Exception:
-            logger.exception("LLM: błąd uruchamiania promptera")
-            return
 
-        while not self._stop_event.wait(self.INTERVAL_SECONDS):
-            total_pending = self.entry_repo.get_pending_number()
-            WorkerStatus.update("LLM", "Loop")
-            WorkerStatus.update("LLM", "Pending", str(total_pending))
+            while not self._stop_event.wait(self.INTERVAL_SECONDS):
+                total_pending = self.entry_repo.get_pending_number()
+                WorkerStatus.update("LLM", "Loop")
+                WorkerStatus.update("LLM", "Pending", str(total_pending))
 
-            try:
-                pending = self.entry_repo.get_pending_with_content(limit=1)
-
-                if not pending:
-                    continue
-
-                entry = pending[0]
-                response = self._session.process_entry(entry)
-                if response is None:
-                    self._session.refresh()
-                    continue
-
-                self.entry_repo.update_llm(entry["id"], response)
-
-                entry["llm"] = response["forecast"]
-                entry["justification"] = response["justification"]
-
-                TelegramBot.send_alert(entry)
-                WorkerStatus.update("LLM", "Last processed")
-                self._session.refresh()
-
-            except Exception as exc:
-                logger.exception("LLM exception: %s", exc)
                 try:
-                    self._session.refresh()
-                except Exception:
-                    logger.exception("Nie udało się odświeżyć LLM po błędzie")
-                continue
+                    pending = self.entry_repo.get_pending_with_content(limit=1)
 
-        logger.exception("Stop event invoked")
+                    if not pending:
+                        continue
+
+                    entry = pending[0]
+                    response = self._session.process_entry(entry)
+                    if response is None:
+                        self._session.refresh()
+                        continue
+
+                    self.entry_repo.update_llm(entry["id"], response)
+
+                    entry["llm"] = response["forecast"]
+                    entry["justification"] = response["justification"]
+
+                    TelegramBot.send_alert(entry)
+                    WorkerStatus.update("LLM", "Last processed")
+                    self._session.refresh()
+
+                except Exception as exc:
+                    logger.exception("LLM prompter exception: %s", exc)
+                    try:
+                        self._session.refresh()
+                    except Exception:
+                        logger.exception("Nie udało się odświeżyć LLM po błędzie")
+                    continue
+
+        except Exception as exc:
+            logger.exception("LLM worker exception: %s", exc)
+
+        finally:
+            logger.info("Closing LLM session...")
+            self._session.close()

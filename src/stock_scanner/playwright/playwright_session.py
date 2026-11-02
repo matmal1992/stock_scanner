@@ -81,7 +81,6 @@ class PlaywrightSession:
         return self._context.new_page()
 
     def close(self) -> None:
-        logger.info("Close method invoked")
         if self._context is not None:
             self._context.close()
             self._context = None
