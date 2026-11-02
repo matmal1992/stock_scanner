@@ -136,17 +136,13 @@ class MainWindow(QMainWindow):
         """)
 
         self.show_main_menu()
-
-    def start_news_strategy(self) -> None:
-        self.news_tracker_window.news_feed.gpw.start()
-        self.news_tracker_window.news_feed.llm.start()
+        self.switch_window(self.news_tracker_window, self.news_tracker)
 
     def switch_window(self, window: QWidget, button: QPushButton) -> None:
         self.show_window(window)
         button.setChecked(True)
 
     def show_window(self, window: QWidget) -> None:
-        """Switch to a strategy window while keeping sidebar."""
         # Remove previous window
         if self.current_window:
             layout = self.window_container.layout()
@@ -161,7 +157,6 @@ class MainWindow(QMainWindow):
         window.show()
 
     def show_main_menu(self) -> None:
-        """Return to main menu."""
         if self.current_window:
             layout = self.window_container.layout()
             if layout:

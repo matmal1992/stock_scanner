@@ -1,7 +1,7 @@
 from typing import Callable
 
 from config.app_config import CONFIG_1D
-from src.stock_scanner.download.downloader import run_download
+from src.stock_scanner.strategies.three_tier_scanner.downloader import run_download
 
 
 def run_3t_strategy(progress_callback: Callable | None = None) -> None:
