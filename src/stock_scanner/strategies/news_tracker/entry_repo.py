@@ -17,7 +17,6 @@ class NewsEntry(TypedDict):
     ticker: str | None
     llm: str
     justification: str
-    skipped: int
     content: str | None
 
 
@@ -39,9 +38,9 @@ class EntryRepository(QObject):
                 cursor = conn.execute(
                     """
                     INSERT OR IGNORE INTO entries (
-                        source_type, ticker, title, link, published, llm, justification, skipped, content
+                        source_type, ticker, title, link, published, llm, justification, content
                     )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         entry["source_type"],
@@ -51,7 +50,6 @@ class EntryRepository(QObject):
                         entry["published"],
                         entry["llm"],
                         entry["justification"],
-                        entry["skipped"],
                         entry["content"],
                     ),
                 )
@@ -71,7 +69,7 @@ class EntryRepository(QObject):
 
             cursor.execute(
                 """
-                SELECT id, title, link, published, source_type, ticker, llm, justification, skipped, content
+                SELECT id, title, link, published, source_type, ticker, llm, justification, content
                 FROM entries
                 WHERE id = ?
                 """,
@@ -90,9 +88,8 @@ class EntryRepository(QObject):
             cur = conn.cursor()
             cur.execute(
                 """
-                SELECT id, title, link, published, source_type, ticker, llm, justification, skipped, content
+                SELECT id, title, link, published, source_type, ticker, llm, justification, content
                 FROM entries
-                WHERE skipped = 0
                 ORDER BY published DESC
                 """
             )
@@ -140,8 +137,7 @@ class EntryRepository(QObject):
             "ticker": row[5],
             "llm": row[6],
             "justification": row[7],
-            "skipped": row[8],
-            "content": row[9],
+            "content": row[8],
         }
 
     def clear_all(self) -> None:
@@ -157,7 +153,7 @@ class EntryRepository(QObject):
 
             cursor.execute(
                 """
-                SELECT id, title, link, published, source_type, ticker, llm, justification, skipped, content
+                SELECT id, title, link, published, source_type, ticker, llm, justification, content
                 FROM entries
                 WHERE llm = ?
                 ORDER BY id ASC
@@ -233,10 +229,9 @@ class EntryRepository(QObject):
             rows = conn.execute(
                 """
                 SELECT id, title, link, published, source_type,
-                    ticker, llm, justification, skipped, content
+                    ticker, llm, justification, content
                 FROM entries
-                WHERE skipped = 0
-                AND content IS NULL
+                WHERE content IS NULL
                 ORDER BY id ASC
                 LIMIT ?
                 """,
@@ -258,7 +253,6 @@ class EntryRepository(QObject):
                     ticker,
                     llm,
                     justification,
-                    skipped,
                     content
                 FROM entries
                 WHERE llm = ?

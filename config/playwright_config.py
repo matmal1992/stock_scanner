@@ -1,4 +1,7 @@
+import logging
 from dataclasses import dataclass
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -178,3 +181,10 @@ def has_keywords(title: str, keywords: tuple[str, ...]) -> bool:
             return True
 
     return False
+
+
+def skip_entry(title: str) -> bool:
+    has_exceptions = has_keywords(title, Config.gpw_exceptions)
+    has_substrings = has_keywords(title, Config.gpw_substrings)
+
+    return has_substrings and not has_exceptions
