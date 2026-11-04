@@ -5,7 +5,7 @@ from typing import Optional
 from playwright.sync_api import Locator
 from PySide6.QtCore import QObject
 
-from config.playwright_config import Config, has_keywords
+from config.playwright_config import Config, skip_entry
 from src.stock_scanner.playwright.playwright_session import PlaywrightSession
 from src.stock_scanner.strategies.news_tracker.entry_repo import NewsEntry
 
@@ -59,19 +59,16 @@ class PapEspiScraper(QObject):
         link_locator = item.locator("a.link")
 
         title = link_locator.inner_text().strip()
+        is_skipped = skip_entry(title)
+        if is_skipped:
+            return None
+
         link = link_locator.get_attribute("href")
-
-        hour_str = item.locator("div.hour").first.inner_text().strip()
-
         if not link:
             return None
 
+        hour_str = item.locator("div.hour").first.inner_text().strip()
         abs_url = self._absolute_url(link)
-        is_skipped = has_keywords(title, Config.gpw_substrings)
-
-        if has_keywords(title, Config.gpw_exceptions):
-            logger.info("Exception ticker detected - dont skip")
-            is_skipped = False
 
         return {
             "id": 0,
@@ -80,9 +77,8 @@ class PapEspiScraper(QObject):
             "published": f"{date_str} {hour_str}",
             "source_type": "ESPI",
             "ticker": self._extract_ticker(title),
-            "llm": "-" if is_skipped else "pending",
+            "llm": "pending",
             "justification": "-",
-            "skipped": int(is_skipped),
             "content": None,
         }
 

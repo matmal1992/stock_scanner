@@ -252,8 +252,8 @@ class TelegramBot:
         cls.close_telegram()
         cls.telegram_state_worker = TelegramStateWorker(entry_repo)
         cls.telegram_state_worker.start()
-        cls.command_worker = TelegramCommandWorker()
-        cls.command_worker.start()
+        # cls.command_worker = TelegramCommandWorker()
+        # cls.command_worker.start()
 
         # ServiceManager.register(cls.close_telegram)
 
@@ -308,13 +308,13 @@ class TelegramBot:
             cls.telegram_state_worker = None
             logger.info("Telegram state worker closed")
 
-        if getattr(cls, "command_worker", None) is not None:
-            if cls.command_worker is not None and cls.command_worker.isRunning():
-                cls.command_worker._running = False
-                cls.command_worker.wait()
+        # if getattr(cls, "command_worker", None) is not None:
+        #     if cls.command_worker is not None and cls.command_worker.isRunning():
+        #         cls.command_worker._running = False
+        #         cls.command_worker.wait()
 
-            cls.command_worker = None
-            logger.info("Telegram command worker closed")
+        #     cls.command_worker = None
+        #     logger.info("Telegram command worker closed")
 
 
 # zostawić tylko wzrost i silny wzrost. Wyjatek to tracked_tickers
