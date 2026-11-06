@@ -26,10 +26,17 @@ class PapEspiScraper(QObject):
     def close(self) -> None:
         self.session.close()
 
-    def refresh_page(self) -> None:
+    def click_refresh_btn(self) -> None:
         refresh_button = self.session.page.locator("#refreshHomeId a.refreshButton")
         refresh_button.wait_for(state="visible", timeout=Config.page_load_timeout)
         refresh_button.click()
+
+    def refresh_page(self) -> None:
+        self.session.page.goto(
+            self.BASE_URL,
+            timeout=Config.page_load_timeout,
+            wait_until="domcontentloaded",
+        )
 
     def scrape_entries(self) -> list[NewsEntry]:
         day_blocks = self.session.page.locator(".view-report-listing div.day")
