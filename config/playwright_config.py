@@ -30,7 +30,11 @@ class Config:
 
     gpw_substrings: tuple[str, ...] = (
         "waln",
+        "unicredit",
+        "liczby głosów",
         "zgromadzeni",
+        "skonsolidowanych przychodach",
+        "art.",
         "akcji",
         "członka zarządu",
         "członka rady",
