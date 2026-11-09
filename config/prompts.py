@@ -416,3 +416,176 @@ Nie używaj Markdown ani bloków kodu.
 
 Analiza ma charakter wyłącznie edukacyjny i informacyjny.
 """
+
+gold_prompt_headline = """Otrzymasz pojedynczy nagłówek wiadomości dotyczący wydarzenia, 
+które może mieć wpływ na cenę złota (XAU/USD).
+
+Twoim zadaniem jest określenie najbardziej prawdopodobnego kierunku reakcji ceny złota w ciągu jednej sesji 
+giełdowej od publikacji wiadomości.
+
+KROK 1 - ANALIZA INFORMACJI I KONTEKSTU RYNKOWEGO
+
+Zinterpretuj wydarzenie opisane w nagłówku i oceń jego potencjalny wpływ na cenę złota.
+
+Jeżeli masz dostęp do internetu, zweryfikuj wydarzenie i uzupełnij analizę o aktualne dane rynkowe.
+
+Uwzględnij przede wszystkim:
+
+- Politykę FED i oczekiwania dotyczące stóp procentowych.
+- Kurs USD i indeks DXY.
+- Rentowności amerykańskich obligacji, szczególnie realne.
+- Dane dotyczące inflacji, zatrudnienia i wzrostu gospodarczego.
+- Zakupy złota przez banki centralne i przepływy kapitału do ETF.
+- Ryzyko geopolityczne i popyt na złoto jako bezpieczną przystań.
+- Inne czynniki istotne dla analizowanego wydarzenia.
+
+Nie musisz uwzględniać wszystkich wymienionych czynników. Skoncentruj się na tych, 
+które rzeczywiście mogą wpłynąć na krótkoterminową cenę złota.
+
+Oceń:
+
+- Znaczenie i wiarygodność informacji.
+- Jej nowość oraz stopień zaskoczenia rynku.
+- Czy rynek zdążył już uwzględnić ją w cenie złota.
+- Potencjalny mechanizm wpływu na złoto.
+- Aktualną sytuację rynkową i możliwe przeciwstawne czynniki.
+
+Nie dopisuj niepotwierdzonych informacji. Preferuj wiarygodne i aktualne źródła, 
+w szczególności źródła pierwotne.
+
+KROK 2 - PROGNOZA REAKCJI RYNKU
+
+Oceń najbardziej prawdopodobną rzeczywistą reakcję ceny XAU/USD w ciągu jednej sesji giełdowej od 
+publikacji wiadomości.
+
+Wybierz dokładnie jedną z poniższych wartości:
+
+- "Silny spadek"
+- "Spadek"
+- "Neutralny"
+- "Wzrost"
+- "Silny wzrost"
+
+Nie utożsamiaj teoretycznego wpływu informacji z rzeczywistą reakcją rynku. Uwzględnij jej znaczenie, 
+aktualny kontekst rynkowy, stopień zdyskontowania oraz możliwe przeciwstawne czynniki.
+
+Kategorie "Silny spadek" i "Silny wzrost" stosuj wyłącznie w przypadku wyjątkowo istotnych wydarzeń, 
+które mogą wywołać zdecydowaną reakcję rynku.
+
+Jeżeli informacja ma niewielkie znaczenie dla jednej sesji lub dostępne dane nie pozwalają wiarygodnie 
+określić kierunku reakcji, wybierz "Neutralny".
+
+KROK 3 - UZASADNIENIE
+
+Przygotuj uzasadnienie składające się z dokładnie dwóch zdań.
+
+Wyjaśnij najważniejszy mechanizm wpływu wiadomości na złoto oraz wskaż, 
+dlaczego w aktualnych warunkach rynkowych przewidywany kierunek reakcji jest najbardziej prawdopodobny.
+
+KROK 4 - FORMAT ODPOWIEDZI
+
+Zwróć wyłącznie poprawny składniowo obiekt JSON o następującej strukturze:
+
+{
+  "forecast": "jedna z pięciu dozwolonych wartości",
+  "justification": "Pierwsze zdanie uzasadnienia. Drugie zdanie uzasadnienia."
+}
+
+Przed zwróceniem odpowiedzi sprawdź poprawność JSON, zgodność prognozy z dozwolonymi wartościami oraz to, czy 
+uzasadnienie zawiera dokładnie dwa zdania.
+
+Nie dodawaj komentarzy, źródeł, linków, dodatkowych pól ani tekstu poza obiektem JSON.
+Nie używaj Markdown ani bloków kodu.
+
+Analiza ma charakter wyłącznie edukacyjny i informacyjny.
+"""
+
+silver_prompt_headline = """Otrzymasz pojedynczy nagłówek wiadomości dotyczący wydarzenia,
+które może mieć wpływ na cenę srebra (XAG/USD).
+
+Twoim zadaniem jest określenie najbardziej prawdopodobnego kierunku reakcji ceny srebra w ciągu jednej sesji
+giełdowej od publikacji wiadomości.
+
+KROK 1 - ANALIZA INFORMACJI I KONTEKSTU RYNKOWEGO
+
+Zinterpretuj wydarzenie opisane w nagłówku i oceń jego potencjalny wpływ na cenę srebra.
+
+Jeżeli masz dostęp do internetu, zweryfikuj wydarzenie i uzupełnij analizę o aktualne dane rynkowe.
+
+Uwzględnij przede wszystkim:
+
+- Globalny popyt przemysłowy i inwestycyjny na srebro.
+- Popyt ze strony fotowoltaiki, elektroniki, elektromobilności i innych sektorów technologicznych.
+- Podaż srebra z kopalń i recyklingu oraz sytuację na globalnym rynku srebra.
+- Zapasy srebra, w szczególności COMEX i LBMA, oraz przepływy kapitału do funduszy ETF.
+- Politykę FED i oczekiwania dotyczące stóp procentowych.
+- Kurs USD i indeks DXY.
+- Rentowności amerykańskich obligacji, szczególnie realne.
+- Kondycję gospodarki światowej, szczególnie przemysłu Chin i USA.
+- Relację ceny złota do srebra (Gold/Silver Ratio).
+- Ryzyko geopolityczne i inne czynniki istotne dla analizowanego wydarzenia.
+
+Nie musisz uwzględniać wszystkich wymienionych czynników. Skoncentruj się na tych,
+które rzeczywiście mogą wpłynąć na krótkoterminową cenę srebra.
+
+Oceń:
+
+- Znaczenie i wiarygodność informacji.
+- Jej nowość oraz stopień zaskoczenia rynku.
+- Czy rynek zdążył już uwzględnić ją w cenie srebra.
+- Potencjalny mechanizm wpływu na srebro, zarówno przez popyt przemysłowy, jak i inwestycyjny lub podaż.
+- Aktualną sytuację rynkową i możliwe przeciwstawne czynniki.
+
+Nie dopisuj niepotwierdzonych informacji. Preferuj wiarygodne i aktualne źródła,
+w szczególności źródła pierwotne.
+
+KROK 2 - PROGNOZA REAKCJI RYNKU
+
+Oceń najbardziej prawdopodobną rzeczywistą reakcję ceny XAG/USD w ciągu jednej sesji giełdowej od
+publikacji wiadomości.
+
+Wybierz dokładnie jedną z poniższych wartości:
+
+- "Silny spadek"
+- "Spadek"
+- "Neutralny"
+- "Wzrost"
+- "Silny wzrost"
+
+Nie utożsamiaj teoretycznego wpływu informacji z rzeczywistą reakcją rynku. Uwzględnij jej znaczenie,
+aktualny kontekst rynkowy, stopień zdyskontowania oraz możliwe przeciwstawne czynniki.
+
+Pamiętaj, że srebro jest jednocześnie metalem szlachetnym i surowcem przemysłowym.
+Dlatego uwzględnij zarówno wpływ nastrojów inwestycyjnych i sytuacji na rynku metali szlachetnych,
+jak i oczekiwań dotyczących globalnej koniunktury oraz popytu przemysłowego.
+
+Kategorie "Silny spadek" i "Silny wzrost" stosuj wyłącznie w przypadku wyjątkowo istotnych wydarzeń,
+które mogą wywołać zdecydowaną reakcję rynku.
+
+Jeżeli informacja ma niewielkie znaczenie dla jednej sesji lub dostępne dane nie pozwalają wiarygodnie
+określić kierunku reakcji, wybierz "Neutralny".
+
+KROK 3 - UZASADNIENIE
+
+Przygotuj uzasadnienie składające się z dokładnie dwóch zdań.
+
+Wyjaśnij najważniejszy mechanizm wpływu wiadomości na srebro oraz wskaż,
+dlaczego w aktualnych warunkach rynkowych przewidywany kierunek reakcji jest najbardziej prawdopodobny.
+
+KROK 4 - FORMAT ODPOWIEDZI
+
+Zwróć wyłącznie poprawny składniowo obiekt JSON o następującej strukturze:
+
+{
+  "forecast": "jedna z pięciu dozwolonych wartości",
+  "justification": "Pierwsze zdanie uzasadnienia. Drugie zdanie uzasadnienia."
+}
+
+Przed zwróceniem odpowiedzi sprawdź poprawność JSON, zgodność prognozy z dozwolonymi wartościami oraz to,
+czy uzasadnienie zawiera dokładnie dwa zdania.
+
+Nie dodawaj komentarzy, źródeł, linków, dodatkowych pól ani tekstu poza obiektem JSON.
+Nie używaj Markdown ani bloków kodu.
+
+Analiza ma charakter wyłącznie edukacyjny i informacyjny.
+"""
