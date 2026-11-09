@@ -92,46 +92,52 @@ gpw_prompt = """WYKONAJ PONIŻSZE POLECENIE DOSŁOWNIE.
     Analiza ma charakter wyłącznie edukacyjny i informacyjny.
     """
 
-gold_prompt = """Przeanalizuj poniższy tekst, skopiowany ze strony internetowej. Dotyczy on wydarzenia, informacji lub wiadomości, która może mieć wpływ na cenę złota (XAU/USD).
+gold_prompt = """Przeanalizuj poniższy tekst, skopiowany ze strony internetowej. Dotyczy on wydarzenia,
+informacji lub wiadomości, która może mieć wpływ na cenę złota (XAU/USD).
 
-### KROK 1 — ANALIZA INFORMACJI
+KROK 1 - IDENTYFIKACJA I ANALIZA WIADOMOŚCI
 
-Na podstawie rzeczywistej treści otrzymanego tekstu ustal:
+Na podstawie otrzymanego tekstu:
 
-- Co dokładnie wydarzyło się według komunikatu?
-- Czy informacja jest potencjalnie pozytywna, negatywna czy neutralna dla ceny złota?
-- Jaki jest mechanizm potencjalnego wpływu tej informacji na cenę złota?
-- Czy wpływ może być bezpośredni, czy wynika z pośredniego oddziaływania na czynniki rynkowe?
+- Zidentyfikuj główną treść wiadomości i ustal, co dokładnie się wydarzyło.
+Ignoruj reklamy, menu, stopki, komentarze, odnośniki i
+inne elementy niezwiązane bezpośrednio z głównym komunikatem.
+- Ustal datę publikacji oraz datę opisywanego wydarzenia, jeżeli są dostępne.
+- Oceń, czy informacja jest potencjalnie pozytywna, negatywna czy neutralna dla ceny złota.
+- Ustal mechanizm jej potencjalnego wpływu na XAU/USD, rozróżniając oddziaływanie bezpośrednie i pośrednie.
 
-Nie wymyślaj faktów ani nie wyciągaj wniosków, których nie uzasadnia treść wiadomości.
+Nie dopisuj faktów ani nie wyciągaj wniosków, których nie uzasadnia treść wiadomości.
 
-### KROK 2 — AKTUALNY KONTEKST RYNKOWY
+KROK 2 - AKTUALNY KONTEKST RYNKOWY
 
-Jeżeli masz dostęp do internetu, zweryfikuj najnowsze informacje mogące mieć znaczenie dla oceny wpływu analizowanego wydarzenia na cenę złota.
+Jeżeli masz dostęp do internetu, zweryfikuj aktualne informacje,
+które mogą istotnie wpłynąć na ocenę analizowanego wydarzenia.
 
 W szczególności uwzględnij:
 
-- Zakupy i sprzedaż złota przez banki centralne.
+- Zakupy i sprzedaż złota przez banki centralne oraz ich wpływ na globalny popyt.
 - Napływy i odpływy kapitału z funduszy ETF opartych na złocie.
-- Politykę monetarną FED i oczekiwania dotyczące stóp procentowych.
+- Politykę FED, oczekiwania dotyczące stóp procentowych oraz perspektywy polityki monetarnej.
 - Kurs dolara amerykańskiego (USD).
-- Rentowności amerykańskich obligacji skarbowych, szczególnie obligacji realnych.
-- Dane dotyczące inflacji i sytuacji makroekonomicznej.
+- Rentowności amerykańskich obligacji skarbowych, szczególnie rentowności realne.
+- Dane dotyczące inflacji i aktualnej sytuacji makroekonomicznej.
 - Ryzyko geopolityczne i popyt na złoto jako bezpieczną przystań.
+- Globalny popyt na złoto, w szczególności popyt inwestycyjny i jubilerski.
 - Najnowsze prognozy i rekomendacje analityków dotyczące ceny złota.
 - Inne wydarzenia mogące istotnie wpłynąć na krótkoterminową wycenę złota.
 
-Uwzględniaj wyłącznie informacje, które możesz rzeczywiście zweryfikować i których aktualność możesz ustalić.
+Nie musisz uwzględniać wszystkich czynników. Wybierz wyłącznie te,
+które mają rzeczywiste znaczenie dla analizowanej wiadomości.
 
-Nie wymuszaj uwzględniania wszystkich wymienionych czynników. Wykorzystuj tylko te, które mają istotne znaczenie dla analizowanej wiadomości.
+Korzystaj wyłącznie z informacji, których aktualność i wiarygodność możesz zweryfikować.
+Nie przedstawiaj niepotwierdzonych danych jako faktów.
 
-### KROK 3 — PROGNOZA
+KROK 3 - PROGNOZA REAKCJI RYNKU
 
-Oceń najbardziej prawdopodobny wpływ analizowanej informacji na cenę złota (XAU/USD).
+Oceń najbardziej prawdopodobną reakcję ceny złota (XAU/USD) w ciągu jednej sesji giełdowej od
+momentu publikacji analizowanej wiadomości.
 
-Prognoza dotyczy reakcji ceny złota w ciągu jednej sesji giełdowej od momentu publikacji analizowanej informacji.
-
-Wybierz dokładnie jedną z pięciu wartości:
+Wybierz dokładnie jedną z poniższych wartości:
 
 - "Silny spadek"
 - "Spadek"
@@ -139,25 +145,43 @@ Wybierz dokładnie jedną z pięciu wartości:
 - "Wzrost"
 - "Silny wzrost"
 
-Oceniając potencjalną reakcję rynku:
+Przy podejmowaniu decyzji uwzględnij:
 
-- Uwzględnij znaczenie i wiarygodność informacji.
-- Oceń, czy informacja może zaskoczyć uczestników rynku.
-- Uwzględnij, czy wydarzenie mogło zostać już zdyskontowane w cenie złota.
-- Weź pod uwagę aktualny kontekst makroekonomiczny i rynkowy.
-- Nie utożsamiaj pozytywnego wydźwięku wiadomości z automatycznym wzrostem ceny złota ani negatywnego wydźwięku ze spadkiem ceny.
+- Znaczenie, wiarygodność i potencjalną skalę wydarzenia.
+- Czy informacja jest nowa i może zaskoczyć uczestników rynku.
+- Czy wydarzenie lub jego konsekwencje mogły zostać już uwzględnione w cenie złota.
+- Aktualny kontekst makroekonomiczny i rynkowy.
+- Potencjalny wpływ na popyt inwestycyjny, popyt ze strony banków centralnych oraz atrakcyjność 
+złota jako bezpiecznej przystani.
+- Wpływ zmian oczekiwań dotyczących stóp procentowych, kursu USD i rentowności realnych obligacji USA.
+- Możliwe przeciwstawne czynniki, które mogą ograniczać lub odwracać reakcję rynku.
 
-Prognoza ma przedstawiać najbardziej prawdopodobną reakcję rynku, a nie wyłącznie teoretyczny kierunek wpływu informacji.
+Nie utożsamiaj pozytywnego wydźwięku wiadomości z automatycznym wzrostem ceny ani
+negatywnego wydźwięku ze spadkiem ceny.
 
-### KROK 4 — UZASADNIENIE
+Pamiętaj, że złoto jest przede wszystkim metalem szlachetnym i aktywem inwestycyjnym,
+dlatego jego cena może reagować na zmiany oczekiwań dotyczących polityki monetarnej,
+wartości dolara amerykańskiego, rentowności obligacji oraz poziomu ryzyka geopolitycznego.
 
-Przygotuj uzasadnienie wybranej prognozy składające się z dokładnie dwóch zdań.
+Kategorie "Silny spadek" i "Silny wzrost" stosuj wyłącznie w przypadku informacji o wyjątkowo dużym znaczeniu,
+mogących wywołać zdecydowaną reakcję rynku.
 
-Uwzględnij w nim najważniejsze czynniki wynikające z analizowanej wiadomości oraz istotnego, zweryfikowanego kontekstu rynkowego.
+Prognoza ma przedstawiać najbardziej prawdopodobną rzeczywistą reakcję rynku,
+a nie wyłącznie teoretyczny kierunek oddziaływania informacji.
 
-Wyjaśnij, dlaczego przewidywany kierunek reakcji ceny złota jest najbardziej prawdopodobny.
+Jeżeli dostępne dane nie pozwalają na wiarygodne określenie kierunku reakcji, wybierz "Neutralny".
 
-### KROK 5 — FORMAT ODPOWIEDZI
+KROK 4 - UZASADNIENIE
+
+Przygotuj uzasadnienie prognozy składające się z dokładnie dwóch zdań.
+
+Uwzględnij w nim:
+
+- Najważniejszy mechanizm wpływu analizowanej wiadomości na złoto.
+- Najistotniejsze czynniki aktualnego kontekstu rynkowego.
+- Powód, dla którego przewidywany kierunek reakcji jest najbardziej prawdopodobny.
+
+KROK 5 - FORMAT ODPOWIEDZI
 
 Zwróć wyłącznie poprawny składniowo obiekt JSON o następującej strukturze:
 
@@ -166,82 +190,59 @@ Zwróć wyłącznie poprawny składniowo obiekt JSON o następującej strukturze
   "justification": "Pierwsze zdanie uzasadnienia. Drugie zdanie uzasadnienia."
 }
 
-### KROK 6 — WALIDACJA
+Przed zwróceniem odpowiedzi sprawdź poprawność JSON, zgodność prognozy z dozwolonymi wartościami oraz to,
+czy uzasadnienie zawiera dokładnie dwa zdania.
 
-Przed zwróceniem odpowiedzi sprawdź:
-
-- Czy przeanalizowałeś rzeczywistą treść otrzymanej wiadomości?
-- Czy analiza dotyczy wyłącznie rynku złota?
-- Czy nie wykorzystałeś informacji, których nie można zweryfikować?
-- Czy uwzględniłeś istotny kontekst rynkowy, jeżeli był dostępny?
-- Czy prognoza dotyczy właściwego horyzontu czasowego?
-- Czy wartość "forecast" jest dokładnie jedną z pięciu dozwolonych wartości?
-- Czy "justification" zawiera dokładnie dwa zdania?
-- Czy JSON zawiera dokładnie pola "forecast" oraz "justification"?
-- Czy JSON jest poprawny składniowo i wartości tekstowe są prawidłowo escapowane?
-
-Jeżeli dostępne informacje nie pozwalają na wiarygodne określenie kierunku reakcji rynku, wybierz "Neutralny", o ile jest to najbardziej uzasadniona ocena.
-
-### WAŻNE
-
-- Nie wymyślaj faktów, danych ani wydarzeń.
-- Nie zakładaj automatycznej reakcji ceny złota na podstawie samego pozytywnego lub negatywnego wydźwięku wiadomości.
-- Nie wykorzystuj informacji dotyczących rynku srebra.
-- Nie dodawaj komentarzy, źródeł, linków ani dodatkowych pól.
-- Nie używaj Markdown ani bloków kodu.
-- Nie dodawaj żadnego tekstu przed obiektem JSON ani po nim.
-
-OSTATECZNA ODPOWIEDŹ MUSI ZAWIERAĆ WYŁĄCZNIE POPRAWNY OBIEKT JSON.
+Nie dodawaj komentarzy, źródeł, linków, dodatkowych pól ani tekstu poza obiektem JSON.
+Nie używaj Markdown ani bloków kodu.
 
 Analiza ma charakter wyłącznie edukacyjny i informacyjny.
-    """
+"""
 
-silver_prompt = """Przeanalizuj poniższy tekst, skopiowany ze strony internetowej. Dotyczy on wydarzenia, informacji lub wiadomości, która może mieć wpływ na cenę srebra (XAG/USD).
+silver_prompt = """Przeanalizuj poniższy tekst, skopiowany ze strony internetowej. Dotyczy on wydarzenia, 
+informacji lub wiadomości, która może mieć wpływ na cenę srebra (XAG/USD).
 
-### KROK 1 — ANALIZA INFORMACJI
+KROK 1 — IDENTYFIKACJA I ANALIZA WIADOMOŚCI
 
-Na podstawie rzeczywistej treści otrzymanego tekstu ustal:
+Na podstawie otrzymanego tekstu:
 
-- Co dokładnie wydarzyło się według komunikatu?
-- Czy informacja jest potencjalnie pozytywna, negatywna czy neutralna dla ceny srebra?
-- Jaki jest mechanizm potencjalnego wpływu tej informacji na cenę srebra?
-- Czy wpływ może być bezpośredni, czy wynika z pośredniego oddziaływania na czynniki rynkowe?
+- Zidentyfikuj główną treść wiadomości i ustal, co dokładnie się wydarzyło.
+Ignoruj reklamy, menu, stopki, komentarze, odnośniki i 
+inne elementy niezwiązane bezpośrednio z głównym komunikatem.
+- Ustal datę publikacji oraz datę opisywanego wydarzenia, jeżeli są dostępne.
+- Oceń, czy informacja jest potencjalnie pozytywna, negatywna czy neutralna dla ceny srebra.
+- Ustal mechanizm jej potencjalnego wpływu na XAG/USD, rozróżniając oddziaływanie bezpośrednie i pośrednie.
 
-Nie wymyślaj faktów ani nie wyciągaj wniosków, których nie uzasadnia treść wiadomości.
+Nie dopisuj faktów ani nie wyciągaj wniosków, których nie uzasadnia treść wiadomości.
 
-### KROK 2 — AKTUALNY KONTEKST RYNKOWY
+KROK 2 — AKTUALNY KONTEKST RYNKOWY
 
-Jeżeli masz dostęp do internetu, zweryfikuj najnowsze informacje mogące mieć znaczenie dla oceny wpływu analizowanego wydarzenia na cenę srebra.
+Jeżeli masz dostęp do internetu, zweryfikuj aktualne informacje, 
+które mogą istotnie wpłynąć na ocenę analizowanego wydarzenia.
 
 W szczególności uwzględnij:
 
-- Globalny popyt przemysłowy na srebro.
-- Zapotrzebowanie na srebro w fotowoltaice, elektronice, elektromobilności i innych sektorach technologicznych.
-- Podaż srebra z kopalń oraz poziom produkcji największych producentów.
-- Podaż srebra pochodzącego z recyklingu.
-- Dane dotyczące deficytu lub nadwyżki na globalnym rynku srebra.
-- Zapasy srebra w magazynach giełdowych, w szczególności COMEX i LBMA.
-- Napływy i odpływy kapitału z funduszy ETF opartych na srebrze.
-- Politykę monetarną FED i oczekiwania dotyczące stóp procentowych.
-- Kurs dolara amerykańskiego (USD).
-- Rentowności amerykańskich obligacji skarbowych.
-- Kondycję globalnej gospodarki, szczególnie przemysłu chińskiego i amerykańskiego.
-- Relację ceny złota do ceny srebra (Gold/Silver Ratio).
-- Ryzyko geopolityczne i popyt inwestycyjny na metale szlachetne.
-- Najnowsze prognozy i rekomendacje analityków dotyczące ceny srebra.
-- Inne wydarzenia mogące istotnie wpłynąć na krótkoterminową wycenę srebra.
+- Globalny popyt przemysłowy i inwestycyjny na srebro.
+- Popyt ze strony fotowoltaiki, elektroniki, elektromobilności i innych sektorów technologicznych.
+- Podaż srebra z kopalń i recyklingu oraz sytuację na globalnym rynku srebra.
+- Zapasy srebra, w szczególności COMEX i LBMA, oraz przepływy kapitału do funduszy ETF.
+- Politykę FED, oczekiwania dotyczące stóp procentowych, kurs USD i rentowności obligacji USA.
+- Kondycję gospodarki światowej, szczególnie przemysłu Chin i USA.
+- Relację ceny złota do srebra (Gold/Silver Ratio).
+- Ryzyko geopolityczne i aktualne prognozy rynkowe.
 
-Uwzględniaj wyłącznie informacje, które możesz rzeczywiście zweryfikować i których aktualność możesz ustalić.
+Nie musisz uwzględniać wszystkich czynników. Wybierz wyłącznie te, 
+które mają rzeczywiste znaczenie dla analizowanej wiadomości.
 
-Nie wymuszaj uwzględniania wszystkich wymienionych czynników. Wykorzystuj tylko te, które mają istotne znaczenie dla analizowanej wiadomości.
+Korzystaj wyłącznie z informacji, których aktualność i wiarygodność możesz zweryfikować. 
+Nie przedstawiaj niepotwierdzonych danych jako faktów.
 
-### KROK 3 — PROGNOZA
+KROK 3 — PROGNOZA REAKCJI RYNKU
 
-Oceń najbardziej prawdopodobny wpływ analizowanej informacji na cenę srebra (XAG/USD).
+Oceń najbardziej prawdopodobną reakcję ceny srebra (XAG/USD) w ciągu jednej sesji giełdowej od 
+momentu publikacji analizowanej wiadomości.
 
-Prognoza dotyczy reakcji ceny srebra w ciągu jednej sesji giełdowej od momentu publikacji analizowanej informacji.
-
-Wybierz dokładnie jedną z pięciu wartości:
+Wybierz dokładnie jedną z poniższych wartości:
 
 - "Silny spadek"
 - "Spadek"
@@ -249,27 +250,35 @@ Wybierz dokładnie jedną z pięciu wartości:
 - "Wzrost"
 - "Silny wzrost"
 
-Oceniając potencjalną reakcję rynku:
+Przy podejmowaniu decyzji uwzględnij:
 
-- Uwzględnij znaczenie i wiarygodność informacji.
-- Oceń, czy informacja może zaskoczyć uczestników rynku.
-- Uwzględnij, czy wydarzenie mogło zostać już zdyskontowane w cenie srebra.
-- Weź pod uwagę aktualny kontekst makroekonomiczny i rynkowy.
-- Rozróżniaj wpływ czynników inwestycyjnych i przemysłowych.
-- Uwzględnij, że pogorszenie koniunktury gospodarczej może negatywnie wpływać na popyt przemysłowy na srebro.
-- Pamiętaj, że srebro może reagować silniej niż złoto na zmiany nastrojów rynkowych i oczekiwań dotyczących koniunktury gospodarczej.
+- Znaczenie, wiarygodność i potencjalną skalę wydarzenia.
+- Czy informacja jest nowa i może zaskoczyć uczestników rynku.
+- Czy wydarzenie lub jego konsekwencje mogły zostać już uwzględnione w cenie srebra.
+- Aktualny kontekst makroekonomiczny i rynkowy.
+- Potencjalny wpływ na popyt przemysłowy, popyt inwestycyjny lub podaż srebra.
+- Możliwe przeciwstawne czynniki, które mogą ograniczać lub odwracać reakcję rynku.
 
-Nie utożsamiaj pozytywnego wydźwięku wiadomości z automatycznym wzrostem ceny srebra ani negatywnego wydźwięku ze spadkiem ceny.
+Nie utożsamiaj pozytywnego wydźwięku wiadomości z automatycznym wzrostem ceny ani 
+negatywnego wydźwięku ze spadkiem ceny.
+Pamiętaj, że srebro jest jednocześnie metalem szlachetnym i surowcem przemysłowym, 
+dlatego jego cena może reagować odmiennie na zmiany nastrojów inwestycyjnych
+i oczekiwań dotyczących koniunktury gospodarczej.
+Kategorie "Silny spadek" i "Silny wzrost" stosuj wyłącznie w przypadku informacji o wyjątkowo dużym znaczeniu,
+mogących wywołać zdecydowaną reakcję rynku.
+Prognoza ma przedstawiać najbardziej prawdopodobną rzeczywistą reakcję rynku, 
+a nie wyłącznie teoretyczny kierunek oddziaływania informacji.
+Jeżeli dostępne dane nie pozwalają na wiarygodne określenie kierunku reakcji, wybierz "Neutralny".
 
-Prognoza ma przedstawiać najbardziej prawdopodobną reakcję rynku, a nie wyłącznie teoretyczny kierunek wpływu informacji.
+KROK 4 — UZASADNIENIE
 
-### KROK 4 — UZASADNIENIE
+Przygotuj uzasadnienie prognozy składające się z dokładnie dwóch zdań.
 
-Przygotuj uzasadnienie wybranej prognozy składające się z dokładnie dwóch zdań.
+Uwzględnij w nim:
 
-Uwzględnij w nim najważniejsze czynniki wynikające z analizowanej wiadomości oraz istotnego, zweryfikowanego kontekstu rynkowego.
-
-Wyjaśnij, dlaczego przewidywany kierunek reakcji ceny srebra jest najbardziej prawdopodobny.
+- Najważniejszy mechanizm wpływu analizowanej wiadomości na srebro.
+- Najistotniejsze czynniki aktualnego kontekstu rynkowego.
+- Powód, dla którego przewidywany kierunek reakcji jest najbardziej prawdopodobny.
 
 ### KROK 5 — FORMAT ODPOWIEDZI
 
@@ -280,60 +289,45 @@ Zwróć wyłącznie poprawny składniowo obiekt JSON o następującej strukturze
   "justification": "Pierwsze zdanie uzasadnienia. Drugie zdanie uzasadnienia."
 }
 
-### KROK 6 — WALIDACJA
+Przed zwróceniem odpowiedzi sprawdź poprawność JSON, zgodność prognozy z dozwolonymi wartościami oraz to, 
+czy uzasadnienie zawiera dokładnie dwa zdania.
 
-Przed zwróceniem odpowiedzi sprawdź:
-
-- Czy przeanalizowałeś rzeczywistą treść otrzymanej wiadomości?
-- Czy analiza dotyczy wyłącznie rynku srebra?
-- Czy nie wykorzystałeś informacji, których nie można zweryfikować?
-- Czy uwzględniłeś istotny kontekst rynkowy, jeżeli był dostępny?
-- Czy prognoza dotyczy właściwego horyzontu czasowego?
-- Czy wartość "forecast" jest dokładnie jedną z pięciu dozwolonych wartości?
-- Czy "justification" zawiera dokładnie dwa zdania?
-- Czy JSON zawiera dokładnie pola "forecast" oraz "justification"?
-- Czy JSON jest poprawny składniowo i wartości tekstowe są prawidłowo escapowane?
-
-Jeżeli dostępne informacje nie pozwalają na wiarygodne określenie kierunku reakcji rynku, wybierz "Neutralny", o ile jest to najbardziej uzasadniona ocena.
-
-### WAŻNE
-
-- Nie wymyślaj faktów, danych ani wydarzeń.
-- Nie zakładaj automatycznej reakcji ceny srebra na podstawie samego pozytywnego lub negatywnego wydźwięku wiadomości.
-- Nie wykorzystuj informacji dotyczących rynku innych metali jako bezpośredniego substytutu analizy srebra.
-- Nie dodawaj komentarzy, źródeł, linków ani dodatkowych pól.
-- Nie używaj Markdown ani bloków kodu.
-- Nie dodawaj żadnego tekstu przed obiektem JSON ani po nim.
-
-OSTATECZNA ODPOWIEDŹ MUSI ZAWIERAĆ WYŁĄCZNIE POPRAWNY OBIEKT JSON.
+Nie dodawaj komentarzy, źródeł, linków, dodatkowych pól, ani tekstu poza obiektem JSON.
+Nie używaj Markdown ani bloków kodu.
 
 Analiza ma charakter wyłącznie edukacyjny i informacyjny.
-    """
+"""
 
 
-copper_prompt = """Przeanalizuj poniższy tekst, skopiowany ze strony internetowej. Dotyczy on wydarzenia, informacji lub wiadomości, która może mieć wpływ na cenę miedzi (HG / COMEX lub LME Copper).
+copper_prompt = """Przeanalizuj poniższy tekst, skopiowany ze strony internetowej. Dotyczy on wydarzenia,
+informacji lub wiadomości, która może mieć wpływ na cenę miedzi (HG / COMEX lub LME Copper).
 
-### KROK 1 — ANALIZA INFORMACJI
+KROK 1 - IDENTYFIKACJA I ANALIZA WIADOMOŚCI
 
-Na podstawie rzeczywistej treści otrzymanego tekstu ustal:
+Na podstawie otrzymanego tekstu:
 
-- Co dokładnie wydarzyło się według komunikatu?
-- Czy informacja jest potencjalnie pozytywna, negatywna czy neutralna dla ceny miedzi?
-- Jaki jest mechanizm potencjalnego wpływu tej informacji na cenę miedzi?
-- Czy wpływ może być bezpośredni, czy wynika z pośredniego oddziaływania na czynniki rynkowe?
+- Zidentyfikuj główną treść wiadomości i ustal, co dokładnie się wydarzyło.
+Ignoruj reklamy, menu, stopki, komentarze, odnośniki i
+inne elementy niezwiązane bezpośrednio z głównym komunikatem.
+- Ustal datę publikacji oraz datę opisywanego wydarzenia, jeżeli są dostępne.
+- Oceń, czy informacja jest potencjalnie pozytywna, negatywna czy neutralna dla ceny miedzi.
+- Ustal mechanizm jej potencjalnego wpływu na cenę miedzi, 
+rozróżniając oddziaływanie bezpośrednie i pośrednie.
 
-Nie wymyślaj faktów ani nie wyciągaj wniosków, których nie uzasadnia treść wiadomości.
+Nie dopisuj faktów ani nie wyciągaj wniosków, których nie uzasadnia treść wiadomości.
 
-### KROK 2 — AKTUALNY KONTEKST RYNKOWY
+KROK 2 - AKTUALNY KONTEKST RYNKOWY
 
-Jeżeli masz dostęp do internetu, zweryfikuj najnowsze informacje mogące mieć znaczenie dla oceny wpływu analizowanego wydarzenia na cenę miedzi.
+Jeżeli masz dostęp do internetu, zweryfikuj aktualne informacje,
+które mogą istotnie wpłynąć na ocenę analizowanego wydarzenia.
 
 W szczególności uwzględnij:
 
 - Kondycję chińskiej gospodarki, w szczególności sektora przemysłowego, budownictwa i rynku nieruchomości.
 - Chiński popyt na miedź oraz politykę gospodarczą i stymulacyjną Chin.
 - Globalny popyt przemysłowy na miedź.
-- Zapotrzebowanie na miedź w energetyce, infrastrukturze elektroenergetycznej, elektromobilności, fotowoltaice i centrach danych.
+- Zapotrzebowanie na miedź w energetyce, infrastrukturze elektroenergetycznej, elektromobilności, 
+fotowoltaice i centrach danych.
 - Produkcję największych kopalń miedzi na świecie.
 - Zakłócenia wydobycia, strajki, problemy operacyjne i zamykanie kopalń.
 - Podaż miedzi z recyklingu.
@@ -347,17 +341,18 @@ W szczególności uwzględnij:
 - Najnowsze prognozy i rekomendacje analityków dotyczące ceny miedzi.
 - Inne wydarzenia mogące istotnie wpłynąć na krótkoterminową wycenę miedzi.
 
-Uwzględniaj wyłącznie informacje, które możesz rzeczywiście zweryfikować i których aktualność możesz ustalić.
+Nie musisz uwzględniać wszystkich czynników. Wybierz wyłącznie te,
+które mają rzeczywiste znaczenie dla analizowanej wiadomości.
 
-Nie wymuszaj uwzględniania wszystkich wymienionych czynników. Wykorzystuj tylko te, które mają istotne znaczenie dla analizowanej wiadomości.
+Korzystaj wyłącznie z informacji, których aktualność i wiarygodność możesz zweryfikować.
+Nie przedstawiaj niepotwierdzonych danych jako faktów.
 
-### KROK 3 — PROGNOZA
+KROK 3 - PROGNOZA REAKCJI RYNKU
 
-Oceń najbardziej prawdopodobny wpływ analizowanej informacji na cenę miedzi.
+Oceń najbardziej prawdopodobną reakcję ceny miedzi (HG / COMEX lub LME Copper)
+w ciągu jednej sesji giełdowej od momentu publikacji analizowanej wiadomości.
 
-Prognoza dotyczy reakcji ceny miedzi w ciągu jednej sesji giełdowej od momentu publikacji analizowanej informacji.
-
-Wybierz dokładnie jedną z pięciu wartości:
+Wybierz dokładnie jedną z poniższych wartości:
 
 - "Silny spadek"
 - "Spadek"
@@ -365,30 +360,46 @@ Wybierz dokładnie jedną z pięciu wartości:
 - "Wzrost"
 - "Silny wzrost"
 
-Oceniając potencjalną reakcję rynku:
+Przy podejmowaniu decyzji uwzględnij:
 
-- Uwzględnij znaczenie i wiarygodność informacji.
-- Oceń, czy informacja może zaskoczyć uczestników rynku.
-- Uwzględnij, czy wydarzenie mogło zostać już zdyskontowane w cenie miedzi.
-- Weź pod uwagę aktualny kontekst makroekonomiczny i rynkowy.
-- Rozróżniaj wpływ czynników podażowych i popytowych.
-- Zwróć szczególną uwagę na informacje dotyczące Chin, które są kluczowym uczestnikiem globalnego rynku miedzi.
-- Uwzględnij, że ograniczenia podaży lub zakłócenia wydobycia mogą wspierać ceny miedzi, natomiast wzrost zapasów i osłabienie popytu przemysłowego mogą wywierać na nie presję.
-- Pamiętaj, że miedź jest silnie powiązana z oczekiwaniami dotyczącymi globalnej koniunktury gospodarczej.
+- Znaczenie, wiarygodność i potencjalną skalę wydarzenia.
+- Czy informacja jest nowa i może zaskoczyć uczestników rynku.
+- Czy wydarzenie lub jego konsekwencje mogły zostać już uwzględnione w cenie miedzi.
+- Aktualny kontekst makroekonomiczny i rynkowy.
+- Potencjalny wpływ na podaż i popyt na miedź.
+- Możliwe przeciwstawne czynniki, które mogą ograniczać lub odwracać reakcję rynku.
 
-Nie utożsamiaj pozytywnego wydźwięku wiadomości z automatycznym wzrostem ceny miedzi ani negatywnego wydźwięku ze spadkiem ceny.
+Zwróć szczególną uwagę na informacje dotyczące Chin, które są kluczowym uczestnikiem globalnego rynku miedzi.
 
-Prognoza ma przedstawiać najbardziej prawdopodobną reakcję rynku, a nie wyłącznie teoretyczny kierunek wpływu informacji.
+Pamiętaj, że ograniczenia podaży lub zakłócenia wydobycia mogą wspierać ceny miedzi,
+natomiast wzrost zapasów i osłabienie popytu przemysłowego mogą wywierać na nie presję.
 
-### KROK 4 — UZASADNIENIE
+Miedź jest silnie powiązana z oczekiwaniami dotyczącymi globalnej koniunktury gospodarczej,
+dlatego pogorszenie perspektyw gospodarczych może negatywnie wpływać na jej cenę,
+nawet jeżeli jednocześnie pojawiają się czynniki ograniczające podaż.
 
-Przygotuj uzasadnienie wybranej prognozy składające się z dokładnie dwóch zdań.
+Nie utożsamiaj pozytywnego wydźwięku wiadomości z automatycznym wzrostem ceny ani
+negatywnego wydźwięku ze spadkiem ceny.
 
-Uwzględnij w nim najważniejsze czynniki wynikające z analizowanej wiadomości oraz istotnego, zweryfikowanego kontekstu rynkowego.
+Kategorie "Silny spadek" i "Silny wzrost" stosuj wyłącznie w przypadku informacji o wyjątkowo dużym znaczeniu,
+mogących wywołać zdecydowaną reakcję rynku.
 
-Wyjaśnij, dlaczego przewidywany kierunek reakcji ceny miedzi jest najbardziej prawdopodobny.
+Prognoza ma przedstawiać najbardziej prawdopodobną rzeczywistą reakcję rynku,
+a nie wyłącznie teoretyczny kierunek oddziaływania informacji.
 
-### KROK 5 — FORMAT ODPOWIEDZI
+Jeżeli dostępne dane nie pozwalają na wiarygodne określenie kierunku reakcji, wybierz "Neutralny".
+
+KROK 4 - UZASADNIENIE
+
+Przygotuj uzasadnienie prognozy składające się z dokładnie dwóch zdań.
+
+Uwzględnij w nim:
+
+- Najważniejszy mechanizm wpływu analizowanej wiadomości na cenę miedzi.
+- Najistotniejsze czynniki aktualnego kontekstu rynkowego.
+- Powód, dla którego przewidywany kierunek reakcji jest najbardziej prawdopodobny.
+
+KROK 5 - FORMAT ODPOWIEDZI
 
 Zwróć wyłącznie poprawny składniowo obiekt JSON o następującej strukturze:
 
@@ -397,32 +408,11 @@ Zwróć wyłącznie poprawny składniowo obiekt JSON o następującej strukturze
   "justification": "Pierwsze zdanie uzasadnienia. Drugie zdanie uzasadnienia."
 }
 
-### KROK 6 — WALIDACJA
+Przed zwróceniem odpowiedzi sprawdź poprawność JSON, zgodność prognozy z dozwolonymi wartościami oraz to,
+czy uzasadnienie zawiera dokładnie dwa zdania.
 
-Przed zwróceniem odpowiedzi sprawdź:
-
-- Czy przeanalizowałeś rzeczywistą treść otrzymanej wiadomości?
-- Czy analiza dotyczy wyłącznie rynku miedzi?
-- Czy nie wykorzystałeś informacji, których nie można zweryfikować?
-- Czy uwzględniłeś istotny kontekst rynkowy, jeżeli był dostępny?
-- Czy prognoza dotyczy właściwego horyzontu czasowego?
-- Czy wartość "forecast" jest dokładnie jedną z pięciu dozwolonych wartości?
-- Czy "justification" zawiera dokładnie dwa zdania?
-- Czy JSON zawiera dokładnie pola "forecast" oraz "justification"?
-- Czy JSON jest poprawny składniowo i wartości tekstowe są prawidłowo escapowane?
-
-Jeżeli dostępne informacje nie pozwalają na wiarygodne określenie kierunku reakcji rynku, wybierz "Neutralny", o ile jest to najbardziej uzasadniona ocena.
-
-### WAŻNE
-
-- Nie wymyślaj faktów, danych ani wydarzeń.
-- Nie zakładaj automatycznej reakcji ceny miedzi na podstawie samego pozytywnego lub negatywnego wydźwięku wiadomości.
-- Nie wykorzystuj informacji dotyczących innych metali jako bezpośredniego substytutu analizy miedzi.
-- Nie dodawaj komentarzy, źródeł, linków ani dodatkowych pól.
-- Nie używaj Markdown ani bloków kodu.
-- Nie dodawaj żadnego tekstu przed obiektem JSON ani po nim.
-
-OSTATECZNA ODPOWIEDŹ MUSI ZAWIERAĆ WYŁĄCZNIE POPRAWNY OBIEKT JSON.
+Nie dodawaj komentarzy, źródeł, linków, dodatkowych pól ani tekstu poza obiektem JSON.
+Nie używaj Markdown ani bloków kodu.
 
 Analiza ma charakter wyłącznie edukacyjny i informacyjny.
-    """
+"""
