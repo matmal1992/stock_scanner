@@ -19,6 +19,13 @@ class PAPEntryContentScraper:
     def close(self) -> None:
         self.session.close()
 
+    def refresh(self) -> None:
+        self.session.page.goto(
+            self.BASE_URL,
+            timeout=Config.page_load_timeout,
+            wait_until="domcontentloaded",
+        )
+
     def scrape_content(self, url: str) -> str:
         content: str = "invalid content"
         page = self.session.page

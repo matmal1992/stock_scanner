@@ -23,19 +23,25 @@ class ScraperWorker(BaseWorker):
             self._session.start()
 
             while not self._stop_event.wait(self.INTERVAL_SECONDS):
-                WorkerStatus.update("GPW entry scraper", "Loop")
-                entries = self.entry_repo.get_entries_without_content(limit=1)
+                try:
+                    WorkerStatus.update("GPW entry scraper", "Loop")
+                    entries = self.entry_repo.get_entries_without_content(limit=1)
 
-                if not entries:
+                    if not entries:
+                        continue
+
+                    entry = entries[0]
+                    content = self._session.scrape_content(entry["link"])
+                    self.entry_repo.update_content(entry["id"], content)
+                    WorkerStatus.update("GPW entry scraper", "Last scrape")
+                except Exception as exc:
+                    logger.exception(f"GPW entry scraper while loop exception: {exc}")
+                    self._session.refresh()
                     continue
-
-                entry = entries[0]
-                content = self._session.scrape_content(entry["link"])
-                self.entry_repo.update_content(entry["id"], content)
-                WorkerStatus.update("GPW entry scraper", "Last scrape")
 
         except Exception as exc:
             logger.exception(f"GPW entry scraper exception: {exc}")
+            self._session.refresh()
 
         finally:
             logger.info("Closing GPW entry scraper session...")

@@ -59,6 +59,7 @@ class LLMWorker(BaseWorker):
 
         except Exception as exc:
             logger.exception("LLM worker exception: %s", exc)
+            self._session.refresh()
 
         finally:
             logger.info("Closing LLM session...")

@@ -24,12 +24,16 @@ class GPWWorker(BaseWorker):
             self._scrape_and_save()
 
             while not self._stop_event.wait(self.INTERVAL_SECONDS):
-                WorkerStatus.update("GPW", "Loop")
-                self._session.refresh_page()
-                self._scrape_and_save()
+                try:
+                    WorkerStatus.update("GPW", "Loop")
+                    self._session.click_refresh_btn()
+                    self._scrape_and_save()
+                except Exception as exc:
+                    self._handle_error("GPW while loop exception", str(exc))
+                    continue
 
         except Exception as exc:
-            logger.exception(f"GPW exception: {exc}")
+            self._handle_error("GPW main exception", str(exc))
 
         finally:
             logger.info("Closing GPW session...")
@@ -54,3 +58,10 @@ class GPWWorker(BaseWorker):
     def stop(self) -> None:
         self._session.close()
         self._stop_event.set()
+
+    def _handle_error(self, message: str, full_log: str) -> None:
+        screenshot = self._session.session.page.screenshot(full_page=True)
+        WorkerStatus.update("GPW", "Last error")
+        WorkerStatus.update_error_status(message, full_log, screenshot)
+        logger.error(message + "\n" + full_log)
+        self._session.refresh_page()

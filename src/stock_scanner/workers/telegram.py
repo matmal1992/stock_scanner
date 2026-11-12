@@ -133,9 +133,9 @@ class TelegramCommandWorker(QThread):
 class TelegramStateBot:
     def __init__(self) -> None:
         self.last_text: str = "No app state text"
-        self.last_error_text: str = WorkerStatus._llm_error
-        self.last_screen: bytes = WorkerStatus._llm_error_screen
-        self.last_error_log: str = WorkerStatus._llm_full_error_log
+        self.last_error_text: str = WorkerStatus._error_title
+        self.last_screen: bytes = WorkerStatus._error_screen
+        self.last_error_log: str = WorkerStatus._full_error_log
 
     def _request(self, method: str, payload: dict, chat_token: str) -> dict | None:
         url = f"https://api.telegram.org/bot{chat_token}/{method}"
@@ -228,14 +228,14 @@ class TelegramStateWorker(QThread):
             try:
                 last_update = datetime.now().strftime("%H:%M:%S")
                 app_status_text = WorkerStatus.format_message(last_update)
-                llm_error_text = WorkerStatus._llm_error
-                llm_error_screen = WorkerStatus._llm_error_screen
-                llm_full_error_log = WorkerStatus._llm_full_error_log
+                error_text_title = WorkerStatus._error_title
+                error_screen = WorkerStatus._error_screen
+                full_error_log = WorkerStatus._full_error_log
 
                 self.bot.update_app_state(app_status_text)
-                self.bot.update_llm_error_status(llm_error_text)
-                self.bot.update_llm_status_screen(llm_error_screen)
-                self.bot.update_log_file(llm_full_error_log)
+                self.bot.update_llm_error_status(error_text_title)
+                self.bot.update_llm_status_screen(error_screen)
+                self.bot.update_log_file(full_error_log)
 
             except Exception as exc:
                 logger.exception(f"Błąd aktualizacji Scanner State: {exc}")
@@ -252,8 +252,8 @@ class TelegramBot:
         cls.close_telegram()
         cls.telegram_state_worker = TelegramStateWorker(entry_repo)
         cls.telegram_state_worker.start()
-        cls.command_worker = TelegramCommandWorker()
-        cls.command_worker.start()
+        # cls.command_worker = TelegramCommandWorker()
+        # cls.command_worker.start()
 
         # ServiceManager.register(cls.close_telegram)
 
@@ -308,13 +308,13 @@ class TelegramBot:
             cls.telegram_state_worker = None
             logger.info("Telegram state worker closed")
 
-        if getattr(cls, "command_worker", None) is not None:
-            if cls.command_worker is not None and cls.command_worker.isRunning():
-                cls.command_worker._running = False
-                cls.command_worker.wait()
+        # if getattr(cls, "command_worker", None) is not None:
+        #     if cls.command_worker is not None and cls.command_worker.isRunning():
+        #         cls.command_worker._running = False
+        #         cls.command_worker.wait()
 
-            cls.command_worker = None
-            logger.info("Telegram command worker closed")
+        #     cls.command_worker = None
+        #     logger.info("Telegram command worker closed")
 
 
 # zostawić tylko wzrost i silny wzrost. Wyjatek to tracked_tickers

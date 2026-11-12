@@ -101,7 +101,7 @@ class GeminiPrompter:
     def _handle_error(self, message: str, full_log: str) -> None:
         screenshot = self.session.page.screenshot(full_page=True)
         WorkerStatus.update("LLM", "Last error")
-        WorkerStatus.update_llm_error_status(message, full_log, screenshot)
+        WorkerStatus.update_error_status(message, full_log, screenshot)
         logger.error(message + "\n" + full_log)
         self.refresh()
 

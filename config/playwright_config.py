@@ -1,4 +1,7 @@
+import logging
 from dataclasses import dataclass
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -27,16 +30,20 @@ class Config:
 
     gpw_substrings: tuple[str, ...] = (
         "waln",
+        "unicredit",
+        "michael/str",
+        "ab inter rao",
+        "liczby głosów",
         "zgromadzeni",
-        "akcji serii",
-        "akcji własnych",
+        "skonsolidowanych przychodach",
+        "art.",
+        "akcji",
         "członka zarządu",
         "członka rady",
         "księgi popytu",
         "okresowego raportu",
         "subskrypcji obligacji",
         "zmiana terminu publikacji",
-        "skupu akcji własnych",
         "emitenta",
         "zawiadomienia akcjonariuszy",
         "w trybie art.",
@@ -46,25 +53,33 @@ class Config:
         "korekta raportu bieżącego",
         "ETF",
         "FIZ",
-        "Zawiadomienie o zmianie stanu posiadania",
+        "stanu posiadania",
+        "rejestracja zmian",
+        "zawiadomienie od okcjonariusza",
         "publikacji raportu",
         "publikacji raportów",
         "inne informaje",
         "osoby zarządzającej",
         "obowiązki zarządcze",
         "złożenie rezygnacji",
-        "obligacji ST1",
-        "serii E1",
-        "serii D1",
-        "serii F1",
+        "obligacji",
+        "serii",
         "zmiana prokurenta",
         "bank",
         "korekta raportu",
         "raport kwartalny",
+        "raport miesięczny",
+        "raport roczny",
+        "audyt",
+        "MOL",
         "raportów okresowych",
         "ryzykiem kursowym",
         "emisji obligacji",
         "nwz",
+        "kwartał",
+        "danych finansowych",
+        "pożycz",
+        "kernel holding",
     )
 
     valid_forecasts = {
@@ -178,3 +193,10 @@ def has_keywords(title: str, keywords: tuple[str, ...]) -> bool:
             return True
 
     return False
+
+
+def skip_entry(title: str) -> bool:
+    has_exceptions = has_keywords(title, Config.gpw_exceptions)
+    has_substrings = has_keywords(title, Config.gpw_substrings)
+
+    return has_substrings and not has_exceptions
