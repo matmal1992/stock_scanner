@@ -16,6 +16,10 @@ class WorkerStatus:
             "Loop",
             "Last error",
         ],
+        "DAX": [
+            "Loop",
+            "Last error",
+        ],
         "GPW entry scraper": [
             "Loop",
             "Last scrape",
