@@ -1,13 +1,13 @@
 import logging
 
-from config.playwright_config import Config
-from src.stock_scanner.playwright.playwright_session import PlaywrightSession
+from src.stock_scanner.strategies.news_tracker.playwright_session import PlaywrightSession
 
 logger = logging.getLogger(__name__)
 
 
 class PAPEntryContentScraper:
     BASE_URL = "https://espiebi.pap.pl/"
+    page_load_timeout: float = 15_000
 
     def __init__(self) -> None:
         self.session = PlaywrightSession()
@@ -22,7 +22,7 @@ class PAPEntryContentScraper:
     def refresh(self) -> None:
         self.session.page.goto(
             self.BASE_URL,
-            timeout=Config.page_load_timeout,
+            timeout=self.page_load_timeout,
             wait_until="domcontentloaded",
         )
 
@@ -30,9 +30,9 @@ class PAPEntryContentScraper:
         content: str = "invalid content"
         page = self.session.page
 
-        page.goto(url, timeout=Config.page_load_timeout, wait_until="domcontentloaded")
+        page.goto(url, timeout=self.page_load_timeout, wait_until="domcontentloaded")
         container = page.locator("div.field-body-xml-content")
-        container.wait_for(state="attached", timeout=Config.page_load_timeout)
+        container.wait_for(state="attached", timeout=self.page_load_timeout)
 
         if container.count() > 0:
             content = container.evaluate("(element) => element.outerHTML")

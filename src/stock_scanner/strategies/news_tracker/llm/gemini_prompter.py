@@ -2,9 +2,10 @@ import json
 import logging
 import time
 
-from config.playwright_config import Config
-from src.stock_scanner.playwright.playwright_session import PlaywrightSession
+from src.stock_scanner.strategies.news_tracker.dax.dax_config import DAXConfig
 from src.stock_scanner.strategies.news_tracker.entry_repo import LLMResponse, NewsEntry
+from src.stock_scanner.strategies.news_tracker.gpw.gpw_config import GPWConfig
+from src.stock_scanner.strategies.news_tracker.playwright_session import PlaywrightSession
 from src.stock_scanner.workers.worker_status import WorkerStatus
 
 logger = logging.getLogger(__name__)
@@ -15,6 +16,9 @@ logger = logging.getLogger(__name__)
 # Przejrzeć lokatory i dać precyzyjne odniesienia, a nie jeden z kilku
 class GeminiPrompter:
     URL = "https://gemini.google.com/"
+    page_load_timeout: float = 15_000
+    prompt_timeout: float = 30_000
+    prompt_load_timeout: float = 30_000
 
     def __init__(self) -> None:
         self.session = PlaywrightSession()
@@ -35,9 +39,9 @@ class GeminiPrompter:
     def send_prompt(self, prompt: str) -> None:
         try:
             prompt_input = self.session.page.locator("#prompt-textarea, div[contenteditable='true']").first
-            prompt_input.wait_for(state="visible", timeout=Config.prompt_timeout)
+            prompt_input.wait_for(state="visible", timeout=self.prompt_timeout)
             prompt_input.click()
-            prompt_input.fill(prompt, timeout=Config.prompt_load_timeout)
+            prompt_input.fill(prompt, timeout=self.prompt_load_timeout)
             prompt_input.press("Enter")
         except Exception as exc:
             self._handle_error("Gemini: Nie udało się wysłać prompta", str(exc))
@@ -45,14 +49,14 @@ class GeminiPrompter:
     def _wait_for_prompt_input(self) -> None:
         try:
             prompt_input = self.session.page.locator("#prompt-textarea, div[contenteditable='true']").first
-            prompt_input.wait_for(state="visible", timeout=Config.page_load_timeout)
+            prompt_input.wait_for(state="visible", timeout=self.page_load_timeout)
         except Exception as exc:
             self._handle_error("Gemini: Input niegotowy", str(exc))
 
     def refresh(self) -> None:
         self.session.page.goto(
             self.URL,
-            timeout=Config.page_load_timeout,
+            timeout=self.page_load_timeout,
             wait_until="domcontentloaded",
         )
 
@@ -79,7 +83,7 @@ class GeminiPrompter:
         response = self.session.page.locator("message-content .markdown").last
 
         try:
-            response.wait_for(state="visible", timeout=Config.prompt_timeout)
+            response.wait_for(state="visible", timeout=self.prompt_timeout)
         except Exception as exc:
             self._handle_error("Gemini nie utworzył elementu odpowiedzi w wyznaczonym czasie.", str(exc))
             return False
@@ -128,7 +132,7 @@ class GeminiPrompter:
         if set(parsed) != {"forecast", "justification"}:
             return False
 
-        if parsed["forecast"] not in Config.valid_forecasts:
+        if parsed["forecast"] not in GPWConfig.valid_forecasts:
             return False
 
         if not isinstance(parsed["justification"], str):
@@ -151,9 +155,14 @@ class GeminiPrompter:
         }
 
     def process_entry(self, entry: NewsEntry) -> LLMResponse | None:
+        entry_type = entry["source_type"]
         content = entry["content"]
 
-        full_prompt = f"{Config.gpw_prompt} \nFragment html do analizy: {content}"
+        if entry_type == "ESPI":
+            full_prompt = f"{GPWConfig.gpw_prompt} \nFragment html do analizy: {content}"
+        else:
+            full_prompt = f"{DAXConfig.dax_prompt} \nTreść komunikatu do analizy: {content}"
+
         self.send_prompt(full_prompt)
 
         if not self._wait_for_stable_response():

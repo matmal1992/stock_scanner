@@ -1,11 +1,11 @@
 import logging
 from typing import Callable
 
+from src.stock_scanner.strategies.news_tracker.dax.dax_worker import DAXWorker
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository
-from src.stock_scanner.workers.dax_worker import DAXWorker
-from src.stock_scanner.workers.gpw_worker import GPWWorker
-from src.stock_scanner.workers.llm_worker import LLMWorker
-from src.stock_scanner.workers.page_scraper_worker import ScraperWorker
+from src.stock_scanner.strategies.news_tracker.gpw.gpw_worker import GPWWorker
+from src.stock_scanner.strategies.news_tracker.gpw.page_scraper_worker import ScraperWorker
+from src.stock_scanner.strategies.news_tracker.llm.llm_worker import LLMWorker
 from src.stock_scanner.workers.telegram import TelegramBot
 from src.stock_scanner.workers.worker_status import WorkerStatus
 

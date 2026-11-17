@@ -1,7 +1,7 @@
 import logging
 
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository
-from src.stock_scanner.strategies.news_tracker.gemini_prompter import GeminiPrompter
+from src.stock_scanner.strategies.news_tracker.llm.gemini_prompter import GeminiPrompter
 from src.stock_scanner.workers.base_worker import BaseWorker
 from src.stock_scanner.workers.telegram import TelegramBot
 from src.stock_scanner.workers.worker_status import WorkerStatus

@@ -5,11 +5,7 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class Config:
-    page_load_timeout: float = 15_000
-    prompt_timeout: float = 30_000
-    prompt_load_timeout: float = 30_000
-
+class GPWConfig:
     gpw_exceptions: tuple[str, ...] = (
         "XTB",
         "CREOTECH",
@@ -196,7 +192,7 @@ def has_keywords(title: str, keywords: tuple[str, ...]) -> bool:
 
 
 def skip_entry(title: str) -> bool:
-    has_exceptions = has_keywords(title, Config.gpw_exceptions)
-    has_substrings = has_keywords(title, Config.gpw_substrings)
+    has_exceptions = has_keywords(title, GPWConfig.gpw_exceptions)
+    has_substrings = has_keywords(title, GPWConfig.gpw_substrings)
 
     return has_substrings and not has_exceptions

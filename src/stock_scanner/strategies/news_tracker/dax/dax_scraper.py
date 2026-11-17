@@ -4,9 +4,8 @@ from typing import Optional
 from playwright.sync_api import Locator
 from PySide6.QtCore import QObject
 
-from config.playwright_config import Config
-from src.stock_scanner.playwright.playwright_session import PlaywrightSession
 from src.stock_scanner.strategies.news_tracker.entry_repo import NewsEntry
+from src.stock_scanner.strategies.news_tracker.playwright_session import PlaywrightSession
 
 logger = logging.getLogger(__name__)
 
@@ -14,6 +13,7 @@ logger = logging.getLogger(__name__)
 class DaxScraper(QObject):
     BASE_URL = "https://www.eqs-news.com/"
     ALLOWED_CATEGORIES = {"corporate", "ad-hoc"}
+    page_load_timeout: float = 15_000
 
     def __init__(self) -> None:
         super().__init__()
@@ -29,7 +29,7 @@ class DaxScraper(QObject):
     def refresh_page(self) -> None:
         self.session.page.goto(
             self.BASE_URL,
-            timeout=Config.page_load_timeout,
+            timeout=self.page_load_timeout,
             wait_until="domcontentloaded",
         )
 

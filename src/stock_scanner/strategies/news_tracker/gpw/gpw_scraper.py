@@ -5,15 +5,16 @@ from typing import Optional
 from playwright.sync_api import Locator
 from PySide6.QtCore import QObject
 
-from config.playwright_config import Config, skip_entry
-from src.stock_scanner.playwright.playwright_session import PlaywrightSession
 from src.stock_scanner.strategies.news_tracker.entry_repo import NewsEntry
+from src.stock_scanner.strategies.news_tracker.gpw.gpw_config import skip_entry
+from src.stock_scanner.strategies.news_tracker.playwright_session import PlaywrightSession
 
 logger = logging.getLogger(__name__)
 
 
 class PapEspiScraper(QObject):
     BASE_URL = "https://espiebi.pap.pl/"
+    page_load_timeout: float = 15_000
 
     def __init__(self) -> None:
         super().__init__()
@@ -28,13 +29,13 @@ class PapEspiScraper(QObject):
 
     def click_refresh_btn(self) -> None:
         refresh_button = self.session.page.locator("#refreshHomeId a.refreshButton")
-        refresh_button.wait_for(state="visible", timeout=Config.page_load_timeout)
+        refresh_button.wait_for(state="visible", timeout=self.page_load_timeout)
         refresh_button.click()
 
     def refresh_page(self) -> None:
         self.session.page.goto(
             self.BASE_URL,
-            timeout=Config.page_load_timeout,
+            timeout=self.page_load_timeout,
             wait_until="domcontentloaded",
         )
 

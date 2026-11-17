@@ -1,7 +1,7 @@
 import logging
 
-from src.stock_scanner.playwright.pap_entry_scraper import PAPEntryContentScraper
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository
+from src.stock_scanner.strategies.news_tracker.gpw.gpw_entry_scraper import PAPEntryContentScraper
 from src.stock_scanner.workers.base_worker import BaseWorker
 from src.stock_scanner.workers.worker_status import WorkerStatus
 
