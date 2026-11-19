@@ -26,22 +26,7 @@ class DAXConfig:
 
         Nie wymyślaj żadnych faktów ani danych.
 
-        KROK 2 — DANE DODATKOWE
-
-        Jeżeli są dostępne w internecie, uwzględnij najnowsze informacje dotyczące spółki, w szczególności:
-
-        - wyniki finansowe,
-        - prognozy,
-        - rekomendacje analityków,
-        - strategię spółki,
-        - istotne wydarzenia korporacyjne,
-        - inne informacje mogące mieć znaczenie dla oceny reakcji rynku.
-
-        Uwzględniaj wyłącznie informacje, które możesz rzeczywiście zweryfikować.
-        Bazuj wyłącznie na najnowszych dostępnych danych w odniesieniu do daty 
-        i godziny wykonania niniejszego polecenia.
-
-        KROK 3 — PROGNOZA
+        KROK 2 — PROGNOZA
 
         Oceń prawdopodobny wpływ analizowanej informacji na kurs akcji spółki.
         Prognoza dotyczy reakcji kursu w ciągu jednej sesji giełdowej od momentu publikacji informacji.
@@ -53,14 +38,13 @@ class DAXConfig:
         - "Wzrost"
         - "Silny wzrost"
 
-        KROK 4 — UZASADNIENIE
+        KROK 3 — UZASADNIENIE
 
         Napisz dokładnie dwa zdania uzasadnienia wybranej prognozy.
 
-        Uzasadnienie powinno wskazywać najważniejsze czynniki wynikające z analizowanej informacji oraz, 
-        jeżeli są istotne, z dodatkowych zweryfikowanych danych.
+        Uzasadnienie powinno wskazywać najważniejsze czynniki wynikające z analizowanej informacji.
 
-        KROK 5 — FORMAT ODPOWIEDZI
+        KROK 4 — FORMAT ODPOWIEDZI
 
         Odpowiedź MUSI być poprawnym składniowo obiektem JSON, o strukturze:
 
@@ -74,7 +58,6 @@ class DAXConfig:
         Przed zwróceniem odpowiedzi sprawdź:
 
         - Czy rzeczywiście uzyskałeś i przeanalizowałeś treść wskazanego tekstu.
-        - Czy nie wykorzystałeś informacji, których nie można zweryfikować.
         - Czy prognoza jest dokładnie jedną z pięciu dozwolonych wartości.
         - Czy uzasadnienie zawiera dokładnie dwa zdania.
         - Czy odpowiedź jest poprawnym JSON-em.

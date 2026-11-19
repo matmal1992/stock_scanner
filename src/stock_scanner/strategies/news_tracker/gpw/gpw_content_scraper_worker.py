@@ -25,7 +25,7 @@ class ScraperWorker(BaseWorker):
             while not self._stop_event.wait(self.INTERVAL_SECONDS):
                 try:
                     WorkerStatus.update("GPW entry scraper", "Loop")
-                    entries = self.entry_repo.get_entries_without_content(limit=1)
+                    entries = self.entry_repo.get_entries_without_content("GPW", limit=1)
 
                     if not entries:
                         continue

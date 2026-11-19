@@ -83,7 +83,7 @@ class PapEspiScraper(QObject):
             "title": title,
             "link": abs_url,
             "published": f"{date_str} {hour_str}",
-            "source_type": "ESPI",
+            "source_type": "GPW",
             "ticker": self._extract_ticker(title),
             "llm": "pending",
             "justification": "-",

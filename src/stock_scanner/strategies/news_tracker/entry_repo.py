@@ -224,18 +224,21 @@ class EntryRepository(QObject):
             )
             return False
 
-    def get_entries_without_content(self, limit: int = 10) -> list[NewsEntry]:
+    def get_entries_without_content(self, source_type: str, limit: int = 10) -> list[NewsEntry]:
         with self.db.connect() as conn:
             rows = conn.execute(
                 """
                 SELECT id, title, link, published, source_type,
                     ticker, llm, justification, content
                 FROM entries
-                WHERE content IS NULL
+                WHERE content IS NULL AND source_type = ?
                 ORDER BY id ASC
                 LIMIT ?
                 """,
-                (limit,),
+                (
+                    source_type,
+                    limit,
+                ),
             ).fetchall()
 
         return [self._to_dict(row) for row in rows]
