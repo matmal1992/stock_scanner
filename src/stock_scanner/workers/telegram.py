@@ -251,7 +251,7 @@ class TelegramBot:
     def init(cls, entry_repo: EntryRepository) -> None:
         cls.close_telegram()
         cls.telegram_state_worker = TelegramStateWorker(entry_repo)
-        cls.telegram_state_worker.start()
+        # cls.telegram_state_worker.start()
         # cls.command_worker = TelegramCommandWorker()
         # cls.command_worker.start()
 

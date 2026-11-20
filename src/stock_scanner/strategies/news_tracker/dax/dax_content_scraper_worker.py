@@ -34,6 +34,7 @@ class DaxSingleEntryScraperWorker(BaseWorker):
                     content = self._session.scrape_content(entry["link"])
                     self.entry_repo.update_content(entry["id"], content)
                     WorkerStatus.update("DAX entry scraper", "Last scrape")
+                    print("dax scraped")
                 except Exception as exc:
                     logger.exception(f"DAX entry scraper while loop exception: {exc}")
                     self._session.refresh()

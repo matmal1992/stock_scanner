@@ -14,7 +14,7 @@ class DAXEntryContentScraper:
 
     def start(self) -> None:
         logger.info("Start sesji DAX entry content scraper")
-        self.session.start(self.BASE_URL, headless=True)
+        self.session.start(self.BASE_URL, headless=False)
 
     def close(self) -> None:
         self.session.close()

@@ -38,7 +38,7 @@ class DaxScraper(QObject):
 
         results: list[NewsEntry] = []
 
-        for i in range(items.count(), 10):
+        for i in range(10):
             try:
                 entry = self._parse_item(items.nth(i))
 

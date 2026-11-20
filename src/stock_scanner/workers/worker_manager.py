@@ -1,7 +1,7 @@
 import logging
 from typing import Callable
 
-from src.stock_scanner.strategies.news_tracker.dax.dax_entry_scraper import DAXEntryContentScraper
+from src.stock_scanner.strategies.news_tracker.dax.dax_content_scraper_worker import DaxSingleEntryScraperWorker
 from src.stock_scanner.strategies.news_tracker.dax.dax_worker import DAXWorker
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository
 from src.stock_scanner.strategies.news_tracker.gpw.gpw_content_scraper_worker import ScraperWorker
@@ -17,7 +17,7 @@ class ServiceManager:
     _services: list[Callable[[], None]] = []
     _gpw_worker: GPWWorker
     _dax_worker: DAXWorker
-    _dax_entry_scraper: DAXEntryContentScraper
+    _dax_entry_scraper_worker: DaxSingleEntryScraperWorker
     _llm_worker: LLMWorker
     _scraper_worker: ScraperWorker
 
@@ -29,10 +29,10 @@ class ServiceManager:
         # cls._gpw_worker.start()
         cls._dax_worker = DAXWorker(entry_repo)
         cls._dax_worker.start()
-        cls._dax_entry_scraper = DAXEntryContentScraper()
-        cls._dax_entry_scraper.start()
-        # cls._llm_worker = LLMWorker(entry_repo)
-        # cls._llm_worker.start()
+        cls._dax_entry_scraper_worker = DaxSingleEntryScraperWorker(entry_repo)
+        cls._dax_entry_scraper_worker.start()
+        cls._llm_worker = LLMWorker(entry_repo)
+        cls._llm_worker.start()
         # cls._scraper_worker = ScraperWorker(entry_repo)
         # cls._scraper_worker.start()
 
