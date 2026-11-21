@@ -24,7 +24,7 @@ class DaxScraper(QObject):
     def start(self) -> None:
         logger.info("Start sesji DAX scraper")
         self.session.start(self.BASE_URL, headless=False)
-        # self.handle_cookies()
+        self.handle_cookies()
         self.set_filters()
 
     def close(self) -> None:
@@ -148,3 +148,17 @@ class DaxScraper(QObject):
         page.locator('[data-wio="adv-filter-elem-button-apply"]').click()
 
         logger.info("DAX: Filters applied successfully")
+
+    def handle_cookies(self) -> None:
+        page = self.session.page
+        logger.info("DAX: Checking cookies banner...")
+        disagree_button = page.locator("#didomi-notice-disagree-button")
+
+        try:
+            disagree_button.wait_for(state="visible", timeout=5_000)
+            disagree_button.click()
+            logger.info("DAX: Cookies configured - necessary cookies only")
+            disagree_button.wait_for(state="hidden", timeout=5_000)
+
+        except Exception:
+            logger.info("DAX: Cookies banner not displayed")
