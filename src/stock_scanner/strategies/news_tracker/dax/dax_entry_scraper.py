@@ -32,6 +32,7 @@ class DAXEntryContentScraper:
 
         try:
             page.goto(url, timeout=self.page_load_timeout, wait_until="domcontentloaded")
+            self.handle_cookies()
             container = page.locator("div.news-details__content div.break-word.news_main")
             container.wait_for(state="attached", timeout=self.page_load_timeout)
 
@@ -41,3 +42,17 @@ class DAXEntryContentScraper:
             logger.exception(f"DAX: błąd pobierania treści artykułu {url}: {exc}")
 
         return content
+
+    def handle_cookies(self) -> None:
+        page = self.session.page
+        logger.info("DAX: Checking cookies banner...")
+        disagree_button = page.locator("#didomi-notice-disagree-button")
+
+        try:
+            disagree_button.wait_for(state="visible", timeout=5_000)
+            disagree_button.click()
+            logger.info("DAX: Cookies configured - necessary cookies only")
+            disagree_button.wait_for(state="hidden", timeout=5_000)
+
+        except Exception:
+            logger.info("DAX: Cookies banner not displayed")

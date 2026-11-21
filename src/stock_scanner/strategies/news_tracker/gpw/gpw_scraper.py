@@ -67,8 +67,7 @@ class PapEspiScraper(QObject):
         link_locator = item.locator("a.link")
 
         title = link_locator.inner_text().strip()
-        is_skipped = skip_entry(title)
-        if is_skipped:
+        if skip_entry(title):
             return None
 
         link = link_locator.get_attribute("href")

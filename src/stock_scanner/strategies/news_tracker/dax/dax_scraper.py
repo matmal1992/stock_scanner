@@ -4,6 +4,7 @@ from typing import Optional
 from playwright.sync_api import Locator
 from PySide6.QtCore import QObject
 
+from src.stock_scanner.strategies.news_tracker.dax.dax_config import should_skip
 from src.stock_scanner.strategies.news_tracker.entry_repo import NewsEntry
 from src.stock_scanner.strategies.news_tracker.playwright_session import PlaywrightSession
 
@@ -62,6 +63,9 @@ class DaxScraper(QObject):
         if not title:
             return None
 
+        if should_skip(title):
+            return None
+
         link = item.get_attribute("href")
 
         if not link:
@@ -93,10 +97,6 @@ class DaxScraper(QObject):
             "justification": "-",
             "content": None,
         }
-
-    def skip(self, item: Locator) -> bool:
-        category = item.get_attribute("data-news-category") or ""
-        return category.lower() in self.EXCLUDED_CATEGORIES
 
     @staticmethod
     def _absolute_url(link: str) -> str:

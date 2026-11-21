@@ -3,59 +3,59 @@ from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
+EXCLUDE_KEYWORDS: tuple[str, ...] = (
+    # Raporty finansowe
+    "geschäftsbericht",
+    "jahresfinanzbericht",
+    "halbjahresfinanzbericht",
+    "quartalsbericht",
+    "quartalsmitteilung",
+    "zwischenbericht",
+    "finanzbericht",
+    "jahresabschluss",
+    "konzernabschluss",
+    "finanzkennzahlen",
+    "vorabbekanntmachung",
+    "veröffentlichung des finanzberichts",
+    # Formalności giełdowe i regulacyjne
+    "stimmrechtsmitteilung",
+    "stimmrechtsanteile",
+    "schwellenberührung",
+    "directors' dealings",
+    "eigengeschäfte von führungskräften",
+    "hauptversammlung",
+    "tagesordnung",
+    "einberufung",
+    "beschlussvorschlag",
+    "dividendenbekanntmachung",
+    "wertpapierprospekt",
+    "bezugsangebot",
+    "anleihebedingungen",
+    "änderung der satzung",
+    # Zmiany personalne
+    "personalveränderung",
+    "vorstandswechsel",
+    "niederlegung des amtes",
+    "bestellung zum vorstand",
+    "mitglied des aufsichtsrat",
+    # Korekty i sprostowania
+    "korrektur",
+    "berichtigung",
+    "korrektur der mitteilung",
+    # Raporty i komunikaty okresowe
+    "quartalsergebnis",
+    "jahresergebnis",
+    "zwischenmitteilung",
+    "monatsbericht",
+    "Search Atlas",
+)
+
 
 @dataclass
 class DAXConfig:
     page_load_timeout: float = 15_000
     prompt_timeout: float = 30_000
     prompt_load_timeout: float = 30_000
-
-    EXCLUDE_KEYWORDS: tuple[str, ...] = (
-        # Raporty finansowe
-        "geschäftsbericht",
-        "jahresfinanzbericht",
-        "halbjahresfinanzbericht",
-        "quartalsbericht",
-        "quartalsmitteilung",
-        "zwischenbericht",
-        "finanzbericht",
-        "jahresabschluss",
-        "konzernabschluss",
-        "finanzkennzahlen",
-        "vorabbekanntmachung",
-        "veröffentlichung des finanzberichts",
-        # Formalności giełdowe i regulacyjne
-        "stimmrechtsmitteilung",
-        "stimmrechtsanteile",
-        "schwellenberührung",
-        "directors' dealings",
-        "eigengeschäfte von führungskräften",
-        "hauptversammlung",
-        "tagesordnung",
-        "einberufung",
-        "beschlussvorschlag",
-        "dividendenbekanntmachung",
-        "wertpapierprospekt",
-        "bezugsangebot",
-        "anleihebedingungen",
-        "änderung der satzung",
-        # Zmiany personalne
-        "personalveränderung",
-        "vorstandswechsel",
-        "niederlegung des amtes",
-        "bestellung zum vorstand",
-        "mitglied des aufsichtsrat",
-        # Korekty i sprostowania
-        "korrektur",
-        "berichtigung",
-        "korrektur der mitteilung",
-        # Raporty i komunikaty okresowe
-        "quartalsergebnis",
-        "jahresergebnis",
-        "zwischenmitteilung",
-        "monatsbericht",
-        "Search Atlas",
-    )
 
     dax_prompt = """WYKONAJ PONIŻSZE POLECENIE DOSŁOWNIE.
 
@@ -130,7 +130,8 @@ class DAXConfig:
         Analiza ma charakter wyłącznie edukacyjny i informacyjny.
         """
 
-    def should_skip(self, title: str) -> bool:
-        normalized = title.casefold()
 
-        return any(keyword.casefold() in normalized for keyword in self.EXCLUDE_KEYWORDS)
+def should_skip(title: str) -> bool:
+    normalized = title.casefold()
+
+    return any(keyword.casefold() in normalized for keyword in EXCLUDE_KEYWORDS)
