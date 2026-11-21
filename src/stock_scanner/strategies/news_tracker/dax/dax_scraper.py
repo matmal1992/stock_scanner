@@ -12,8 +12,10 @@ logger = logging.getLogger(__name__)
 
 class DaxScraper(QObject):
     BASE_URL = "https://www.eqs-news.com/"
-    ALLOWED_CATEGORIES = {"corporate", "ad-hoc"}
+    EXCLUDED_CATEGORIES = {"fr regulatory", "uk regulatory"}
     page_load_timeout: float = 15_000
+
+    ALLOWED_CATEGORIES = {"ADHOC", "ANNOUNCEMENT", "WPUEG", "INTERNATIONAL"}
 
     def __init__(self) -> None:
         super().__init__()
@@ -22,6 +24,8 @@ class DaxScraper(QObject):
     def start(self) -> None:
         logger.info("Start sesji DAX scraper")
         self.session.start(self.BASE_URL, headless=False)
+        # self.handle_cookies()
+        self.set_filters()
 
     def close(self) -> None:
         self.session.close()
@@ -32,6 +36,7 @@ class DaxScraper(QObject):
             timeout=self.page_load_timeout,
             wait_until="domcontentloaded",
         )
+        self.set_filters()
 
     def scrape_entries(self) -> list[NewsEntry]:
         items = self.session.page.locator('a[data-wio="news-feed-list-item"]')
@@ -91,7 +96,7 @@ class DaxScraper(QObject):
 
     def skip(self, item: Locator) -> bool:
         category = item.get_attribute("data-news-category") or ""
-        return category.lower() not in self.ALLOWED_CATEGORIES
+        return category.lower() in self.EXCLUDED_CATEGORIES
 
     @staticmethod
     def _absolute_url(link: str) -> str:
@@ -101,7 +106,45 @@ class DaxScraper(QObject):
         if link.startswith("//"):
             return "https:" + link
 
-        if link.startswith("/"):
-            return "https://espiebi.pap.pl" + link
-
         return link
+
+    def set_filters(self) -> None:
+        logger.info("DAX: Configuring EQS filters")
+
+        page = self.session.page
+        modal = page.locator("[data-advanced-filter-modal-body]")
+
+        if not modal.is_visible():
+            page.locator('[data-wio="advance-filter-button"]').click()
+            modal.wait_for(state="visible", timeout=self.page_load_timeout)
+
+        category_dropdown = modal.locator("[data-filter-dropdown]").first
+        dropdown_content = category_dropdown.locator("[data-dropdown-content]")
+
+        if not dropdown_content.is_visible():
+            category_dropdown.locator("[data-dropdown-anchor]").click()
+
+        checkboxes = modal.locator('input[name="checkbox-categories[]"]')
+        checkboxes.first.wait_for(state="attached", timeout=self.page_load_timeout)
+
+        for i in range(checkboxes.count()):
+            checkbox = checkboxes.nth(i)
+
+            category = checkbox.get_attribute("value")
+            checkbox_id = checkbox.get_attribute("id")
+
+            if not category or not checkbox_id:
+                continue
+
+            should_be_checked = category in self.ALLOWED_CATEGORIES
+            is_checked = checkbox.is_checked()
+
+            if is_checked == should_be_checked:
+                continue
+
+            label = modal.locator(f'label[for="{checkbox_id}"]')
+            label.click()
+
+        page.locator('[data-wio="adv-filter-elem-button-apply"]').click()
+
+        logger.info("DAX: Filters applied successfully")
