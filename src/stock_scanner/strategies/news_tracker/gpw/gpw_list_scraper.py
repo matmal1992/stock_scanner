@@ -12,7 +12,7 @@ from src.stock_scanner.strategies.news_tracker.playwright_session import Playwri
 logger = logging.getLogger(__name__)
 
 
-class PapEspiScraper(QObject):
+class GPWListScraper(QObject):
     BASE_URL = "https://espiebi.pap.pl/"
     page_load_timeout: float = 15_000
 

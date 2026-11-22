@@ -13,16 +13,18 @@ class WorkerStatus:
             "Last error",
         ],
         "GPW": [
-            "Loop",
-            "Last error",
+            "List scraper loop",
+            "Entry scraper loop",
+            "List scraper - last error",
+            "Entry scraper - last error",
+            "Entry scraper - last scrape",
         ],
         "DAX": [
-            "Loop",
-            "Last error",
-        ],
-        "GPW entry scraper": [
-            "Loop",
-            "Last scrape",
+            "List scraper loop",
+            "Entry scraper loop",
+            "List scraper - last error",
+            "Entry scraper - last error",
+            "Entry scraper - last scrape",
         ],
     }
 
@@ -88,7 +90,7 @@ class WorkerStatus:
         return "\n\n".join(sections)
 
     @classmethod
-    def load_init_icon(self) -> bytes:
+    def load_init_icon(cls) -> bytes:
         image_path = get_assets_dir() / "input_icon.png"
 
         try:

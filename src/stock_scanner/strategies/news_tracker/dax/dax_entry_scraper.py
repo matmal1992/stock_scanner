@@ -5,7 +5,7 @@ from src.stock_scanner.strategies.news_tracker.playwright_session import Playwri
 logger = logging.getLogger(__name__)
 
 
-class DAXEntryContentScraper:
+class DAXEntryScraper:
     BASE_URL = "https://www.eqs-news.com/"
     page_load_timeout: float = 15_000
 
@@ -41,3 +41,16 @@ class DAXEntryContentScraper:
             logger.exception(f"DAX: błąd pobierania treści artykułu {url}: {exc}")
 
         return content
+
+    def handle_cookies(self) -> None:
+        page = self.session.page
+        disagree_button = page.locator("#didomi-notice-disagree-button")
+
+        try:
+            disagree_button.wait_for(state="visible", timeout=5_000)
+            disagree_button.click()
+            logger.info("DAX: Cookies obsłużony na stronie dax entry")
+            disagree_button.wait_for(state="hidden", timeout=5_000)
+
+        except Exception:
+            logger.info("DAX: Cookies banner not displayed")

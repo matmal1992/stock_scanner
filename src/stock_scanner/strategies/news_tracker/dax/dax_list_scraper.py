@@ -151,13 +151,12 @@ class DaxScraper(QObject):
 
     def handle_cookies(self) -> None:
         page = self.session.page
-        logger.info("DAX: Checking cookies banner...")
         disagree_button = page.locator("#didomi-notice-disagree-button")
 
         try:
             disagree_button.wait_for(state="visible", timeout=5_000)
             disagree_button.click()
-            logger.info("DAX: Cookies configured - necessary cookies only")
+            logger.info("DAX: Cookies obsłużony na stronie dax list")
             disagree_button.wait_for(state="hidden", timeout=5_000)
 
         except Exception:
