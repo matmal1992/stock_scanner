@@ -13,27 +13,33 @@ class WorkerStatus:
             "Last error",
         ],
         "GPW": [
-            "Loop",
-            "Last scrape",
+            "List scraper loop",
+            "Entry scraper loop",
+            "List scraper - last error",
+            "Entry scraper - last error",
+            "Entry scraper - last scrape",
         ],
-        "GPW entry scraper": [
-            "Loop",
-            "Last scrape",
+        "DAX": [
+            "List scraper loop",
+            "Entry scraper loop",
+            "List scraper - last error",
+            "Entry scraper - last error",
+            "Entry scraper - last scrape",
         ],
     }
 
     _statuses: dict[str, dict[str, str]] = {}
     _lock = Lock()
-    _llm_error: str
-    _llm_error_screen: bytes
-    _llm_full_error_log: str
+    _error_title: str
+    _error_screen: bytes
+    _full_error_log: str
 
     @classmethod
     def init(cls) -> None:
         cls._statuses = {group: {field: "-" for field in fields} for group, fields in cls.FIELD_ORDER.items()}
-        cls._llm_error = "Initial error title"
-        cls._llm_error_screen = cls.load_init_icon()
-        cls._llm_full_error_log = "Initial full log content"
+        cls._error_title = "Initial error title"
+        cls._error_screen = cls.load_init_icon()
+        cls._full_error_log = "Initial full log content"
 
     @staticmethod
     def _now() -> str:
@@ -48,10 +54,10 @@ class WorkerStatus:
             cls._statuses.setdefault(group, {})[field] = status
 
     @classmethod
-    def update_llm_error_status(cls, error_msg: str, full_log: str, screenshot: bytes) -> None:
-        cls._llm_error = cls._now() + " | " + error_msg
-        cls._llm_error_screen = screenshot
-        cls._llm_full_error_log = full_log
+    def update_error_status(cls, error_msg: str, full_log: str, screenshot: bytes) -> None:
+        cls._error_title = cls._now() + " | " + error_msg
+        cls._error_screen = screenshot
+        cls._full_error_log = full_log
 
     @classmethod
     def snapshot(cls) -> dict[str, dict[str, str]]:
@@ -84,7 +90,7 @@ class WorkerStatus:
         return "\n\n".join(sections)
 
     @classmethod
-    def load_init_icon(self) -> bytes:
+    def load_init_icon(cls) -> bytes:
         image_path = get_assets_dir() / "input_icon.png"
 
         try:

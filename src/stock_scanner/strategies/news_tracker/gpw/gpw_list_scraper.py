@@ -5,15 +5,16 @@ from typing import Optional
 from playwright.sync_api import Locator
 from PySide6.QtCore import QObject
 
-from config.playwright_config import Config, has_keywords
-from src.stock_scanner.playwright.playwright_session import PlaywrightSession
 from src.stock_scanner.strategies.news_tracker.entry_repo import NewsEntry
+from src.stock_scanner.strategies.news_tracker.gpw.gpw_config import skip_entry
+from src.stock_scanner.strategies.news_tracker.playwright_session import PlaywrightSession
 
 logger = logging.getLogger(__name__)
 
 
-class PapEspiScraper(QObject):
+class GPWListScraper(QObject):
     BASE_URL = "https://espiebi.pap.pl/"
+    page_load_timeout: float = 15_000
 
     def __init__(self) -> None:
         super().__init__()
@@ -26,10 +27,17 @@ class PapEspiScraper(QObject):
     def close(self) -> None:
         self.session.close()
 
-    def refresh_page(self) -> None:
+    def click_refresh_btn(self) -> None:
         refresh_button = self.session.page.locator("#refreshHomeId a.refreshButton")
-        refresh_button.wait_for(state="visible", timeout=Config.page_load_timeout)
+        refresh_button.wait_for(state="visible", timeout=self.page_load_timeout)
         refresh_button.click()
+
+    def refresh_page(self) -> None:
+        self.session.page.goto(
+            self.BASE_URL,
+            timeout=self.page_load_timeout,
+            wait_until="domcontentloaded",
+        )
 
     def scrape_entries(self) -> list[NewsEntry]:
         day_blocks = self.session.page.locator(".view-report-listing div.day")
@@ -59,30 +67,26 @@ class PapEspiScraper(QObject):
         link_locator = item.locator("a.link")
 
         title = link_locator.inner_text().strip()
+        is_skipped = skip_entry(title)
+        if is_skipped:
+            return None
+
         link = link_locator.get_attribute("href")
-
-        hour_str = item.locator("div.hour").first.inner_text().strip()
-
         if not link:
             return None
 
+        hour_str = item.locator("div.hour").first.inner_text().strip()
         abs_url = self._absolute_url(link)
-        is_skipped = has_keywords(title, Config.gpw_substrings)
-
-        if has_keywords(title, Config.gpw_exceptions):
-            logger.info("Exception ticker detected - dont skip")
-            is_skipped = False
 
         return {
             "id": 0,
             "title": title,
             "link": abs_url,
             "published": f"{date_str} {hour_str}",
-            "source_type": "ESPI",
+            "source_type": "GPW",
             "ticker": self._extract_ticker(title),
-            "llm": "-" if is_skipped else "pending",
+            "llm": "pending",
             "justification": "-",
-            "skipped": int(is_skipped),
             "content": None,
         }
 

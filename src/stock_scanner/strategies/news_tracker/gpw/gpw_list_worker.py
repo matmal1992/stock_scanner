@@ -1,18 +1,18 @@
 import logging
 
-from src.stock_scanner.playwright.pap_espi_scraper import PapEspiScraper
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository
+from src.stock_scanner.strategies.news_tracker.gpw.gpw_list_scraper import GPWListScraper
 from src.stock_scanner.workers.base_worker import BaseWorker
 from src.stock_scanner.workers.worker_status import WorkerStatus
 
 logger = logging.getLogger(__name__)
 
 
-class GPWWorker(BaseWorker):
+class GPWListWorker(BaseWorker):
     INTERVAL_SECONDS = 5
 
     def __init__(self, entry_repo: EntryRepository) -> None:
-        self._session = PapEspiScraper()
+        self._session = GPWListScraper()
         self.entry_repo = entry_repo
         super().__init__(self._session, "GPW")
 
@@ -24,12 +24,16 @@ class GPWWorker(BaseWorker):
             self._scrape_and_save()
 
             while not self._stop_event.wait(self.INTERVAL_SECONDS):
-                WorkerStatus.update("GPW", "Loop")
-                self._session.refresh_page()
-                self._scrape_and_save()
+                try:
+                    WorkerStatus.update("GPW", "List scraper loop")
+                    self._session.click_refresh_btn()
+                    self._scrape_and_save()
+                except Exception as exc:
+                    self._handle_error("GPW while loop exception", str(exc))
+                    continue
 
         except Exception as exc:
-            logger.exception(f"GPW exception: {exc}")
+            self._handle_error("GPW main exception", str(exc))
 
         finally:
             logger.info("Closing GPW session...")
@@ -54,3 +58,10 @@ class GPWWorker(BaseWorker):
     def stop(self) -> None:
         self._session.close()
         self._stop_event.set()
+
+    def _handle_error(self, message: str, full_log: str) -> None:
+        screenshot = self._session.session.page.screenshot(full_page=True)
+        WorkerStatus.update("GPW", "List scraper - last error")
+        WorkerStatus.update_error_status(message, full_log, screenshot)
+        logger.error(message + "\n" + full_log)
+        self._session.refresh_page()

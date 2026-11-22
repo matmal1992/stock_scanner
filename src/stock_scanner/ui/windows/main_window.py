@@ -40,9 +40,7 @@ class MainWindow(QMainWindow):
         title.setStyleSheet("font-size: 16px; font-weight: bold;")
 
         self.show_chart_btn = QPushButton("Show chart")
-        self.show_chart_btn.clicked.connect(
-            lambda: self.switch_window(self.chart_window, self.show_chart_btn)
-        )
+        self.show_chart_btn.clicked.connect(lambda: self.switch_window(self.chart_window, self.show_chart_btn))
         self.show_chart_btn.setCheckable(True)
 
         self.the_wall = QPushButton("The wall strategy")
@@ -54,15 +52,11 @@ class MainWindow(QMainWindow):
         self.three_tier.setCheckable(True)
 
         self.speculation = QPushButton("Speculation bubble")
-        self.speculation.clicked.connect(
-            lambda: self.switch_window(self.speculation_window, self.speculation)
-        )
+        self.speculation.clicked.connect(lambda: self.switch_window(self.speculation_window, self.speculation))
         self.speculation.setCheckable(True)
 
         self.news_tracker = QPushButton("News tracker")
-        self.news_tracker.clicked.connect(
-            lambda: self.switch_window(self.news_tracker_window, self.news_tracker)
-        )
+        self.news_tracker.clicked.connect(lambda: self.switch_window(self.news_tracker_window, self.news_tracker))
         self.news_tracker.setCheckable(True)
 
         self.settings_btn = QPushButton("Settings")

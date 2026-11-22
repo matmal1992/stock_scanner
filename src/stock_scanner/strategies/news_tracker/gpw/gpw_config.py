@@ -1,42 +1,40 @@
+import logging
 from dataclasses import dataclass
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
-class Config:
-    page_load_timeout: float = 15_000
-    prompt_timeout: float = 30_000
-    prompt_load_timeout: float = 30_000
-
+class GPWConfig:
     gpw_exceptions: tuple[str, ...] = (
         "XTB",
         "CREOTECH",
         "KGHM",
         "CENTURION",
-        "SYGNIS",
         "KOMBINAT KONOPNY",
         "BUMECH",
         "MEDINICE",
         "CD PROJEKT",
-        "POLSAT",
-        "DINO",
         "ORLEN",
-        "PGE",
-        "TAURON",
         "SCANWAY",
     )
 
     gpw_substrings: tuple[str, ...] = (
         "waln",
+        "unicredit",
+        "michael/str",
+        "ab inter rao",
+        "liczby głosów",
         "zgromadzeni",
-        "akcji serii",
-        "akcji własnych",
+        "skonsolidowanych przychodach",
+        "art.",
+        "akcji",
         "członka zarządu",
         "członka rady",
         "księgi popytu",
         "okresowego raportu",
         "subskrypcji obligacji",
         "zmiana terminu publikacji",
-        "skupu akcji własnych",
         "emitenta",
         "zawiadomienia akcjonariuszy",
         "w trybie art.",
@@ -46,25 +44,41 @@ class Config:
         "korekta raportu bieżącego",
         "ETF",
         "FIZ",
-        "Zawiadomienie o zmianie stanu posiadania",
+        "stanu posiadania",
+        "rejestracja zmian",
+        "zawiadomienie od okcjonariusza",
         "publikacji raportu",
         "publikacji raportów",
-        "inne informaje",
+        "inne informacje",
+        "kapitału docelowego",
+        "terminu notowania",
         "osoby zarządzającej",
         "obowiązki zarządcze",
         "złożenie rezygnacji",
-        "obligacji ST1",
-        "serii E1",
-        "serii D1",
-        "serii F1",
+        "obligacji",
+        "dywidendy",
+        "serii",
+        "zmiany w strukturze udziałowej",
+        "zmiany osobowe",
+        "rady nadzorczej",
         "zmiana prokurenta",
         "bank",
         "korekta raportu",
         "raport kwartalny",
+        "raport miesięczny",
+        "raport roczny",
+        "audyt",
+        "MOL",
         "raportów okresowych",
         "ryzykiem kursowym",
         "emisji obligacji",
         "nwz",
+        "kwartał",
+        "danych finansowych",
+        "pożycz",
+        "kernel holding",
+        "po spotkaniu",
+        "financial report",
     )
 
     valid_forecasts = {
@@ -93,22 +107,7 @@ class Config:
 
     Nie wymyślaj żadnych faktów ani danych.
 
-    KROK 2 — DANE DODATKOWE
-
-    Jeżeli są dostępne w internecie, uwzględnij najnowsze informacje dotyczące spółki, w szczególności:
-
-    - wyniki finansowe,
-    - prognozy,
-    - rekomendacje analityków,
-    - strategię spółki,
-    - istotne wydarzenia korporacyjne,
-    - inne informacje mogące mieć znaczenie dla oceny reakcji rynku.
-
-    Uwzględniaj wyłącznie informacje, które możesz rzeczywiście zweryfikować.
-    Bazuj wyłącznie na najnowszych dostępnych danych w odniesieniu do
-    daty i godziny wykonania niniejszego polecenia.
-
-    KROK 3 — PROGNOZA
+    KROK 2 — PROGNOZA
 
     Oceń prawdopodobny wpływ analizowanej informacji na kurs akcji spółki.
 
@@ -122,14 +121,13 @@ class Config:
     - "Wzrost"
     - "Silny wzrost"
 
-    KROK 4 — UZASADNIENIE
+    KROK 3 — UZASADNIENIE
 
     Napisz dokładnie dwa zdania uzasadnienia wybranej prognozy.
 
-    Uzasadnienie powinno wskazywać najważniejsze czynniki wynikające z analizowanej informacji oraz,
-    jeżeli są istotne, z dodatkowych zweryfikowanych danych.
+    Uzasadnienie powinno wskazywać najważniejsze czynniki wynikające z analizowanej informacji.
 
-    KROK 5 — FORMAT ODPOWIEDZI
+    KROK 4 — FORMAT ODPOWIEDZI
 
     Odpowiedź MUSI być poprawnym składniowo obiektem JSON, o strukturze:
 
@@ -143,7 +141,6 @@ class Config:
     Przed zwróceniem odpowiedzi sprawdź:
 
     - Czy rzeczywiście uzyskałeś i przeanalizowałeś treść wskazanego fragmentu html.
-    - Czy nie wykorzystałeś informacji, których nie można zweryfikować.
     - Czy prognoza jest dokładnie jedną z pięciu dozwolonych wartości.
     - Czy uzasadnienie zawiera dokładnie dwa zdania.
     - Czy odpowiedź jest poprawnym JSON-em.
@@ -178,3 +175,10 @@ def has_keywords(title: str, keywords: tuple[str, ...]) -> bool:
             return True
 
     return False
+
+
+def skip_entry(title: str) -> bool:
+    has_exceptions = has_keywords(title, GPWConfig.gpw_exceptions)
+    has_substrings = has_keywords(title, GPWConfig.gpw_substrings)
+
+    return has_substrings and not has_exceptions
