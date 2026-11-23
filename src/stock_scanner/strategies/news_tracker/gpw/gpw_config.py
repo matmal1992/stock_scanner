@@ -19,29 +19,32 @@ class GPWConfig:
         "SCANWAY",
     )
 
-    gpw_substrings: tuple[str, ...] = (
+    EXCLUDE_KEYWORDS: tuple[str, ...] = (
         "waln",
         "unicredit",
         "michael/str",
         "ab inter rao",
+        "share",
+        "hipoteki",
         "liczby głosów",
         "zgromadzeni",
         "skonsolidowanych przychodach",
         "art.",
         "akcji",
-        "członka zarządu",
+        "statut",
+        "prezesa zarz" "zarząd",
         "członka rady",
         "księgi popytu",
         "okresowego raportu",
         "subskrypcji obligacji",
         "zmiana terminu publikacji",
         "emitenta",
+        "kredyt",
         "zawiadomienia akcjonariuszy",
         "w trybie art.",
         "okaziciela",
         "kapitału zakładowego",
-        "korekta oznaczenia raportu",
-        "korekta raportu bieżącego",
+        "korekta",
         "ETF",
         "FIZ",
         "stanu posiadania",
@@ -52,8 +55,6 @@ class GPWConfig:
         "inne informacje",
         "kapitału docelowego",
         "terminu notowania",
-        "osoby zarządzającej",
-        "obowiązki zarządcze",
         "złożenie rezygnacji",
         "obligacji",
         "dywidendy",
@@ -63,7 +64,6 @@ class GPWConfig:
         "rady nadzorczej",
         "zmiana prokurenta",
         "bank",
-        "korekta raportu",
         "raport kwartalny",
         "raport miesięczny",
         "raport roczny",
@@ -76,6 +76,7 @@ class GPWConfig:
         "kwartał",
         "danych finansowych",
         "pożycz",
+        "akcjach",
         "kernel holding",
         "po spotkaniu",
         "financial report",
@@ -179,6 +180,6 @@ def has_keywords(title: str, keywords: tuple[str, ...]) -> bool:
 
 def skip_entry(title: str) -> bool:
     has_exceptions = has_keywords(title, GPWConfig.gpw_exceptions)
-    has_substrings = has_keywords(title, GPWConfig.gpw_substrings)
+    has_substrings = has_keywords(title, GPWConfig.EXCLUDE_KEYWORDS)
 
     return has_substrings and not has_exceptions
