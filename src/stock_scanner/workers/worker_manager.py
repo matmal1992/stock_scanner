@@ -25,16 +25,16 @@ class ServiceManager:
     def init_all(cls, entry_repo: EntryRepository) -> None:
         WorkerStatus.init()
         TelegramBot.init(entry_repo)
-        cls._gpw_list_worker = GPWListWorker(entry_repo)
-        cls._gpw_list_worker.start()
+        # cls._gpw_list_worker = GPWListWorker(entry_repo)
+        # cls._gpw_list_worker.start()
+        # cls._gpw_entry_worker = GPWEntryWorker(entry_repo)
+        # cls._gpw_entry_worker.start()
         cls._dax_list_worker = DAXListWorker(entry_repo)
         cls._dax_list_worker.start()
         cls._dax_entry_worker = DaxEntryWorker(entry_repo)
         cls._dax_entry_worker.start()
         cls._llm_worker = LLMWorker(entry_repo)
         cls._llm_worker.start()
-        cls._gpw_entry_worker = GPWEntryWorker(entry_repo)
-        cls._gpw_entry_worker.start()
 
     @classmethod
     def register(cls, service_stop_callback: Callable[[], None]) -> None:

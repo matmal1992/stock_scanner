@@ -32,7 +32,7 @@ class GPWConfig:
         "art.",
         "akcji",
         "statut",
-        "prezesa zarz" "zarząd",
+        "prezesa zarzzarząd",
         "członka rady",
         "księgi popytu",
         "okresowego raportu",
