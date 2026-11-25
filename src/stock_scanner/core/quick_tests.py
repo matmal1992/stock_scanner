@@ -6,6 +6,7 @@ import urllib.request
 from src.stock_scanner.core.database import Database
 from src.stock_scanner.core.paths import configure_environment, get_assets_dir
 from src.stock_scanner.strategies.news_tracker.entry_repo import EntryRepository
+from src.stock_scanner.strategies.news_tracker.playwright_session import PlaywrightSession
 from src.stock_scanner.workers.telegram import TelegramBot
 
 logger = logging.getLogger(__name__)
@@ -155,8 +156,39 @@ def test_telegram() -> None:
     TelegramBot.send_message("Telegram alert")
 
 
+# def handle_cookies() -> None:
+#     disagree_button = page.locator("#didomi-notice-disagree-button")
+
+#     try:
+#         disagree_button.wait_for(state="visible", timeout=5_000)
+#         disagree_button.click()
+#         logger.info("DAX: Cookies obsłużony na stronie dax entry")
+#         disagree_button.wait_for(state="hidden", timeout=5_000)
+
+
+def scrape_dax() -> None:
+    session = PlaywrightSession()
+    url = "https://www.eqs-news.com/news/voting-rights/bank-of-america-corporation-wilmington-de-united-states-of-america-usa/e8bf0177-f4aa-4554-970b-ae78429b88a0_en"
+    session.start(url, headless=False)
+    content: str = "invalid content"
+    page = session.page
+
+    try:
+        page.goto(url, timeout=15_000, wait_until="domcontentloaded")
+        container = page.locator("div.news-details__content")
+        container.wait_for(state="attached", timeout=5_000)
+
+        if container.count() > 0:
+            content = container.inner_text().strip()
+
+    except Exception as exc:
+        logger.exception(f"DAX: błąd pobierania treści artykułu {url}: {exc}")
+
+    print(content)
+
+
 def main() -> None:
-    pass
+    scrape_dax()
 
 
 if __name__ == "__main__":

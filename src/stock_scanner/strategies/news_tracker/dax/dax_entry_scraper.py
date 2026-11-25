@@ -32,8 +32,8 @@ class DAXEntryScraper:
 
         try:
             page.goto(url, timeout=self.page_load_timeout, wait_until="domcontentloaded")
-            self.handle_cookies()
-            container = page.locator("div.news-details__content div.break-word.news_main")
+            # self.handle_cookies()
+            container = page.locator("div.news-details__content")
             container.wait_for(state="attached", timeout=self.page_load_timeout)
 
             if container.count() > 0:
