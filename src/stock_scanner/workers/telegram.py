@@ -260,9 +260,13 @@ class TelegramBot:
     @classmethod
     def send_alert(cls, entry: NewsEntry) -> None:
         message = cls._build_alert(entry)
+        chat_token = ""
+
+        if entry["source_type"] == "DAX":
+            chat_token = Keys.dax_chat_token
 
         if message:
-            cls.send_message(message)
+            cls.send_message(message, chat_token)
 
     @classmethod
     def _build_alert(cls, entry: NewsEntry) -> str | None:
@@ -290,8 +294,8 @@ class TelegramBot:
         return f'<a href="{url}">{source}</a> | {published}\n{title}\n{forecast_display} - {justification}'
 
     @classmethod
-    def send_message(cls, text: str) -> None:
-        url = f"https://api.telegram.org/bot{Keys.alert_chat_token}/sendMessage"
+    def send_message(cls, text: str, chat_token: str = Keys.alert_chat_token) -> None:
+        url = f"https://api.telegram.org/bot{chat_token}/sendMessage"
         payload = build_payload(text, Keys.alert_chat_id)
         data = urllib.parse.urlencode(payload).encode("utf-8")
 

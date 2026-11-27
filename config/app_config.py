@@ -60,10 +60,12 @@ class ConfigKeys:
     alert_chat_token: str
     state_chat_token: str
     debug_chat_token: str
+    dax_chat_token: str
 
     alert_chat_id: str
     state_chat_id: str
     debug_chat_id: str
+    dax_chat_id: str
 
     state_chat_pinned_message_id: str
     llm_pinned_error_msg_id: str
@@ -79,9 +81,11 @@ class ConfigKeys:
             alert_chat_token=str(config["alert_chat_token"]),
             state_chat_token=str(config["state_chat_token"]),
             debug_chat_token=str(config["debug_chat_token"]),
+            dax_chat_token=str(config["dax_chat_token"]),
             alert_chat_id=str(config["alert_chat_id"]),
             state_chat_id=str(config["state_chat_id"]),
             debug_chat_id=str(config["debug_chat_id"]),
+            dax_chat_id=str(config["dax_chat_id"]),
             state_chat_pinned_message_id=str(config["state_chat_pinned_message_id"]),
             llm_pinned_error_msg_id=str(config["llm_pinned_error_msg_id"]),
             llm_pinned_error_screen_msg_id=str(config["llm_pinned_error_screen_msg_id"]),
